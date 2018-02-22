@@ -1,0 +1,14 @@
+{
+  "extends": "eslint-config-airbnb",
+  "rules": {
+    "eqeqeq": "off",
+    "curly": "error",
+    "quotes": ["error", "double"],
+    "no-bitwise": "off",
+    "no-underscore-dangle": "off",
+    "no-plusplus": "off",
+    "prefer-destructuring": "off",
+    "class-methods-use-this": "off"
+
+  }
+}
