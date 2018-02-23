@@ -1,5 +1,5 @@
 import path from "path";
-import OldDict from "./index";
+// import OldDict from "../old/index";
 // import Parser from "./Parser";
 // import common from "./common";
 import Mdict from "./Mdict";
@@ -9,9 +9,6 @@ import Mdict from "./Mdict";
 // const dictPath = path.join(__dirname, "../resource/21century.mdx");
 const dictPath = path.join(__dirname, "../resource/Collins.mdx");
 // const dictPath = path.join(__dirname, "../resource/bing.mdx");
-
-
-
 // WRONG TODO:: FIX THIS
 // const dictPath = path.join(__dirname, "../resource/msbing.mdx");
 // WRONG TODO:: FIX THIS

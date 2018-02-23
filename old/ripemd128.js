@@ -3,10 +3,10 @@
  * By Feng Dihai <fengdh@gmail.com>, 2015/07/09
  *
  * Based on coiscir/jsdigest (https://github.com/coiscir/jsdigest/blob/master/src/hash/ripemd128.js)
- *
+ * 
  * ripemd128.js is free software released under terms of the MIT License.
  * You can get a copy on http://opensource.org/licenses/MIT.
- *
+ * 
  *
  * RIPEMD-128 (c) 1996 Hans Dobbertin, Antoon Bosselaers, and Bart Preneel
  */

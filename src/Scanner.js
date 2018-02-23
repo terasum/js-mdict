@@ -4,20 +4,18 @@ import lzo from "lzo";
 import { TextDecoder } from "text-encoding";
 import bufferToArrayBuffer from "buffer-to-arraybuffer";
 // below is for debug
-import arrayBufferToBuffer from "arraybuffer-to-buffer";
 import { DOMParser } from "xmldom";
 import ripemd128 from "./ripemd128";
 // import lzo from "./lzo";
-import common from "./mdict-common";
+import common from "./common";
 import RecordBlockTable from "./RecordBlockTable";
 
 // import int64Buffer from "int64-buffer";
-const UInt64BE = require("int64-buffer").UInt64BE;
 
-import { linenumber } from "@everymundo/linenumber";
-const ln = linenumber;
+// import { linenumber } from "@everymundo/linenumber";
+// const ln = linenumber;
 
-const DEBUG = (...args) => console.log(__filename, args);
+// const DEBUG = (...args) => console.log(__filename, args);
 
 // A shared UTF16LE text decorder used to read
 // the dictionary header string.
@@ -79,7 +77,7 @@ function decrypt(buf, bkey) {
   let byte;
   const keylen = key.length;
   const len = buf.length;
-  let decbuf = new Uint8Array(len);
+  let decbuf = new Uint8Array(len); // eslint-disable-line prefer-const
   let prev = 0x36;
   for (let i = 0; i < len; i += 1) {
     byte = buf[i];
@@ -174,7 +172,7 @@ class Scanner {
    * accroding to the header contents, the dictionary
    * attributes can be determined
    */
-  config(debug) {
+  config() {
     this.attrs.Encoding = this.attrs.Encoding || UTF16;
     this._decoder = new TextDecoder(this.attrs.Encoding || UTF16);
     this._bpu = this.attrs.Encoding === UTF16 ? 2 : 1;
@@ -379,7 +377,7 @@ class Scanner {
     const mark = this.offset + ofst; /* header_remain_len */
     // 2504
     this.forward(ofst);
-    // offset = 834 
+    // offset = 834
     const ret = {
       numBlocks: this.readNum(), // 842
       numEntries: this.readNum(), // 850
@@ -414,10 +412,9 @@ class Scanner {
     const compType = kbcdv.getUint8(0);
     let keyBlockInfo = null;
     const start = 0;
-    const end =  keywordSummary.keyIndexCompLen;
+    const end = keywordSummary.keyIndexCompLen;
     if (compType === 0) {
       if (this._v2) {
-        const passkey = keyBlockInfoCompressed.slice(start + 4, start + 8);
         keyBlockInfo = keyBlockInfoCompressed.slice(start + 8, end);
       }
       keyBlockInfo = keyBlockInfoCompressed;
@@ -426,13 +423,12 @@ class Scanner {
       keyBlockInfoCompressed = keyBlockInfoCompressed.slice(start + 8, end);
       // decrypt
       if (this.attrs.Encrypted === 2) {
-        // TODO: decrypt
-        // throw new Error("needs to decrypt");
-        // passkey.set([0x95, 0x36, 0x00, 0x00], 4);
-        let passKey = _appendBuffer(passkey,Buffer.from([0x95,0x36,0x00,0x00]));
-        // temp = decryptor(temp, passkey);
-        let keyBlockInfoDecrypted = decrypt(new Uint8Array(keyBlockInfoCompressed), new Uint8Array(passKey));
-        keyBlockInfoCompressed = bufferToArrayBuffer(keyBlockInfoDecrypted);
+        const passKey = _appendBuffer(passkey, Buffer.from([0x95, 0x36, 0x00, 0x00]));
+        const kbiDecrypted = decrypt(
+          new Uint8Array(keyBlockInfoCompressed),
+          new Uint8Array(passKey),
+        );
+        keyBlockInfoCompressed = bufferToArrayBuffer(kbiDecrypted);
       }
 
       keyBlockInfo = compType === 2

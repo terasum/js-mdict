@@ -23,7 +23,6 @@ class Parser {
         const keyBlocks = this.scanner.slice(this.scanner.offset, keywordSummary.keyBlockLen);
         const keyList = this.scanner.readKeyBlock(keywordIndex, keyBlocks);
         // 将offset 指针定位到 record 开始
-        console.log(keyList);
         this.scanner.forward(keywordSummary.keyBlockLen);
         const recordSection = this.scanner.readRecordSect();
         const recordBlockTable = this.scanner.readRecordBlock(recordSection);
