@@ -21,6 +21,9 @@
   
   // concat 2 typed array
   function concat(a, b) {
+    if(!a && !b) throw 'Please specify valid arguments for parameters a and b.';  
+    if(!b || b.length === 0) return a;
+    if(!a || a.length === 0) return b;
     var c = new a.constructor(a.length + b.length);
     c.set(a);
     c.set(b, a.length);

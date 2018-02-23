@@ -10,7 +10,7 @@
  *  });
  */
 
-var mdict = require('./mdict.js');
+var mdict = require('./mdict-old.js');
 var isNode = require('detect-node');
 //const dict = mdict.dictionary('./testdict/Collins.mdx')
 function MDictByName(file) {

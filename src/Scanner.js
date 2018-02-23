@@ -1,14 +1,23 @@
 // import fs from "fs";
 import pako from "pako";
+import lzo from "lzo";
 import { TextDecoder } from "text-encoding";
 import bufferToArrayBuffer from "buffer-to-arraybuffer";
 // below is for debug
-// import arrayBufferToBuffer from "arraybuffer-to-buffer";
+import arrayBufferToBuffer from "arraybuffer-to-buffer";
 import { DOMParser } from "xmldom";
 import ripemd128 from "./ripemd128";
-import lzo from "./lzo";
+// import lzo from "./lzo";
 import common from "./mdict-common";
 import RecordBlockTable from "./RecordBlockTable";
+
+// import int64Buffer from "int64-buffer";
+const UInt64BE = require("int64-buffer").UInt64BE;
+
+import { linenumber } from "@everymundo/linenumber";
+const ln = linenumber;
+
+const DEBUG = (...args) => console.log(__filename, args);
 
 // A shared UTF16LE text decorder used to read
 // the dictionary header string.
@@ -23,12 +32,12 @@ const UTF16 = "UTF-16";
  * @param {ArrayBuffers} buffer2 The second buffer.
  * @return {ArrayBuffers} The new ArrayBuffer created out of the two.
  */
-const _appendBuffer = function (buffer1, buffer2) {
+function _appendBuffer(buffer1, buffer2) {
   const tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
   tmp.set(new Uint8Array(buffer1), 0);
   tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
   return tmp.buffer;
-};
+}
 
 function bufferEqual(buf1, buf2) {
   if (buf1.byteLength != buf2.byteLength) return false;
@@ -38,6 +47,22 @@ function bufferEqual(buf1, buf2) {
     if (dv1[i] != dv2[i]) return false;
   }
   return true;
+}
+
+// searchTextLen need search the 'NUL' character which
+function searchTextLen(dv, offset, encoding) {
+  // UTF-16
+  if (encoding === UTF16) {
+    let ofset = offset;
+    const mark = offset;
+    while (dv.getUint16(ofset++)) { /* scan  for NUL */ }
+    return ofset - mark;
+  }
+  // UTF-8 or GBK or Big5
+  let ofset = offset;
+  const mark = offset;
+  while (dv.getUint8(ofset++)) { /* scan for NUL */ }
+  return ofset - mark - 1;
 }
 
 /*
@@ -54,15 +79,16 @@ function decrypt(buf, bkey) {
   let byte;
   const keylen = key.length;
   const len = buf.length;
+  let decbuf = new Uint8Array(len);
   let prev = 0x36;
   for (let i = 0; i < len; i += 1) {
     byte = buf[i];
     byte = ((byte >> 4) | (byte << 4)); // eslint-disable-line no-bitwise
     byte = byte ^ prev ^ (i & 0xFF) ^ key[i % keylen]; // eslint-disable-line no-bitwise
     prev = buf[i];
-    buf[i] = byte; // eslint-disable-line no-param-reassign
+    decbuf[i] = byte; // eslint-disable-line no-param-reassign
   }
-  return buf;
+  return decbuf;
 }
 
 /**
@@ -129,16 +155,13 @@ class Scanner {
     // [keyword_header_decryptor, keyword_index_decryptor],
     // only keyword_index_decryptor is supported
 
-    // Functions:
-    this._searchTextLen = () => {}; // search NUL to get text length
-
     // read a "short" number representing kewword text size,
     // 8-bit for version < 2, 16-bit for version >= 2
-    this._readShort = this.readUint8;
+    this.readShort = this.readUint8;
 
     // Read a number representing offset or data block size,
     // 16-bit for version < 2, 32-bit for version >= 2
-    this._readNum = this.readUInt32; //
+    this.readNum = this.readUInt32; //
 
     // Version >= 2.0 only
     this._checksum_v2 = () => {};
@@ -151,39 +174,17 @@ class Scanner {
    * accroding to the header contents, the dictionary
    * attributes can be determined
    */
-  config() {
+  config(debug) {
     this.attrs.Encoding = this.attrs.Encoding || UTF16;
-    // / searchTextLen need search the 'NUL' character which
-    // determined by current encoding
-    this._searchTextLen = (this.attrs.Encoding === UTF16)
-      // UTF-16
-      ? () => {
-        let ofset = this.offset;
-        const mark = this.offset;
-        while (this.dv.getUint16(ofset++)) { /* scan  for NUL */ }
-        return ofset - mark;
-      }
-      // UTF-8 or GBK or Big5
-      : () => {
-        let ofset = this.offset;
-        const mark = this.offset;
-        while (this.dv.getUint8(ofset++)) { /* scan for NUL */ }
-        return ofset - mark - 1;
-      };
-
     this._decoder = new TextDecoder(this.attrs.Encoding || UTF16);
     this._bpu = this.attrs.Encoding === UTF16 ? 2 : 1;
-
     // Version specification configurations
     if (Number.parseInt(this.attrs.GeneratedByEngineVersion, 10) >= 2.0) {
       this._v2 = true;
       this._tail = this._bpu;
       this._number_format = "uint64";
       this._number_width = 8;
-      this._readNum = () => {
-        this.forward(4);
-        return this.readUInt32();
-      };
+      this.readNum = this.readUInt64;
       this.readShort = this.readUInt16;
     } else {
       this._tail = 0;
@@ -237,7 +238,10 @@ class Scanner {
   readUInt32() {
     return conseq(this.dv.getUint32(this.offset, 0), this.forward(4));
   }
-
+  readUInt64() {
+    this.forward(4);
+    return this.readUInt32();
+  }
   // 16-bit unsigned int
   readUInt16() {
     return conseq(this.dv.getUint16(this.offset, false), this.forward(2));
@@ -277,121 +281,47 @@ class Scanner {
     )), this.forward(length + this._tail));
     return read;
   }
-  readBlock(length, expectedBufSize, decryptor) {
-    // this getUint8 will not go forward
-    // first byte means compress type
-    // compression type, 0 = non, 1 = lzo, 2 = gzip;
-
-    const compType = this.dv.getUint8(this.offset, false);
-
-
-    if (compType === 0) {
-      if (this._v2) {
-        // ENHANCEMENT
-        if (this.attrs.Encrypted === 0x02) {
-          // TODO: decrypted
-          console.log(" TODO: NEED TO DECRYPTED");
-        }
-        // for version >= 2, skip comp_type (4 bytes with tailing \x00) and checksum (4 bytes)
-        // for version >=2 commpressed is important
-        // key_block_info = zlib.decompress(this.slice(this.offset,this.))
-        this.forward(8);
-      }
-      return this;
-    }
-    // skip comp_type (4 bytes with tailing \x00) and checksum (4 bytes)
-    // IMPORTANT, version <2, also needs to forward?
-    this.forward(8);
-    // this.offset += 8;
-    const len = length - 8;
-    let temp = Buffer.from(this.buffer, 0, this.offset - 4, this.offset);
-    if (decryptor) {
-      const passkey = new Uint8Array(8);
-      this.buffer.copy(passkey, 0, this.offset - 4, this.offset);
-      passkey.set([0x95, 0x36, 0x00, 0x00], 4);
-      temp = decryptor(temp, passkey);
-    }
-
-    temp = compType === 2 ? pako.inflate(temp) : lzo.decompress(temp, expectedBufSize, 1308672);
-    this.forward(len);
-    const d = Buffer.from(temp);
-    return new Scanner(d, temp.length);
-  }
   /**
-   * Read data block of keyword index, key block or record content.
-   * These data block are maybe in compressed (gzip or lzo) format,
-   * while keyword index maybe be encrypted.
-   * @see https://github.com/zhansliu/writemdict/blob/master/fileformat.md#compression (with typo mistake)
-   * @param {Number} keyIndexCompLen means buffer length
-   * @param {Number} keyIndexDecompLen if compressed expectedBufSize is the deComp_size
-   * @param {Function} decryptor is a decrypt function
+   * read the definiation block, decompress or decrypt
+   * @param {*} compSize compression size
+   * @param {*} decompSize decompression size
+   * @param {*} decryptor decrypt algoritm
+   * @return {Buffer} decompressed buffer
    */
-  // length       keywordSummary.keyIndexCompLen,
-  // expectedBufSize    keywordSummary.keyIndexDecompLen,
-  // readKeyBlock2(keyIndexCompLen, keyIndexDecompLen, decryptor) {
-  //   // compressed key block info
-  //   let keyBlockInfoCompressed = this.slice(this.offset, keyIndexCompLen);
-  //   const kbcdv = new DataView(keyBlockInfoCompressed);
-  //   const compType2 = kbcdv.getUint8(0);
-  //   let keyBlockInfo = null;
-  //   if (this._v2) {
-  //     // zlib compression
-  //     if (compType2 !== 2) {
-  //       throw new Error("version > 2, not gzip compression");
-  //     }
-  //     console.debug("compress type is gzip");
-  //     if (this.attrs.Encrypted === 0x02) {
-  //       // decrypt
-  //       // const passkey = new Uint8Array(8);
-  //       // this.buffer.copy(passkey, 0, this.offset - 4, this.offset);
-  //       // passkey.set([0x95, 0x36, 0x00, 0x00], 4);
-  //       // temp = decryptor(temp, passkey);
-  //       keyBlockInfoCompressed = decryptor(keyBlockInfoCompressed);
-  //     }
-  //     // decompress
-  //     keyBlockInfo = pako.inflate(keyBlockInfoCompressed.slice(8));
-  //     // adler checksum  Big-Endian
-  //     // TODO: because of pako zlib implements,
-  //     //       we do not have some alder32 checksum
-  //     //       get methods.
-  //     // adler32 = kbcdv.getUint32(4);
-  //     // if (adler32 !== pako.adler32(keyBlockInfo) {
-  //     // throw new Error("key block checksum not correct")
-  //     // }
-  //   } else if (compType2 === 1) {
-  //     console.debug("compress type is lzo");
-  //     keyBlockInfo = lzo.decompress(keyBlockInfoCompressed, keyIndexDecompLen, 1308672);
-  //   } else {
-  //     console.debug("compress type is none");
-  //     keyBlockInfo = keyBlockInfoCompressed;
-  //   }
-  //   /** ***********************************
-  //    * starts to decode the keyBlockInfo *
-  //    ************************************ */
-  //   // new keyBlockInfo data view
-  //   // const kbdv = new DataView(keyBlockInfo);
-  //   const keywordIndex = Array(keywordSummary.numBlocks);
-  //   let offset = 0;
+  readBlock(blockBuf, compSize, decompSize, decryptor) {
+    const dv = new DataView(blockBuf);
+    const start = 0;
+    const end = start + compSize;
+    let block = null;
+    // compression type, 0 = non, 1 = lzo, 2 = gzip;
+    const compType = dv.getUint8(start, false);
+    if (compType === 0) {
+      block = blockBuf.slice(start + 8, end);
+    } else {
+      let blockBufDecrypted = null;
+      if (decryptor) {
+        // TODO: decryption
+        const passkey = new Uint8Array(8);
+        blockBuf.copy(passkey, 0, start + 4, start + 8);
+        passkey.set([0x95, 0x36, 0x00, 0x00], 4); // key part 2: fixed data
+        blockBufDecrypted = decryptor(blockBuf.slice(start + 8, end), passkey);
+      } else {
+        blockBufDecrypted = blockBuf.slice(start + 8, end);
+      }
+      if (compType === 1) {
+        // lzo
+        const header = new ArrayBuffer([0xf0, decompSize]);
+        block = lzo.decompress(_appendBuffer(header, blockBufDecrypted));
+        block = bufferToArrayBuffer(block)
+          .slice(block.byteOffset, block.byteOffset + block.byteLength);
+      } else if (compType === 2) {
+        // gzip
+        block = pako.inflate(blockBufDecrypted);
+      }
+    }
 
-  //   for (let i = 0, size; i < keywordSummary.numBlocks; i++) {
-  //     keywordIndex[i] = {
-  //       num_entries: conseq(blockScanner.readNum()),
-  //       // UNUSED, can be ignored
-  //       first_size: blockScanner.readShort(),
-  //       first_word: conseq(blockScanner.readTextSized(size)),
-  //       // UNUSED, can be ignored
-  //       last_size: blockScanner.readShort(),
-  //       last_word: blockScanner.readTextSized(size),
-  //       comp_size: size = blockScanner.readNum(),
-  //       decomp_size: blockScanner.readNum(),
-  //       // extra fields
-  //       offset, // offset of the first byte for the target key block in mdx/mdd file
-  //       index: i, // index of this key index, used to search previous/next block
-  //     };
-  //     offset += size;
-  //   }
-  //   return new Scanner(keyBlockInfo, this.ext);
-  // }
+    return block;
+  }
 
   /**
    * Read the first 4 bytes of mdx/mdd file to get length of header_str.
@@ -449,15 +379,15 @@ class Scanner {
     const mark = this.offset + ofst; /* header_remain_len */
     // 2504
     this.forward(ofst);
-    // offset = 2504
+    // offset = 834 
     const ret = {
-      numBlocks: this.readNum(),
-      numEntries: this.readNum(),
-      keyIndexDeCompLen: this._v2 && this.readNum(), // Ver >= 2.0 only
-      keyIndexCompLen: this.readNum(),
-      keyBlockLen: this.readNum(),
+      numBlocks: this.readNum(), // 842
+      numEntries: this.readNum(), // 850
+      keyIndexDeCompLen: this._v2 && this.readNum(), // Ver >= 2.0 only // 858
+      keyIndexCompLen: this.readNum(), // 864
+      keyBlockLen: this.readNum(), // 872
       // forward (4)
-      checksum: 0,
+      checksum: this._v2 ? this.forward(4) && 0 : 0,
       len: this.offset - mark,
       // actual length of keyword section, varying with engine version attribute
     };
@@ -481,50 +411,48 @@ class Scanner {
     // compressed key block info
     let keyBlockInfoCompressed = this.slice(this.offset, keywordSummary.keyIndexCompLen);
     const kbcdv = new DataView(keyBlockInfoCompressed);
-    const compType2 = kbcdv.getUint8(0);
+    const compType = kbcdv.getUint8(0);
     let keyBlockInfo = null;
-    if (this._v2) {
-      // zlib compression
-      if (compType2 !== 2) {
-        throw new Error("version > 2, not gzip compression");
+    const start = 0;
+    const end =  keywordSummary.keyIndexCompLen;
+    if (compType === 0) {
+      if (this._v2) {
+        const passkey = keyBlockInfoCompressed.slice(start + 4, start + 8);
+        keyBlockInfo = keyBlockInfoCompressed.slice(start + 8, end);
       }
-      if (this.attrs.Encrypted === 0x02) {
-        // decrypt
-        // const passkey = new Uint8Array(8);
-        // this.buffer.copy(passkey, 0, this.offset - 4, this.offset);
-        // passkey.set([0x95, 0x36, 0x00, 0x00], 4);
-        // temp = decryptor(temp, passkey);
-        keyBlockInfoCompressed = this._decryptor[1](keyBlockInfoCompressed);
-      }
-      // decompress
-      keyBlockInfo = pako.inflate(keyBlockInfoCompressed.slice(8));
-      // adler checksum  Big-Endian
-      // TODO: because of pako zlib implements,
-      //       we do not have some alder32 checksum
-      //       get methods.
-      // adler32 = kbcdv.getUint32(4);
-      // if (adler32 !== pako.adler32(keyBlockInfo) {
-      // throw new Error("key block checksum not correct")
-      // }
-    } else if (compType2 === 1) {
-      keyBlockInfo = lzo.decompress(
-        keyBlockInfoCompressed,
-        keywordSummary.keyIndexDecompLen, 1308672,
-      );
-    } else {
       keyBlockInfo = keyBlockInfoCompressed;
+    } else {
+      const passkey = keyBlockInfoCompressed.slice(start + 4, start + 8);
+      keyBlockInfoCompressed = keyBlockInfoCompressed.slice(start + 8, end);
+      // decrypt
+      if (this.attrs.Encrypted === 2) {
+        // TODO: decrypt
+        // throw new Error("needs to decrypt");
+        // passkey.set([0x95, 0x36, 0x00, 0x00], 4);
+        let passKey = _appendBuffer(passkey,Buffer.from([0x95,0x36,0x00,0x00]));
+        // temp = decryptor(temp, passkey);
+        let keyBlockInfoDecrypted = decrypt(new Uint8Array(keyBlockInfoCompressed), new Uint8Array(passKey));
+        keyBlockInfoCompressed = bufferToArrayBuffer(keyBlockInfoDecrypted);
+      }
+
+      keyBlockInfo = compType === 2
+        ? pako.inflate(keyBlockInfoCompressed)
+        : lzo.decompress(keyBlockInfoCompressed, keywordSummary.keyIndexDecompLen, 1308672);
     }
     /** ***********************************
     * starts to decode the keyBlockInfo
     ************************************ */
     // new keyBlockInfo data view
     // const kbdv = new DataView(keyBlockInfo);
+    if (keyBlockInfo instanceof Uint8Array) {
+      keyBlockInfo = keyBlockInfo.buffer;
+    }
 
     const keyBlockInfoScanner = new Scanner(keyBlockInfo);
     keyBlockInfoScanner.attrs = this.attrs;
     keyBlockInfoScanner._bpu = this._bpu;
     keyBlockInfoScanner._tail = this._tail;
-    keyBlockInfoScanner.config();
+    keyBlockInfoScanner.config("key INDEX");
     // keyBlockInfoScanner.forward(8);
 
     const keywordIndex = Array(keywordSummary.numBlocks);
@@ -539,11 +467,11 @@ class Scanner {
         // TODO: readTextSized will be out of bound
         // UNYSED, can be ignored
         // first_word: conseq(keyBlockInfoScanner.readTextSized(size)),
-        first_word: keyBlockInfoScanner.forward(size),
+        first_word: keyBlockInfoScanner.forward(size + keyBlockInfoScanner._tail),
         // UNUSED, can be ignored
         last_size: size = keyBlockInfoScanner.readShort(),
         // last_word: keyBlockInfoScanner.readTextSized(size),
-        last_word: keyBlockInfoScanner.forward(size),
+        last_word: keyBlockInfoScanner.forward(size + keyBlockInfoScanner._tail),
         comp_size: size = keyBlockInfoScanner.readNum(),
         decomp_size: keyBlockInfoScanner.readNum(),
         // extra fields
@@ -564,10 +492,13 @@ class Scanner {
    */
   readKeyBlock(keyWordIndex, keyBlockBuffer) {
     let i = 0;
-    const keyList = [];
+    let keyList = new Array(0);
     const dataView = new DataView(keyBlockBuffer);
-    for (i = 0; i < keyWordIndex.length; i++) {
-      const keyWordIdx = keyWordIndex[i];
+    for (let j = 0; j < keyWordIndex.length; j++) {
+      // console.log(j, keyWordIndex.length);
+      const keyWordIdx = keyWordIndex[j];
+      // console.log(keyWordIdx);
+      // console.log("Scanner.js:576", "i", i);
       const start = i;
       const end = i + keyWordIdx.comp_size;
       // 4 bytes: compression type
@@ -582,14 +513,25 @@ class Scanner {
         // lzo compression
         const header = new ArrayBuffer([0xf0, keyWordIdx.decomp_size]);
         keyBlock = lzo.decompress(_appendBuffer(header, keyBlockBuffer.slice(start + 8, end)));
+        keyBlock = bufferToArrayBuffer(keyBlock)
+          .slice(keyBlock.byteOffset, keyBlock.byteOffset + keyBlock.byteLength);
       } else if (keyBlockType === 2) {
         keyBlock = pako.inflate(keyBlockBuffer.slice(start + 8, end));
       }
-      keyList.push(this.splitKeyBlock(keyBlock.buffer));
+      if (keyBlock instanceof Uint8Array) {
+        keyBlock = keyBlock.buffer;
+      }
+      const tempKeyList = this.splitKeyBlock(keyBlock);
+      keyList = keyList.concat(tempKeyList);
+      // console.log("Scanner.js:601", "tempKeyList", tempKeyList);
       // checksum pass
       // assert(adler32 == zlib.adler32(key_block) & 0xffffffff);
-      i += keyWordIdx.compressed_size;
+
+      // console.log("Scanner.js:603", "keyWordIdx.compressed_size", keyWordIdx.comp_size);
+      i += keyWordIdx.comp_size;
+      // console.log("Scanner.js:604", "i", i);
     }
+    // console.log("Scanner.js:609", "KeyList", keyList);
     return keyList;
   }
   /**
@@ -607,7 +549,8 @@ class Scanner {
     while (keyStartIndex < keyBlock.byteLength) {
       if (this._v2) {
         // uint64 8bytes
-        keyId = dataView.getUint64(keyStartIndex);
+        keyId = dataView.getUint32(keyStartIndex + 4);
+        // DEBUG(ln(), keyId);
       } else {
         // uint32 4bytes
         keyId = dataView.getUint32(keyStartIndex);
@@ -689,6 +632,21 @@ class Scanner {
     }
     this.recordBlockTable.put(p0, p1);
     return this.recordBlockTable;
+  }
+
+  readDifination(input, blockInfo, keyWordIndexOffset) {
+    const blockBuffer = input
+      .slice(blockInfo.comp_offset, blockInfo.comp_offset + blockInfo.comp_size);
+    let decompressedBuffer = this
+      .readBlock(blockBuffer, blockInfo.comp_size, blockInfo.decomp_size);
+    const searchOffset = keyWordIndexOffset - blockInfo.decomp_offset;
+    if (decompressedBuffer instanceof Uint8Array) {
+      decompressedBuffer = decompressedBuffer.buffer;
+    }
+    const searchDataView = new DataView(decompressedBuffer);
+    const len = searchTextLen(searchDataView, searchOffset, this.attrs.Encoding);
+    return this._decoder
+      .decode(new Uint8Array(decompressedBuffer, searchOffset, len));
   }
 }
 
