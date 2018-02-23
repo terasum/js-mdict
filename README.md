@@ -19,7 +19,9 @@ NOT SUPPORT YET
 ## in Node.js
 
 ```javascript
+import path from "path";
 import Mdict from "js-mdict";
+
 const dictPath = path.join(__dirname, "../resource/Collins.mdx");
 const mdict = new Mdict(dictPath);
 mdict.build().then((_mdict) => {
