@@ -1,6 +1,6 @@
 {
   "name": "js-mdict",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "mdict (*.mdx, *.mdd) file reader, support both of browser and node.js",
   "main": "lib/Mdict.js",
   "scripts": {
