@@ -1,5 +1,5 @@
 # mdict
-mdict (*.mdd *.mdx) file reader based on https://github.com/jeka-kiselyov/mdict, improvement imcludes :
+mdict (*.mdd *.mdx) file reader based on https://github.com/jeka-kiselyov/mdict, improvement includes :
 # VERSION 2.0.0
 improvements:
 1. ES6 implements
