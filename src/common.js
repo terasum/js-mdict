@@ -1,9 +1,36 @@
 
-exports.REGEXP_STRIPKEY = {
+import { TextDecoder } from "text-encoding";
+
+const REGEXP_STRIPKEY = {
   mdx: /[()., '/\\@_-]()/g,
   mdd: /([.][^.]*$)|[()., '/\\@_-]/g, // strip '.' before file extension that is keeping the last period
 };
 
-exports.getExtension = function (filename, defaultExt) {
+const UTF_16LE_DECODER = new TextDecoder("utf-16le");
+const UTF16 = "UTF-16";
+
+
+function newUint8Array(buf, offset, len) {
+  let ret = new Uint8Array(len);
+  ret = Buffer.from(buf, offset, offset + len);
+  return ret;
+}
+
+
+function readUTF16(buf, offset, length) {
+  return UTF_16LE_DECODER.decode(newUint8Array(buf, offset, length));
+}
+
+
+function getExtension(filename, defaultExt) {
   return /(?:\.([^.]+))?$/.exec(filename)[1] || defaultExt;
+}
+
+export default {
+  getExtension,
+  readUTF16,
+  newUint8Array,
+  REGEXP_STRIPKEY,
+  UTF16,
 };
+

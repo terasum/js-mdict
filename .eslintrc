@@ -8,7 +8,8 @@
     "no-underscore-dangle": "off",
     "no-plusplus": "off",
     "prefer-destructuring": "off",
-    "class-methods-use-this": "off"
+    "class-methods-use-this": "off",
+    "camelcase":"off"
 
   }
 }
