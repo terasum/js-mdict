@@ -9,10 +9,7 @@
     "build": "babel src --out-dir lib",
     "eslint": "eslint src"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/terasum/js-mdict.git"
-  },
+  "repository": "git+https://github.com/terasum/js-mdict.git",
   "keywords": [
     "mdict",
     "dictionary",
@@ -30,7 +27,6 @@
   "dependencies": {
     "@babel/plugin-transform-dotall-regex": "^7.0.0-beta.51",
     "@everymundo/linenumber": "^1.0.0",
-    "arraybuffer-to-buffer": "0.0.4",
     "bl": "^2.0.1",
     "blob-to-buffer": "^1.2.6",
     "bluebird": "^3.4.7",
@@ -44,7 +40,6 @@
     "lodash": "^4.17.10",
     "long": "^4.0.0",
     "lzo": "^0.4.3",
-    "mhash": "^2.1.9",
     "pako": "^1.0.6",
     "python-struct": "^1.0.6",
     "read-chunk": "^2.1.0",
