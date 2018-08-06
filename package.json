@@ -1,8 +1,8 @@
 {
   "name": "js-mdict",
-  "version": "2.0.3",
+  "version": "3.0.0",
   "description": "mdict (*.mdx, *.mdd) file reader, support both of browser and node.js",
-  "main": "lib/Mdict.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "npm run build && mocha --require babel-core/register",
     "dev": "babel-node src/test.js",
@@ -45,7 +45,8 @@
     "read-chunk": "^2.1.0",
     "string-to-arraybuffer": "^1.0.0",
     "text-encoding": "^0.6.4",
-    "xmldom": "^0.1.27"
+    "xmldom": "^0.1.27",
+    "js-bktree": "^1.0.0"
   },
   "engines": {
     "node": ">=3.0.0"
