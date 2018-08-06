@@ -1,6 +1,6 @@
 # mdict
 mdict (*.mdd *.mdx) file reader based on https://github.com/jeka-kiselyov/mdict, improvement includes :
-# VERSION 2.0.0
+# VERSION 3.0.0
 improvements:
 1. ES6 implements
 2. rewrite the decode code, more readable decode api
@@ -17,6 +17,21 @@ npm install js-mdict
 NOT SUPPORT YET
 
 ## in Node.js
+
+```javascript
+import Mdict from "../src/index";
+
+const mdict = new Mdict("mdx/oale8.mdx");
+console.log(mdict.lookup("hello"));
+console.log(mdict.prefix("hello"));
+
+```
+
+## Depreciate
+
+if you use js-mdict @2.0.3, you can use api shown below:
+
+Note: 2.0.3 not support mdd file, and record info encrypted file
 
 ```javascript
 import path from "path";

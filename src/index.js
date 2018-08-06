@@ -6,7 +6,9 @@ import BufferList from "bl";
 import pako from "pako";
 import Long from "long";
 import lzo from "lzo";
+import BKTree from "js-bktree";
 import bufferToArrayBuffer from "buffer-to-arraybuffer";
+import dart from "doublearray";
 
 import { TextDecoder } from "text-encoding";
 import { DOMParser } from "xmldom";
@@ -91,13 +93,88 @@ class MDict {
       this._decoder = UTF_16LE_DECODER;
     }
     // console.log("Dictionary version", this._version);
+    // const d1 = new Date().getTime();
     this._key_list = this._read_keys();
+    // const d2 = new Date().getTime();
+    // console.log(d2 - d1);
     this._passcode = _passcode;
+    // const d3 = new Date().getTime();
     this.key_data = this._decode_record_block();
+    // const d4 = new Date().getTime();
+    // console.log(d4 - d3);
+    // for (let i = 0; i < 10; i++) {
+    //   console.log(this.key_data[i].key);
+    // }
+    // console.log(this.key_data
+    // .map(keyword => ({ k: keyword.key, v: keyword })));
+    // TODO: out of memory
+    // this.bktree = new BKTree(this.key_data.length);
+
+    this.trie = dart.builder()
+      .build(this.key_data
+        .map(keyword =>
+          // TODO: here will out of memory
+          // this.bktree.add(keyword.key);
+          // cousole.log(keyword.key)
+          ({ k: keyword.key, v: keyword.idx })));
+    // const d5 = new Date().getTime();
+    // console.log(d5 - d4);
     // console.log(key_data[0]);
   }
 
+  // returns if word exist or not
+  contains(word) {
+    if (!this.trie) {
+      throw new Error("trie not build finished");
+    }
+    return this.trie.contain(word);
+  }
+
+  similar(word, tol) {
+    return this.bktree.simWords(word, tol);
+  }
+
+  // return the word idx
+  _lookup_idx(word) {
+    if (!this.trie) {
+      throw new Error("trie not build finished");
+    }
+    if (!this.contains(word)) {
+      return -1;
+    }
+    return this.trie.lookup(word);
+  }
+  // look up the word definition
   lookup(word) {
+    const idx = this._lookup_idx(word);
+    if (idx === -1) {
+      return "NOTFOUND";
+    }
+    // TODO: get the definition
+    const word_info = this.key_data[idx];
+    if (!word_info || word_info == undefined) {
+      return "NOTFOUND";
+    }
+    let defbuf = this.__readbuffer(word_info.record_comp_start, word_info.record_compressed_size);
+    if (word_info.record_comp_type == "zlib") {
+      defbuf = pako.inflate(defbuf.slice(8, defbuf.length));
+    } else {
+      return "NOTSUPPORTCOMP";
+    }
+    if (this.ext == "mdx") {
+      return this._decoder
+        .decode(defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end));
+    }
+    return defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end);
+  }
+
+  prefix(word) {
+    if (!this.trie) {
+      throw new Error("trie not init");
+    }
+    return this.trie.commonPrefixSearch(word);
+  }
+  lookup2(word) {
     for (let idx = 0; idx < this.key_data.length; idx++) {
       // console.log(this.key_data[idx].key);
       let text_term = 0;
@@ -415,6 +492,7 @@ class MDict {
     let offset = 0;
     let i = 0;
     size_counter = new Long(0, 0);
+    let item_counter = new Long(0, 0);
     let record_offset = 0;
     // throw Error("ffff");
     for (let idx = 0; idx < record_block_info_list.length; idx++) {
@@ -512,10 +590,11 @@ class MDict {
           record_end = record_block.length + offset;
         }
         i += 1;
-        const data = record_block.slice(record_start - offset, record_end - offset);
+        // const data = record_block.slice(record_start - offset, record_end - offset);
         key_data.push({
           key: key_text,
-          data,
+          idx: item_counter.toNumber(),
+          // data,
           encoding: this._encoding,
           // record_start,
           // record_end,
@@ -531,6 +610,7 @@ class MDict {
           relative_record_end: record_end - offset,
         });
         // console.log(key_text, this._decoder.decode(data));
+        item_counter = item_counter.add(1);
       }
       offset += record_block.length;
       size_counter = size_counter.add(compressed_size);
@@ -734,6 +814,11 @@ class MDict {
     const b = readChunk.sync(this.fname, this.offset, length);
     this.offset += length;
     return new BufferList().append(b);
+  }
+
+  __readbuffer(start, length) {
+    const buf = readChunk.sync(this.fname, start, length);
+    return new BufferList(buf);
   }
 
   // skip those bytes, this is for checksum
