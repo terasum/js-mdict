@@ -1,37 +1,49 @@
 # mdict
-mdict (*.mdd *.mdx) file reader based on https://github.com/jeka-kiselyov/mdict, improvement includes :
-# VERSION 3.0.0
-improvements:
+
+mdict (*.mdd *.mdx) file reader based on [jeka-kiselyov/mdict](https://github.com/jeka-kiselyov/mdict) .
+
+Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov](https://github.com/jeka-kiselyov/mdict).
+
+## RELEASE
+
+### Ver. 3.0.0
+
 1. ES6 implements
 2. rewrite the decode code, more readable decode api
 3. *NOT SUPPORT BROWSER CURRENTLY*
 
-VERY THANKS TO [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov](https://github.com/jeka-kiselyov/mdict)
-# usage
+### VERSION 3.1.0
+
+1. add `fuzzy_search` method, which support fuzzy word search
+
+## USAGE
 
 ```bash
 npm install js-mdict
 ```
 
-## in browser:
+### IN BROWSER
+
 NOT SUPPORT YET
 
-## in Node.js
+### IN NODE.JS
 
 ```javascript
-import Mdict from "../src/index";
+import Mdict from "js-mdict";
 
 const mdict = new Mdict("mdx/oale8.mdx");
 console.log(mdict.lookup("hello"));
 console.log(mdict.prefix("hello"));
 
+console.log(mdict.fuzzy_search("word", 5 /* edit_distance */));
+
 ```
 
-## Depreciate
+## NOTE
 
-if you use js-mdict @2.0.3, you can use api shown below:
+**Depreciate** if you use js-mdict @2.0.3, you can use api shown below:
 
-Note: 2.0.3 not support mdd file, and record info encrypted file
+> Note: 2.0.3 not support mdd file, and record info encrypted file
 
 ```javascript
 import path from "path";
