@@ -6,7 +6,6 @@ import BufferList from "bl";
 import pako from "pako";
 import Long from "long";
 import lzo from "lzo";
-import BKTree from "js-bktree";
 import bufferToArrayBuffer from "buffer-to-arraybuffer";
 import dart from "doublearray";
 
@@ -34,6 +33,10 @@ const GB18030 = "GB18030";
 //        TOOL METHODS
 //-----------------------------
 
+/**
+ * parse mdd/mdx header section
+ * @param {string} header_text
+ */
 function parseHeader(header_text) {
   const doc = new DOMParser().parseFromString(header_text, "text/xml");
   const header_attr = {};
@@ -64,6 +67,9 @@ function _appendBuffer(buffer1, buffer2) {
   return tmp.buffer;
 }
 
+/**
+ * judge num equal or not
+ */
 function _numEqual(num1, num2) {
   let a;
   let b;
@@ -113,7 +119,7 @@ class MDict {
     this.trie = dart.builder()
       .build(this.key_data
         .map(keyword =>
-          // TODO: here will out of memory
+          // TODO: bktree here will out of memory
           // this.bktree.add(keyword.key);
           // cousole.log(keyword.key)
           ({ k: keyword.key, v: keyword.idx })));
@@ -150,22 +156,7 @@ class MDict {
     if (idx === -1) {
       return "NOTFOUND";
     }
-    // TODO: get the definition
-    const word_info = this.key_data[idx];
-    if (!word_info || word_info == undefined) {
-      return "NOTFOUND";
-    }
-    let defbuf = this.__readbuffer(word_info.record_comp_start, word_info.record_compressed_size);
-    if (word_info.record_comp_type == "zlib") {
-      defbuf = pako.inflate(defbuf.slice(8, defbuf.length));
-    } else {
-      return "NOTSUPPORTCOMP";
-    }
-    if (this.ext == "mdx") {
-      return this._decoder
-        .decode(defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end));
-    }
-    return defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end);
+    return this.parse_defination(idx);
   }
 
   prefix(word) {
@@ -174,35 +165,105 @@ class MDict {
     }
     return this.trie.commonPrefixSearch(word);
   }
-  lookup2(word) {
-    for (let idx = 0; idx < this.key_data.length; idx++) {
-      // console.log(this.key_data[idx].key);
-      let text_term = 0;
-      let term_size = 0;
-      if (this._version >= 2.0) {
-        text_term = 1;
-      } else {
-        text_term = 0;
-      }
-      if (this._encoding === UTF16) {
-        term_size = text_term * 2;
-      } else {
-        term_size = text_term;
-      }
 
-      if (this.key_data[idx].key === word) {
-        if (this.ext === "mdx") {
-          const data = this.key_data[idx].data;
-          const word_data = data.slice(0, data.length - term_size);
-          console.log(data);
-          console.log(word_data);
-          console.log(term_size);
-          console.log(this._decoder.decode(word_data));
-        } else {
-          console.log(this.key_data[idx]);
-        }
+  /**
+   * fuzzy_search
+   * find latest `fuzzy_size` words, and filter by lavenshtein_distance
+   * return wordlist struct:
+   * [
+   * {
+   * ed: Number  // word edit distance
+   * idx: Number // word dict idx
+   * key: string // word key string
+   * }
+   * ]
+   */
+  fuzzy_search(word, fuzzy_size, ed_gap) {
+    const fuzzy_words = [];
+    this.prefix(word)
+      .map(item => this._find_nabor(item.v, fuzzy_size)
+        .map((w) => {
+          const ed = common.levenshtein_distance(word, w.key);
+          if (ed < (ed_gap || 5)) {
+            fuzzy_words.push({
+              ed,
+              idx: w.idx,
+              key: w.key,
+            });
+          }
+          return null;
+        }));
+    return fuzzy_words;
+  }
+
+  _find_nabor(sim_idx, fuzzy_size) {
+    const set_size = this.key_data.length;
+    const sim_idx_start = sim_idx - fuzzy_size < 0
+      ? 0
+      : sim_idx - fuzzy_size;
+    const sim_idx_end = sim_idx + fuzzy_size > set_size
+      ? set_size
+      : sim_idx + fuzzy_size;
+
+    const nabor_words = [];
+
+    for (let i = sim_idx_start; i < sim_idx_end; i++) {
+      nabor_words.push({
+        idx: i,
+        key: this.key_data[i].key,
+      });
+    }
+    return nabor_words;
+  }
+
+  _bsearch_sim_idx(word) {
+    let lo = 0;
+    let hi = this.key_data.length - 1;
+    let mid = 0;
+    // find last equal or less than key word
+    while (lo <= hi) {
+      mid = lo + ((hi - lo) >> 1);
+      if (this.key_data[mid].key.localeCompare(word) > 0 /* word > key */) { hi = mid - 1; } else {
+        lo = mid + 1;
       }
     }
+    return hi;
+  }
+
+  bsearch(word) {
+    let lo = 0;
+    let hi = this.key_data.length - 1;
+    let mid = 0;
+    while (lo <= hi) {
+      mid = lo + ((hi - lo) >> 1);
+      if (this.key_data[mid].key.localeCompare(word) > 0 /* word > key */) { hi = mid - 1; }
+      if (this.key_data[mid].key.localeCompare(word) < 0 /* word < key */) { lo = mid + 1; }
+      if (this.key_data[mid].key.localeCompare(word) == 0) { break; }
+    }
+    if (lo > hi) {
+      // not found
+      console.log("not found!");
+      return undefined;
+    }
+
+    return this.parse_defination(mid);
+  }
+  parse_defination(idx) {
+    const word_info = this.key_data[idx];
+    if (!word_info || word_info == undefined) {
+      return "NOTFOUND";
+    }
+    let defbuf = this.__readbuffer(word_info.record_comp_start, word_info.record_compressed_size);
+    if (word_info.record_comp_type == "zlib") {
+      defbuf = pako.inflate(defbuf.slice(8, defbuf.length));
+    } else {
+      return "NOT_SUPPORT_COMPRESS_TYPE";
+    }
+    if (this.ext == "mdx") {
+      return this._decoder
+        .decode(defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end));
+    }
+    return defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end);
   }
 
   /*

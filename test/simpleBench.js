@@ -1,12 +1,23 @@
-import Mdict from "../src/index";
+import Mdict from "../src";
 
 // const mdict = new Mdict2("mdx/ETDict.mdx");
 const mdict = new Mdict("mdx/oale8.mdx");
-console.log(mdict.lookup("hello"));
 
-console.log(mdict.lookup("world"));
+const t1 = new Date().getMilliseconds();
+for (let i = 0; i < 100; i++) {
+  mdict.lookup("incited");
+}
+const t2 = new Date().getMilliseconds();
+console.log(`${(t2 - t1) / 100}ms/op`);
 
-console.log(mdict.lookup("yes"));
+
+const t3 = new Date().getMilliseconds();
+for (let i = 0; i < 100; i++) {
+  mdict.bsearch("incited");
+}
+const t4 = new Date().getMilliseconds();
+console.log(`${(t4 - t3) / 100}ms/op`);
+
 
 // console.log(mdict.prefix("hello"));
 // console.log(mdict.lookup("//uk/hello__gb_1.mp3"));
@@ -21,4 +32,3 @@ console.log(mdict.lookup("yes"));
 
 // const d2 = new Date().getTime();
 // console.log("time", d2 - d1);
-
