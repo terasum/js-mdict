@@ -64,3 +64,5 @@ mdict.build().then((_mdict) => {
   console.log( _mdict.attr());
 }).catch((err) => { console.error(err); });
 ```
+
+code by terasum with ❤️
