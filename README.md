@@ -1,4 +1,11 @@
-# mdict
+# js-mdict
+
+[![npm version](https://badge.fury.io/js/js-mdict.svg)](https://badge.fury.io/js/js-mdict)
+[![GitHub issues](https://img.shields.io/github/issues/terasum/js-mdict.svg)](https://github.com/terasum/js-mdict/issues)
+[![GitHub forks](https://img.shields.io/github/forks/terasum/js-mdict.svg)](https://github.com/terasum/js-mdict/network)
+[![GitHub stars](https://img.shields.io/github/stars/terasum/js-mdict.svg)](https://github.com/terasum/js-mdict/stargazers)
+[![GitHub license](https://img.shields.io/github/license/terasum/js-mdict.svg)](https://github.com/terasum/js-mdict/blob/develop/LICENSE)
+
 
 mdict (*.mdd *.mdx) file reader based on [jeka-kiselyov/mdict](https://github.com/jeka-kiselyov/mdict) .
 
@@ -12,7 +19,7 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov]
 2. rewrite the decode code, more readable decode api
 3. *NOT SUPPORT BROWSER CURRENTLY*
 
-### VERSION 3.1.0
+### Ver 3.1.0 (2018-08-22)
 
 1. add `fuzzy_search` method, which support fuzzy word search
 
