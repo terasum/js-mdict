@@ -1,0 +1,120 @@
+body
+{font-family: Helvetica, Arial, sans-serif;margin-top: 2px !important;margin-right: 2px !important;margin-bottom: 2px !important;margin-left: 4px !important;}
+
+html,body,div,dd,.list,.hw,.cf,.num,.dt1,.num1,.gram,.pron,.synt
+{
+-webkit-margin-before: 0em;
+-webkit-margin-after: 0em;
+-webkit-margin-start: 0px;
+-webkit-margin-end: 0px;}
+
+.hw {
+    font-weight:bold;
+    font-size:125%;
+    padding-right:15px;}
+
+.pron {padding-right:5px;}
+
+.etym {display:block;margin-left:2em; color:steelblue;}
+
+.num {
+    font-weight:bold;
+margin-right: 5px;
+padding:2px 2px 2px 2px;
+border-radius:10px;}
+
+.num1 {
+    font-weight:bold;
+    color:darkred;
+    padding-right:5px;
+    }
+.gram {
+    display: table-cell;
+    margin: 0px auto 0px auto;
+    color: #8f0610 !important;
+    text-transform: uppercase;
+    padding: 6px 3px 6px 3px;
+    font-weight: bold;
+    font-size: 95%;}
+
+dt {
+    display:block;
+PADDING-TOP: 2px;}
+
+.dt1 {display:block;}
+
+dd {
+    display:block;
+    color: darkcyan;
+    margin-left: unset;
+    padding-bottom: 2px;
+    -webkit-margin-start: unset !important;
+    padding-left: 8px;
+    }
+    
+dd strong {
+    display: block;
+-webkit-margin-before: 0em;
+-webkit-margin-after: 0em;
+-webkit-margin-start: 0px;
+-webkit-margin-end: 0px;
+
+    }
+
+.gram-n {display: none;}
+
+.cf {
+    display:block;padding-left: 6px;
+font-weight:bold;
+text-transform: lowercase;
+padding-bottom: 2px;}
+
+
+#box /* rounded box */
+{
+display: block;
+margin: 10px 24px;
+padding: 5px 10px;
+border: 1px solid green;
+border-radius: 5px;
+}
+
+.synt 
+{
+    display: table-cell; /* keep the background color wrapped tight */
+    margin: 0px auto 0px auto; /* keep the block centered */
+    position: relative;
+    bottom: 16px;
+    background-color: #009A31;
+    color: white;
+    font-weight: bold;
+    text-transform:uppercase;
+    padding: 1px 3px;
+    border-radius: 5px;
+    font-size: 95%;
+}
+
+s-b {color:silver;font-size:xx-small;}
+.list {font-weight:bold;display: block;padding-top: 3px;}
+
+#box > .list {
+    display:block;
+    padding-right:10px;
+    font-weight:normal;
+    margin-top:-10px;
+    margin-bottom:10px;}
+
+
+span.xiugaide {
+    color: #8f0610 !important;
+    font-size: 95%;
+    font-weight: bold;
+}
+
+
+
+.c-exa {
+    color: #757575;
+    clear: both;
+    display: block;     /*****需要翻译单独一行去挑前面的/*和*/----*/
+}
