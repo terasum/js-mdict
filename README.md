@@ -42,7 +42,7 @@ const mdict = new Mdict("mdx/oale8.mdx");
 console.log(mdict.lookup("hello"));
 console.log(mdict.prefix("hello"));
 
-console.log(mdict.fuzzy_search("word", 5 /* edit_distance */));
+console.log(mdict.fuzzy_search("word", 5, /* fuzzy words size */ 5, /* edit_distance */));
 
 ```
 
