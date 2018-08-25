@@ -42,7 +42,24 @@ const mdict = new Mdict("mdx/oale8.mdx");
 console.log(mdict.lookup("hello"));
 console.log(mdict.prefix("hello"));
 
-console.log(mdict.fuzzy_search("word", 5, /* fuzzy words size */ 5, /* edit_distance */));
+// get fuzzy words
+fuzzy_words = mdict.fuzzy_search("wrapper", 5, /* fuzzy words size */ 5, /* edit_distance */);
+
+/*
+example output:
+[ { ed: 0, idx: 108605, key: 'wrapper' },
+  { ed: 1, idx: 108603, key: 'wrapped' },
+  { ed: 1, idx: 108606, key: 'wrappers' },
+  { ed: 3, idx: 108593, key: 'wrangler' },
+  { ed: 3, idx: 108598, key: 'wrap' },
+  { ed: 3, idx: 108607, key: 'wrapping' },
+  { ed: 4, idx: 108594, key: 'wranglers' },
+  { ed: 4, idx: 108595, key: 'wrangles' },
+  { ed: 4, idx: 108609, key: 'wrappings' } ]
+*/
+// get difination
+console.log(mdict.parse_defination(fuzzy_words[0].idx));
+
 
 ```
 
