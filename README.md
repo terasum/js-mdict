@@ -50,7 +50,7 @@ console.log(mdict.fuzzy_search("word", 5, /* fuzzy words size */ 5, /* edit_dist
 
 **Depreciate** if you use js-mdict @2.0.3, you can use api shown below:
 
-> Note: 2.0.3 not support mdd file, and record info encrypted file
+> Note: 2.0.3 not supports mdd file, and record info encrypted file
 
 ```javascript
 import path from "path";
