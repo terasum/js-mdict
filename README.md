@@ -15,13 +15,13 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov]
 
 ### Ver. 3.0.0
 
-1. ES6 implements
+1. ES6 implemention
 2. rewrite the decode code, more readable decode api
 3. *NOT SUPPORT BROWSER CURRENTLY*
 
 ### Ver 3.1.0 (2018-08-22)
 
-1. add `fuzzy_search` method, which support fuzzy word search
+1. add `fuzzy_search` method, which supports fuzzy word search
 
 ## USAGE
 
