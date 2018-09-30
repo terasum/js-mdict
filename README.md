@@ -59,7 +59,7 @@ console.log(mdict.parse_defination(fuzzy_words[0].idx));
 
 ```
 
-### Benchmark
+## Benchmark
 
 ```
 Mdict#lookup x 1,786 ops/sec ±12.35% (67 runs sampled)
