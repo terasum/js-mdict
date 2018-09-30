@@ -11,7 +11,7 @@ mdict (*.mdd *.mdx) file reader based on [jeka-kiselyov/mdict](https://github.co
 
 Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov](https://github.com/jeka-kiselyov/mdict).
 
-## RELEASE
+## Release
 
 ### Ver. 3.0.0
 
@@ -23,17 +23,13 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov]
 
 1. add `fuzzy_search` method, which supports fuzzy word search
 
-## USAGE
+## Usage
+
+> not support browser yet
 
 ```bash
 npm install js-mdict
 ```
-
-### IN BROWSER
-
-NOT SUPPORT YET
-
-### IN NODE.JS
 
 ```javascript
 import Mdict from "js-mdict";
@@ -63,7 +59,7 @@ console.log(mdict.parse_defination(fuzzy_words[0].idx));
 
 ```
 
-### BENCHMARK
+### Benchmark
 
 ```
 Mdict#lookup x 1,786 ops/sec ±12.35% (67 runs sampled)
@@ -73,9 +69,9 @@ Mdict#prefix x 336,520 ops/sec ±19.50% (64 runs sampled)
 Fastest is Mdict#prefix
 ```
 
-## NOTE
+## Note
 
-**Depreciate** if you use js-mdict @2.0.3, you can use api shown below:
+**depreciate** if you use js-mdict @2.0.3, you can use api shown below:
 
 > Note: 2.0.3 not supports mdd file, and record info encrypted file
 
