@@ -63,6 +63,16 @@ console.log(mdict.parse_defination(fuzzy_words[0].idx));
 
 ```
 
+### BENCHMARK
+
+```
+Mdict#lookup x 1,786 ops/sec ±12.35% (67 runs sampled)
+Mdict#bsearch x 1,710 ops/sec ±11.88% (65 runs sampled)
+Mdict#fuzzySearch x 21,121 ops/sec ±5.94% (76 runs sampled)
+Mdict#prefix x 336,520 ops/sec ±19.50% (64 runs sampled)
+Fastest is Mdict#prefix
+```
+
 ## NOTE
 
 **Depreciate** if you use js-mdict @2.0.3, you can use api shown below:
