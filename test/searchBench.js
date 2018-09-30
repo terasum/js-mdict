@@ -25,7 +25,7 @@ suite
     // eslint-disable-next-line no-console
     console.log(String(event.target));
   })
-  .on("complete", () => {
+  .on("complete", function cb() {
     // eslint-disable-next-line no-console
     console.log(`Fastest is ${this.filter("fastest").map("name")}`);
   })
