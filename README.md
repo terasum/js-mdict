@@ -57,7 +57,7 @@ example output:
   { ed: 4, idx: 108595, key: 'wrangles' },
   { ed: 4, idx: 108609, key: 'wrappings' } ]
 */
-// get difination
+// get definition
 console.log(mdict.parse_defination(fuzzy_words[0].idx));
 
 
