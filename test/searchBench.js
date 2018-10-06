@@ -5,7 +5,12 @@ import Mdict from "../src";
 const suite = new Benchmark.Suite();
 
 // loading dictionary
+const startTime = new Date().getSeconds();
 const mdict = new Mdict("mdx/oale8.mdx");
+const endTime = new Date().getSeconds();
+console.log(`Mdict#loading time: ${(endTime - startTime)} sec`);
+
+
 // add tests
 suite
   .add("Mdict#lookup", () => {
