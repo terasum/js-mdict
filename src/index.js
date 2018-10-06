@@ -1,11 +1,9 @@
 import struct from "python-struct";
 import readChunk from "read-chunk";
 import assert from "assert";
-// import dart from "doublearray";
 import BufferList from "bl";
 import pako from "pako";
 import Long from "long";
-// import lzo from "lzo";
 import bufferToArrayBuffer from "buffer-to-arraybuffer";
 import dart from "doublearray";
 
