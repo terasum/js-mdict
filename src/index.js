@@ -5,7 +5,7 @@ import assert from "assert";
 import BufferList from "bl";
 import pako from "pako";
 import Long from "long";
-import lzo from "lzo";
+// import lzo from "lzo";
 import bufferToArrayBuffer from "buffer-to-arraybuffer";
 import dart from "doublearray";
 
@@ -15,6 +15,10 @@ import { DOMParser } from "xmldom";
 import common from "./common";
 import lzo1x from "./lzo-wrapper";
 import ripemd128 from "./ripemd128";
+
+// 开启多线程能力
+// const cluster = require("cluster");
+// const numCPUs = require("os").cpus().length;
 
 const UTF_16LE_DECODER = new TextDecoder("utf-16le");
 const UTF16 = "UTF-16";
@@ -99,15 +103,15 @@ class MDict {
       this._decoder = UTF_16LE_DECODER;
     }
     // console.log("Dictionary version", this._version);
-    // const d1 = new Date().getTime();
+    const d1 = new Date().getTime();
     this._key_list = this._read_keys();
-    // const d2 = new Date().getTime();
-    // console.log(d2 - d1);
+    const d2 = new Date().getTime();
+    console.log(`read key used: ${(d2 - d1) / 1000.0} s`);
     this._passcode = _passcode;
-    // const d3 = new Date().getTime();
+    const d3 = new Date().getTime();
     this.key_data = this._decode_record_block();
-    // const d4 = new Date().getTime();
-    // console.log(d4 - d3);
+    const d4 = new Date().getTime();
+    console.log(`decod record used: ${(d4 - d3) / 1000.0}`);
     // for (let i = 0; i < 10; i++) {
     //   console.log(this.key_data[i].key);
     // }
@@ -115,7 +119,6 @@ class MDict {
     // .map(keyword => ({ k: keyword.key, v: keyword })));
     // TODO: out of memory
     // this.bktree = new BKTree(this.key_data.length);
-
     this.trie = dart.builder()
       .build(this.key_data
         .map(keyword =>
@@ -123,8 +126,8 @@ class MDict {
           // this.bktree.add(keyword.key);
           // cousole.log(keyword.key)
           ({ k: keyword.key, v: keyword.idx })));
-    // const d5 = new Date().getTime();
-    // console.log(d5 - d4);
+    const d5 = new Date().getTime();
+    console.log(`dart build used: ${(d5 - d4) / 1000.0} s`);
     // console.log(key_data[0]);
   }
 
@@ -438,8 +441,7 @@ class MDict {
     const key_block_info_list =
     this._decode_key_block_info(num_key_blocks, key_block_info, num_entries);
     // assert(num_key_blocks == len(key_block_info_list))
-    // console.log("num_key_blocks", num_key_blocks);
-    // console.log("key_block_info_list", key_block_info_list.length);
+
     assert(this.__toNumber(num_key_blocks) === key_block_info_list.length, "the num_key_info_list should equals to key_block_info_list");
 
     // key_block_compress part
@@ -460,10 +462,14 @@ class MDict {
     return key_list;
   }
 
+  // TODO 修改为多线程版本
   _decode_key_block(key_block_compressed, key_block_info_list) {
     // console.log(this._encoding);
     let key_list = [];
     let i = 0;
+
+    // harvest keyblocks
+    const keyBlocks = [];
     for (let idx = 0; idx < key_block_info_list.length; idx++) {
       // console.log(" aaa", key_block_info_list[idx], idx);
 
@@ -485,8 +491,11 @@ class MDict {
         //     break
         // # decompress key block
         const header = new ArrayBuffer([0xf0, decompressed_size]);
-        const keyBlock =
-          lzo.decompress(_appendBuffer(header, key_block_compressed.slice(start + 8, end)));
+        const keyBlock = lzo1x.decompress(
+          _appendBuffer(header, key_block_compressed.slice(start + 8, end)),
+          decompressed_size, 1308672,
+        );
+        // lzo.decompress(_appendBuffer(header, key_block_compressed.slice(start + 8, end)));
         key_block = bufferToArrayBuffer(keyBlock)
           .slice(keyBlock.byteOffset, keyBlock.byteOffset + keyBlock.byteLength);
         // throw Error("lzo compress is not support yet");
@@ -500,12 +509,42 @@ class MDict {
         console.log(key_block_type.toString("hex"));
         throw Error("cannot determine the compress type");
       }
-      key_list = key_list.concat(this._split_key_block(
+
+      const splitedKey = this._split_key_block(
         new BufferList(key_block),
         this._number_format, this._number_width, this._encoding,
-      ));
+      );
+      key_list = key_list.concat(splitedKey);
+      // append to a list
+      // TODO
+      keyBlocks.push(key_block);
       i += compressed_size;
     }
+    // const dkbd04 = new Date().getTime();
+
+    // seprate the decompress and decode
+    // TODO promise all
+    // const splitedKey = this._split_key_block(
+    //   new BufferList(key_block),
+    //   this._number_format, this._number_width, this._encoding,
+    // );
+    // TODO 这里修改为多线程版本
+    // const promises = keyBlocks.map(async (key_block) => {
+    //   const splitkeys = await
+    // });
+    // this._split_key_block_helper(keyBlocks, keyBlocks.length);
+
+    // key_list = key_list.concat(splitedKey);
+
+    // const dkbd05 = new Date().getTime();
+    // console.log(`readKey#decodeKeyBlock#readOnce#loop#splitKey
+    // used ${(dkbd05 - dkbd04) / 1000.0}s`);
+    // key_list = key_list.concat(splitedKey);
+
+
+    // const dkbd2 = new Date().getTime();
+    // console.log(`readKey#decodeKeyBlock#readOnce used ${(dkbd2 - dkbd1) / 1000.0}s`);
+    console.log(key_list.length);
     return key_list;
   }
 
@@ -683,11 +722,13 @@ class MDict {
     return key_data;
   }
 
+  // Note: for performance, this function will wrappered by
+  // a generator function, so this should return a Promise object
   _split_key_block(key_block, _number_format, _number_width, _encoding) {
     const key_list = [];
     let key_start_index = 0;
     let key_end_index = 0;
-    // console.log(key_block.length, key_block);
+
     while (key_start_index < key_block.length) {
       // const temp = key_block.slice(key_start_index, key_start_index + _number_width);
       // # the corresponding record's offset in record block
@@ -714,7 +755,7 @@ class MDict {
         i += width;
       }
       const key_text =
-      this._decoder.decode(key_block.slice(key_start_index + _number_width, key_end_index));
+    this._decoder.decode(key_block.slice(key_start_index + _number_width, key_end_index));
 
       key_start_index = key_end_index + width;
       key_list.push([key_id, key_text]);
