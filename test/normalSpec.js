@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import Mdict from "../src";
+import Mdict from "../src/MdictBase";
 
 
 const mdict = new Mdict("mdx/oale8.mdx");
