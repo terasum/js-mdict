@@ -3,6 +3,14 @@ import pako from "pako";
 import MdictBase from "./MdictBase";
 import common from "./common";
 
+/**
+ * Test if a value of dictionary attribute is true or not.
+ * ref: https://github.com/fengdh/mdict-js/blob/efc3fa368edd6e57de229375e2b73bbfe189e6ee/mdict-parser.js:235
+ */
+function isTrue(v) {
+  v = (v).toLowerCase();
+  return v === "yes" || v === "true";
+}
 class Mdict extends MdictBase {
 //   constructor(fname, passcode) {
 //       super(fname, passcode);
@@ -22,27 +30,42 @@ class Mdict extends MdictBase {
 //     // console.log(`dart build used: ${(d5 - d4) / 1000.0} s`);
 //     // console.log(key_data[0]);
 //   }
+  _stripKey() {
+    const regexp = common.REGEXP_STRIPKEY[this.ext];
+    if (isTrue(this.header.KeyCaseSensitive)) {
+      return isTrue(this.header.StripKey)
+        ? function _s(key) { return key.replace(regexp, "$1"); }
+        : function _s(key) { return key; };
+    }
+    return isTrue(this.header.StripKey || (this._version >= 2.0 ? "" : "yes"))
+      ? function _s(key) { return key.toLowerCase().replace(regexp, "$1"); }
+      : function _s(key) { return key.toLowerCase(); };
+  }
+
 
   lookup(word) {
-    function stripFunc(phrase) {
-      return phrase;
-    }
-    const kbid = this._reduceWordKeyBlock(word, stripFunc);
+    const sfunc = this._stripKey();
+    const kbid = this._reduceWordKeyBlock(word, sfunc);
     const list = this._decodeKeyBlockByKBID(kbid);
-    const i = this._binarySearh(list, word, stripFunc);
+    const i = this._binarySearh(list, word, sfunc);
     const rid = this._reduceRecordBlock(list[i].recordStartOffset);
+    const nextStart = i + 1 >= list.length
+      ? this._recordBlockStartOffset +
+      this.recordBlockInfoList[this.recordBlockInfoList.length - 1].keyBlockDecompAccumulator +
+      this.recordBlockInfoList[this.recordBlockInfoList.length - 1].keyBlockDecompSize
+      : list[i + 1].recordStartOffset;
     const data = this._decodeRecordBlockByRBID(
       rid,
       list[i].keyText,
       list[i].recordStartOffset,
-      list[i + 1].recordStartOffset,
+      nextStart,
     );
     return data;
   }
   _binarySearh(list, word, _s) {
     if (!_s || _s == undefined) {
       // eslint-disable-next-line
-      _s = (word) => { return word; };
+      _s = this._stripKey();
     }
     let left = 0;
     let right = list.length;
