@@ -77,4 +77,21 @@ describe("common", () => {
       expect(e.toString()).to.be.equal("Error: uint64 larger than 2^53, JS may lost accuracy");
     }
   });
+  it("readNumber uint16 (17)", () => {
+    const bytes = new Uint8Array([0x00, 0x20]);
+    expect(common.readNumber(bytes, common.NUMFMT_UINT16)).to.equal(0x20);
+  });
+  it("readNumber uint16 (18)", () => {
+    const bytes = new Uint8Array([0x20, 0x20]);
+    expect(common.readNumber(bytes, common.NUMFMT_UINT16)).to.equal(0x2020);
+  });
+
+  it("readNumber uint8 (19)", () => {
+    const bytes = new Uint8Array([0x1a]);
+    expect(common.readNumber(bytes, common.NUMFMT_UINT8)).to.equal(0x1a);
+  });
+  it("readNumber uint8 (20)", () => {
+    const bytes = new Uint8Array([0x20]);
+    expect(common.readNumber(bytes, common.NUMFMT_UINT8)).to.equal(0x20);
+  });
 });
