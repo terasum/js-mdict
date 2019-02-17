@@ -71,9 +71,9 @@ function _numEqual(num1, num2) {
  */
 class MDict {
   /**
-   * 
-   * @param {string} fname 
-   * @param {string} passcode 
+   *
+   * @param {string} fname
+   * @param {string} passcode
    */
   constructor(fname, passcode) {
     // the mdict file name
@@ -81,7 +81,7 @@ class MDict {
     // the dictionary file decrypt pass code
     this._passcode = passcode;
     // the mdict file read offset
-    this._offset = 0
+    this._offset = 0;
     // the dictionary file extension
     this.ext = common.getExtension(fname, "mdx");
     // determine the encoding and decoder, if extension is *.mdd
@@ -106,14 +106,22 @@ class MDict {
     this.keyHeader = {
       keyBlocksNum: 0,
       entriesNum: 0,
-
+      keyBlockInfoDecompSize: 0,
+      keyBlockInfoCompSize: 0,
+      keyBlocksTotalSize: 0,
     };
+    // read key header
+    this._readKeyHeader();
 
     // -------------------------
     // dict key info section
     // --------------------------
-    this._keyInfoStartOffset = 0;
-    this._keyInfoEndOffset = 0;
+    this._keyBlockInfoStartOffset = 0;
+    this._keyBlockInfoEndOffset = 0;
+    // key block info list
+    this.keyBlockInfoList = [];
+    // this._readKeyBlockInfo();
+    console.log(this.keyBlockInfoList);
 
 
     // -------------------------
@@ -127,25 +135,25 @@ class MDict {
     // --------------------------
     this._recordHeaderStartOffset = 0;
     this._recordHeaderEndOffset = 0;
-    
+
     // -------------------------
     // dict record info section
     // --------------------------
     this._recordInfoStartOffset = 0;
     this._recordInfoEndOffset = 0;
 
+
     // -------------------------
     // dict record block section
     // --------------------------
     this._recordBlockStartOffset = 0;
-    this._record_block_end_offset = 0;
+    this._recordBlockEndOffset = 0;
 
-    
 
-    const d1 = new Date().getTime();
-    this._key_list = this._read_keys();
-    const d2 = new Date().getTime();
-    console.log(`read key used: ${(d2 - d1) / 1000.0} s`);
+    // const d1 = new Date().getTime();
+    // this._key_list = this._readKeyBlockInfo();
+    // const d2 = new Date().getTime();
+    // console.log(`read key used: ${(d2 - d1) / 1000.0} s`);
 
     // const d3 = new Date().getTime();
     // this.key_data = this._decode_record_block();
@@ -334,7 +342,7 @@ class MDict {
     // assert(header_b_cksum), "header_bytes checksum failed");
 
     // 4 bytes header size + header_bytes_size + 4bytes alder checksum
-    this._headerEndOffset = header_byte_size + 4 + 4
+    this._headerEndOffset = header_byte_size + 4 + 4;
 
     this._keyHeaderStartOffset = header_byte_size + 4 + 4;
 
@@ -345,18 +353,18 @@ class MDict {
     const header_text = common.readUTF16(header_b_buffer, 0, header_byte_size - 2);
 
     // parse header info
-    this.header_info = common.parseHeader(header_text);
+    this.headerInfo = common.parseHeader(header_text);
 
     // encrypted flag
     // 0x00 - no encryption
     // 0x01 - encrypt record block
     // 0x02 - encrypt key info block
-    if (!this.header_info.Encrypted || this.header_info.Encrypted == "" || this.header_info.Encrypted == "No") {
+    if (!this.headerInfo.Encrypted || this.headerInfo.Encrypted == "" || this.headerInfo.Encrypted == "No") {
       this._encrypt = 0;
-    } else if (this.header_info.Encrypted == "Yes") {
+    } else if (this.headerInfo.Encrypted == "Yes") {
       this._encrypt = 1;
     } else {
-      this._encrypt = parseInt(this.header_info.Encrypted, 10);
+      this._encrypt = parseInt(this.headerInfo.Encrypted, 10);
     }
 
 
@@ -374,28 +382,28 @@ class MDict {
 
     // before version 2.0, number is 4 bytes integer alias, int32
     // version 2.0 and above use 8 bytes, alias int64
-    this._version = parseFloat(this.header_info.GeneratedByEngineVersion);
+    this._version = parseFloat(this.headerInfo.GeneratedByEngineVersion);
     if (this._version >= 2.0) {
-      this._number_width = 8;
+      this._numberWidth = 8;
       this._number_format = ">Q";
     } else {
       this._number_format = ">I";
-      this._number_width = 4;
+      this._numberWidth = 4;
     }
-    console.log(this.header_info);
-    if (!this.header_info.Encoding || this.header_info.Encoding == "") {
+    console.log(this.headerInfo);
+    if (!this.headerInfo.Encoding || this.headerInfo.Encoding == "") {
       this._encoding = UTF8;
       this._decoder = UTF_8_DECODER;
-    } else if (this.header_info.Encoding == "GBK" || this.header_info.Encoding == "GB2312") {
+    } else if (this.headerInfo.Encoding == "GBK" || this.headerInfo.Encoding == "GB2312") {
       this._encoding = GB18030;
       this._decoder = GB18030_DECODER;
-    } else if (this.header_info.Encoding.toLowerCase() == "big5") {
+    } else if (this.headerInfo.Encoding.toLowerCase() == "big5") {
       this._encoding = BIG5;
       this._decoder = BIG5_DECODER;
     } else {
       this._encoding =
-      (this.header_info.Encoding.toLowerCase() == "utf16"
-      || this.header_info.Encoding.toLowerCase() == "utf-16") ?
+      (this.headerInfo.Encoding.toLowerCase() == "utf16"
+      || this.headerInfo.Encoding.toLowerCase() == "utf-16") ?
         UTF16 : UTF8;
       if (this._encoding == UTF16) {
         this._decoder = UTF_16LE_DECODER;
@@ -406,7 +414,10 @@ class MDict {
     // console.log(this._encoding);
   }
 
-  _readkeyHeader() {
+  /**
+   * read key block header
+   */
+  _readKeyHeader() {
     // header info struct:
     // [0:8]/[0:4]   - number of key blocks
     // [8:16]/[4:8]  - number of entries
@@ -421,8 +432,9 @@ class MDict {
     this._keyHeaderStartOffset = this._headerEndOffset;
 
     // version >= 2.0, key_header bytes number is 5 * 8, otherwise, 4 * 4
-    let num_bytes = this._version >= 2.0 ? 8 * 5: 4 * 4;
-    const key_info_b = this.__readfile(num_bytes);
+    const bytesNum = this._version >= 2.0 ? 8 * 5 : 4 * 4;
+    this._keyHeaderEndOffset = this._keyHeaderStartOffset + bytesNum;
+    const keyHeaderBuff = this._readFile(bytesNum);
 
     // decrypt
     if (this._encrypt & 1) {
@@ -431,7 +443,7 @@ class MDict {
         throw Error(" user identification is needed to read encrypted file");
       }
       // regcode, userid = header_info['_passcode']
-      if (this.header_info.RegisterBy == "Email") {
+      if (this.headerInfo.RegisterBy == "Email") {
         // encrypted_key = _decrypt_regcode_by_email(regcode, userid);
         throw Error("encrypted file not support yet");
       } else {
@@ -439,129 +451,84 @@ class MDict {
       }
     }
 
-    let key_i_ofst = 0
+    let keyHeaderOfst = 0;
     // [0:8]   - number of key blocks
     this.keyHeader.keyBlocksNum =
-    this.__readnumber(key_info_b.slice(tmp_ofset, key_i_ofst + this._number_width));
-    key_i_ofst += this._number_width;
+    this._readNumber(keyHeaderBuff.slice(keyHeaderOfst, keyHeaderOfst + this._numberWidth));
+    keyHeaderOfst += this._numberWidth;
     // console.log("num_key_blocks", num_key_blocks.toString());
 
-
-    // number of entries
+    // [8:16]  - number of entries
     this.keyHeader.entriesNum =
-    this.__readnumber(key_info_b.slice(key_i_ofst, key_i_ofst + this._number_width));
-    key_i_ofst += this._number_width;
+    this._readNumber(keyHeaderBuff.slice(keyHeaderOfst, keyHeaderOfst + this._numberWidth));
+    keyHeaderOfst += this._numberWidth;
     // console.log("num_entries", num_entries.toString());
-    this._num_entries = num_entries;
-  }
 
-  _read_keys() {
-    let num_bytes;
-    if (this._version >= 2.0) {
-      num_bytes = 8 * 5;
-    } else {
-      num_bytes = 4 * 4;
-    }
-    const key_info_b = this.__readfile(num_bytes);
-
-    // TODO: encrypted file not support yet
-    if (this._encrypt & 1) {
-      if (!this._passcode || this._passcode == "") {
-        throw Error(" user identification is needed to read encrypted file");
-      }
-      // regcode, userid = header_info['_passcode']
-      if (this.header_info.RegisterBy == "Email") {
-        // encrypted_key = _decrypt_regcode_by_email(regcode, userid);
-        throw Error("encrypted file not support yet");
-      } else {
-        throw Error("encrypted file not support yet");
-      }
-    }
-
-    // header info struct:
-    // [0:8]   - number of key blocks
-    // [8-16]  - number of entries
-    // [16:24] - key block info decompressed size (if version >= 2.0, else not exist)
-    // [24:32] - key block info size
-    // [32:40] - key block size
-    // note: if version <2.0, the key info buffer size is 4 * 4
-    //       otherwise, ths key info buffer size is 5 * 8
-    // <2.0  the order of number is same
-
-    let key_i_ofst = 0;
-    // number of key blocks, passed
-    const num_key_blocks =
-    this.__readnumber(key_info_b.slice(key_i_ofst, key_i_ofst + this._number_width));
-    key_i_ofst += this._number_width;
-    // console.log("num_key_blocks", num_key_blocks.toString());
-
-    // number of entries
-    const num_entries =
-    this.__readnumber(key_info_b.slice(key_i_ofst, key_i_ofst + this._number_width));
-    key_i_ofst += this._number_width;
-    // console.log("num_entries", num_entries.toString());
-    this._num_entries = num_entries;
-
-    // number of key block info decompress size
-    if (this._version >= 2.0) {
+    // [16:24] - number of key block info decompress size
+    if (this._version >= 2.0) { // only for version > 2.0
       const key_block_info_decomp_size =
-      this.__readnumber(key_info_b.slice(key_i_ofst, key_i_ofst + this._number_width));
-      key_i_ofst += this._number_width;
+      this._readNumber(keyHeaderBuff.slice(keyHeaderOfst, keyHeaderOfst + this._numberWidth));
+      keyHeaderOfst += this._numberWidth;
       // console.log(key_block_info_decomp_size.toString());
-      this.header_info.key_block_info_decomp_size = key_block_info_decomp_size;
+      this.keyHeader.keyBlockInfoDecompSize = key_block_info_decomp_size;
     }
 
-    // number of key block info compress size
-    const key_block_info_size =
-    this.__readnumber(key_info_b.slice(key_i_ofst, key_i_ofst + this._number_width));
-    key_i_ofst += this._number_width;
+    // [24:32] - number of key block info compress size
+    const keyBlockInfoSize =
+    this._readNumber(keyHeaderBuff.slice(keyHeaderOfst, keyHeaderOfst + this._numberWidth));
+    keyHeaderOfst += this._numberWidth;
     // console.log("key_block_info_size", key_block_info_size.toString());
-    this.header_info.key_block_info_comp_size = key_block_info_size;
+    this.keyHeader.keyBlockInfoCompSize = keyBlockInfoSize;
 
-    // number of key blocks total size, note, key blocks total size, not key block info
-    const key_blocks_total_size =
-    this.__readnumber(key_info_b.slice(key_i_ofst, key_i_ofst + this._number_width));
-    key_i_ofst += this._number_width;
+    // [32:40] - number of key blocks total size, note, key blocks total size, not key block info
+    const keyBlocksTotalSize =
+    this._readNumber(keyHeaderBuff.slice(keyHeaderOfst, keyHeaderOfst + this._numberWidth));
+    keyHeaderOfst += this._numberWidth;
     // console.log(key_blocks_total_size.toString());
-    this.header_info.key_blocks_total_size = key_blocks_total_size;
+    this.keyHeader.keyBlocksTotalSize = keyBlocksTotalSize;
 
     // 4 bytes alder32 checksum, after key info block
     // TODO: skip for now, not support yet
     if (this._version >= 2.0) {
       this.__skip_bytes(4);
     }
+  }
 
+  /**
+   * read key block info
+   * key block info list:
+   * [{comp_size: xxx, decomp_size: xxx}]
+   */
+  _readKeyBlockInfo() {
+    this._keyBlockInfoStartOffset = this._keyHeaderEndOffset;
+    console.log("aaaaaa", this.keyHeader.keyBlockInfoCompSize);
+    const keyBlockInfoBuff = this._readFile(this.__toNumber(this.keyHeader.keyBlockInfoCompSize));
+    const keyBlockInfoList =
+    this._decode_key_block_info(
+      this.keyHeader.keyBlocksNum,
+      keyBlockInfoBuff, this.keyHeader.entriesNum,
+    );
 
-    // ------------------------
-    // HERE PASSED
-    // ------------------------
-    // console.log(this.offset);
-
-    const key_block_info = this.__readfile(this.__toNumber(key_block_info_size));
-    // console.log(key_block_info.slice(0, 20).toString("hex"));
-    const key_block_info_list =
-    this._decode_key_block_info(num_key_blocks, key_block_info, num_entries);
-    // assert(num_key_blocks == len(key_block_info_list))
-
-    assert(this.__toNumber(num_key_blocks) === key_block_info_list.length, "the num_key_info_list should equals to key_block_info_list");
+    assert(this.__toNumber(this.keyHeader.keyBlocksNum) === keyBlockInfoList.length, "the num_key_info_list should equals to key_block_info_list");
+    this.keyBlockInfoList = keyBlockInfoList;
 
     // key_block_compress part
     // ====================
     // key_block_compress
     // ====================
     // console.log("key_blocks_total_size", key_blocks_total_size);
-    const key_block_compressed =
-      new BufferList(this.__readfile(this.__toNumber(key_blocks_total_size)));
+    // const key_block_compressed =
+    // new BufferList(this._readFile(this.__toNumber(key_blocks_total_size)));
 
     // -------- 到这里为止都是正确的
 
 
     // console.log("key_block_info_list", key_block_info_list);
-   //  const key_list = this._decode_key_block(key_block_compressed, key_block_info_list);
-    const key_list = [];
+    //  const key_list = this._decode_key_block(key_block_compressed, key_block_info_list);
+    // const key_list = [];
     // console.log("key_list", key_list);
-    this._record_block_offset = this.offset;
-    return key_list;
+    // this._record_block_offset = this.offset;
+    // return key_list;
   }
 
   // TODO 修改为多线程版本
@@ -614,7 +581,7 @@ class MDict {
 
       const splitedKey = this._split_key_block(
         new BufferList(key_block),
-        this._number_format, this._number_width, this._encoding,
+        this._number_format, this._numberWidth, this._encoding,
       );
       key_list = key_list.concat(splitedKey);
       // append to a list
@@ -662,12 +629,12 @@ class MDict {
      * [16:24/8:12] - record block info size
      * [24:32/32:40] - record block size
      */
-    const num_record_blocks = this.__readnumber(this.__readfile(this._number_width));
-    const num_entries = this.__readnumber(this.__readfile(this._number_width));
+    const num_record_blocks = this._readNumber(this._readFile(this._numberWidth));
+    const num_entries = this._readNumber(this._readFile(this._numberWidth));
     assert(_numEqual(num_entries, this._num_entries));
 
-    const record_block_info_size = this.__readnumber(this.__readfile(this._number_width));
-    const record_block_size = this.__readnumber(this.__readfile(this._number_width));
+    const record_block_info_size = this._readNumber(this._readFile(this._numberWidth));
+    const record_block_size = this._readNumber(this._readFile(this._numberWidth));
     /**
      * record_block_info_list => record_block_info:
      * {
@@ -680,10 +647,10 @@ class MDict {
     const record_block_info_list = [];
     let size_counter = new Long(0, 0);
     for (let i = 0; i < num_record_blocks; i++) {
-      const compressed_size = this.__readnumber(this.__readfile(this._number_width));
-      const decompressed_size = this.__readnumber(this.__readfile(this._number_width));
+      const compressed_size = this._readNumber(this._readFile(this._numberWidth));
+      const decompressed_size = this._readNumber(this._readFile(this._numberWidth));
       record_block_info_list.push([compressed_size, decompressed_size]);
-      size_counter = size_counter.add(this._number_width * 2);
+      size_counter = size_counter.add(this._numberWidth * 2);
     }
     assert(size_counter.eq(record_block_info_size));
 
@@ -705,7 +672,7 @@ class MDict {
 
       record_offset = this.offset;
       const record_block_compressed =
-        new BufferList(this.__readfile(this.__toNumber(compressed_size)));
+        new BufferList(this._readFile(this.__toNumber(compressed_size)));
       // 4 bytes: compression type
       const record_block_type = new BufferList(record_block_compressed.slice(0, 4));
       // record_block stores the final record data
@@ -889,7 +856,7 @@ class MDict {
     } else {
       key_block_info = key_info_bl;
     }
-    assert(_numEqual(this.header_info.key_block_info_decomp_size, key_block_info.length), "key_block_info length should equal");
+    assert(_numEqual(this.headerInfo.key_block_info_decomp_size, key_block_info.length), "key_block_info length should equal");
     const key_block_info_list = [];
 
     let count_num_entries = new Long(0x00000000, 0x00000000);
@@ -914,10 +881,10 @@ class MDict {
 
       const tmp_count = struct.unpack(
         this._number_format,
-        key_block_info.slice(i, i + this._number_width),
+        key_block_info.slice(i, i + this._numberWidth),
       )[0];
       count_num_entries = count_num_entries.add(tmp_count);
-      i += this._number_width;
+      i += this._numberWidth;
 
       const first_key_size = struct.unpack(byte_format, key_block_info.slice(i, i + byte_width))[0];
       i += byte_width;
@@ -967,15 +934,15 @@ class MDict {
       // key block compressed size
       const key_block_compressed_size = struct.unpack(
         this._number_format,
-        key_block_info.slice(i, i + this._number_width),
+        key_block_info.slice(i, i + this._numberWidth),
       )[0];
-      i += this._number_width;
+      i += this._numberWidth;
       // key block decompressed size
       const key_block_decompressed_size = struct.unpack(
         this._number_format,
-        key_block_info.slice(i, i + this._number_width),
+        key_block_info.slice(i, i + this._numberWidth),
       )[0];
-      i += this._number_width;
+      i += this._numberWidth;
       key_block_info_list.push([this.__toNumber(key_block_compressed_size),
         this.__toNumber(key_block_decompressed_size)]);
       count += 1;
@@ -1013,7 +980,7 @@ class MDict {
   }
 
   // readfile returns a BufferList object which can be easily to use slice method
-  __readfile(length) {
+  _readFile(length) {
     const b = readChunk.sync(this.fname, this.offset, length);
     this.offset += length;
     return new BufferList().append(b);
@@ -1031,7 +998,7 @@ class MDict {
 
   // read number from buffer use number format,
   // note, you should calc the number length before use this method
-  __readnumber(bf) {
+  _readNumber(bf) {
     return struct.unpack(this._number_format, bf)[0];
   }
   __toNumber(number) {
