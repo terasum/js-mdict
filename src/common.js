@@ -1,6 +1,8 @@
 
 import { TextDecoder } from "text-encoding";
 import { DOMParser } from "xmldom";
+import ripemd128 from "./ripemd128";
+import BufferList from "bl";
 
 const REGEXP_STRIPKEY = {
   mdx: /[()., '/\\@_-]()/g,
@@ -156,7 +158,6 @@ const NUMFMT_UINT8 = Symbol("NUM_FMT_UINT8");
 const NUMFMT_UINT16 = Symbol("NUM_FMT_UINT16");
 const NUMFMT_UINT32 = Symbol("NUM_FMT_UINT32");
 const NUMFMT_UINT64 = Symbol("NUM_FMT_UINT64");
-const NUMFMT_LUINT32 = Symbol("NUM_FMT_LITTLE_ENDIAN_UINT32");
 /**
  * read number from buffer
  * @param {BufferList} bf number buffer
@@ -182,6 +183,55 @@ function readNumber(bf, numfmt) {
   // return struct.unpack(this._number_format, bf)[0];
 }
 
+/**
+ * 
+ * @param {Buffer} data data buffer
+ * @param {Buffer} k key
+ */
+function fast_decrypt(data, k) {
+  const b = new Uint8Array(data);
+  const key = new Uint8Array(k);
+  let previous = 0x36;
+  for (let i = 0; i < b.length; ++i) {
+    let t = ((b[i] >> 4) | (b[i] << 4)) & 0xff;
+    t = t ^ previous ^ (i & 0xff) ^ key[i % key.length];
+    previous = b[i];
+    b[i] = t;
+  }
+  return new BufferList(b);
+}
+
+
+// def _mdx_decrypt(comp_block):
+//   key = ripemd128(comp_block[4:8] + pack(b'<L', 0x3695))
+//   return comp_block[0:8] + _fast_decrypt(comp_block[8:], key)
+
+/**
+ * mdx decrypt method
+ * @param {Buffer} comp_block data buffer needs to decrypt
+ */
+function mdxDecrypt(comp_block) {
+  const key = ripemd128.ripemd128(new BufferList(comp_block.slice(4, 8))
+    .append(Buffer.from([0x95, 0x36, 0x00, 0x00])).slice(0, 8));
+  return new BufferList(comp_block.slice(0, 8))
+    .append(fast_decrypt(comp_block.slice(8), key));
+}
+
+/**
+ * Creates a new Uint8Array based on two different ArrayBuffers
+ *
+ * @param {ArrayBuffers} buffer1 The first buffer.
+ * @param {ArrayBuffers} buffer2 The second buffer.
+ * @return {ArrayBuffers} The new ArrayBuffer created out of the two.
+ */
+function appendBuffer(buffer1, buffer2) {
+  const tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+  tmp.set(new Uint8Array(buffer1), 0);
+  tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
+  return tmp.buffer;
+}
+
+
 export default {
   getExtension,
   readUTF16,
@@ -191,6 +241,8 @@ export default {
   levenshtein_distance,
   parseHeader,
   readNumber,
+  mdxDecrypt,
+  appendBuffer,
   NUMFMT_UINT8,
   NUMFMT_UINT16,
   NUMFMT_UINT32,
