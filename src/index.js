@@ -8,15 +8,10 @@ import bufferToArrayBuffer from "buffer-to-arraybuffer";
 import dart from "doublearray";
 
 import { TextDecoder } from "text-encoding";
-import { DOMParser } from "xmldom";
 
 import common from "./common";
 import lzo1x from "./lzo-wrapper";
 import ripemd128 from "./ripemd128";
-
-// 开启多线程能力
-// const cluster = require("cluster");
-// const numCPUs = require("os").cpus().length;
 
 const UTF_16LE_DECODER = new TextDecoder("utf-16le");
 const UTF16 = "UTF-16";
@@ -34,24 +29,6 @@ const GB18030 = "GB18030";
 //-----------------------------
 //        TOOL METHODS
 //-----------------------------
-
-/**
- * parse mdd/mdx header section
- * @param {string} header_text
- */
-function parseHeader(header_text) {
-  const doc = new DOMParser().parseFromString(header_text, "text/xml");
-  const header_attr = {};
-  let elem = doc.getElementsByTagName("Dictionary")[0];
-  if (!elem) {
-    elem = doc.getElementsByTagName("Library_Data")[0]; // eslint_disable_prefer_destructing
-  }
-  for (let i = 0, item; i < elem.attributes.length; i++) {
-    item = elem.attributes[i];
-    header_attr[item.nodeName] = item.nodeValue;
-  }
-  return header_attr;
-}
 
 
 /**
@@ -88,28 +65,92 @@ function _numEqual(num1, num2) {
   return a.eq(b);
 }
 
-// Mdict is the base class
-// It has no public method just for extend by sub class
+/**
+ *
+ * class Mdict, the basic mdict diction parser class
+ */
 class MDict {
-  constructor(fname, _passcode) {
+  /**
+   * 
+   * @param {string} fname 
+   * @param {string} passcode 
+   */
+  constructor(fname, passcode) {
+    // the mdict file name
     this.fname = fname;
-    this._offset = 0;
+    // the dictionary file decrypt pass code
+    this._passcode = passcode;
+    // the mdict file read offset
+    this._offset = 0
+    // the dictionary file extension
     this.ext = common.getExtension(fname, "mdx");
-    this._read_header();
+    // determine the encoding and decoder, if extension is *.mdd
     if (this.ext === "mdd") {
       this._encoding = UTF16;
       this._decoder = UTF_16LE_DECODER;
     }
-    // console.log("Dictionary version", this._version);
+
+    // -------------------------
+    // dict header section
+    //--------------------------
+    // read the diction header info
+    this._headerStartOffset = 0;
+    this._headerEndOffset = 0;
+    this._readHeader();
+
+    // -------------------------
+    // dict key header section
+    // --------------------------
+    this._keyHeaderStartOffset = 0;
+    this._keyHeaderEndOffset = 0;
+    this.keyHeader = {
+      keyBlocksNum: 0,
+      entriesNum: 0,
+
+    };
+
+    // -------------------------
+    // dict key info section
+    // --------------------------
+    this._keyInfoStartOffset = 0;
+    this._keyInfoEndOffset = 0;
+
+
+    // -------------------------
+    // dict key block section
+    // --------------------------
+    this._keyBlockStartOffset = 0;
+    this._keyBlockEndOffset = 0;
+
+    // -------------------------
+    // dict record header section
+    // --------------------------
+    this._recordHeaderStartOffset = 0;
+    this._recordHeaderEndOffset = 0;
+    
+    // -------------------------
+    // dict record info section
+    // --------------------------
+    this._recordInfoStartOffset = 0;
+    this._recordInfoEndOffset = 0;
+
+    // -------------------------
+    // dict record block section
+    // --------------------------
+    this._recordBlockStartOffset = 0;
+    this._record_block_end_offset = 0;
+
+    
+
     const d1 = new Date().getTime();
     this._key_list = this._read_keys();
     const d2 = new Date().getTime();
     console.log(`read key used: ${(d2 - d1) / 1000.0} s`);
-    this._passcode = _passcode;
-    const d3 = new Date().getTime();
-    this.key_data = this._decode_record_block();
-    const d4 = new Date().getTime();
-    console.log(`decod record used: ${(d4 - d3) / 1000.0}`);
+
+    // const d3 = new Date().getTime();
+    // this.key_data = this._decode_record_block();
+    // const d4 = new Date().getTime();
+    // console.log(`decod record used: ${(d4 - d3) / 1000.0}`);
     // for (let i = 0; i < 10; i++) {
     //   console.log(this.key_data[i].key);
     // }
@@ -117,15 +158,15 @@ class MDict {
     // .map(keyword => ({ k: keyword.key, v: keyword })));
     // TODO: out of memory
     // this.bktree = new BKTree(this.key_data.length);
-    this.trie = dart.builder()
-      .build(this.key_data
-        .map(keyword =>
-          // TODO: bktree here will out of memory
-          // this.bktree.add(keyword.key);
-          // cousole.log(keyword.key)
-          ({ k: keyword.key, v: keyword.idx })));
-    const d5 = new Date().getTime();
-    console.log(`dart build used: ${(d5 - d4) / 1000.0} s`);
+    // this.trie = dart.builder()
+    //   .build(this.key_data
+    //     .map(keyword =>
+    //       // TODO: bktree here will out of memory
+    //       // this.bktree.add(keyword.key);
+    //       // cousole.log(keyword.key)
+    //       ({ k: keyword.key, v: keyword.idx })));
+    // const d5 = new Date().getTime();
+    // console.log(`dart build used: ${(d5 - d4) / 1000.0} s`);
     // console.log(key_data[0]);
   }
 
@@ -268,32 +309,43 @@ class MDict {
   }
 
   /*
-   * get mdx header info:
-   * [0:4] 字节： header 的长度(header_bytes_size), 大端（4Bytes, 16bits）
+   * Get mdx header info (xml content to object)
+   * [0:4], 4 bytes header length (header_byte_size), big-endian, 4 bytes, 16 bits
    * [4:header_byte_size + 4] header_bytes
    * [header_bytes_size + 4:header_bytes_size +8] adler32 checksum
-   * 应当满足:
+   * should be:
    * assert(zlib.adler32(header_bytes) & 0xffffffff, adler32)
    *
    */
-  _read_header() {
+  _readHeader() {
+    // [0:4], 4 bytes header length (header_byte_size), big-endian, 4 bytes, 16 bits
     const header_size_buffer = readChunk.sync(this.fname, 0, 4);
     const header_byte_size = struct.unpack(">I", header_size_buffer)[0];
+
+    // [4:header_byte_size + 4] header_bytes
     const header_b_buffer = readChunk.sync(this.fname, 4, header_byte_size);
 
+    // TODO: SKIP 4 bytes alder32 checksum
     // header_b_cksum should skip for now, because cannot get alder32 sum by js
     // const header_b_cksum = readChunk.sync(this.fname, header_byte_size + 4, 4);
+
     // console.log(hash("alder32", header_b_buffer));
     // console.log(header_b_cksum);
     // assert(header_b_cksum), "header_bytes checksum failed");
 
     // 4 bytes header size + header_bytes_size + 4bytes alder checksum
-    this._key_block_offset = header_byte_size + 4 + 4;
-    this.offset = this._key_block_offset;
+    this._headerEndOffset = header_byte_size + 4 + 4
+
+    this._keyHeaderStartOffset = header_byte_size + 4 + 4;
+
+    // set file read offset
+    this._offset = this._headerEndOffset;
+
     // header text in utf-16 encoding ending with `\x00\x00`, so minus 2
     const header_text = common.readUTF16(header_b_buffer, 0, header_byte_size - 2);
+
     // parse header info
-    this.header_info = parseHeader(header_text);
+    this.header_info = common.parseHeader(header_text);
 
     // encrypted flag
     // 0x00 - no encryption
@@ -306,6 +358,8 @@ class MDict {
     } else {
       this._encrypt = parseInt(this.header_info.Encrypted, 10);
     }
+
+
     // stylesheet attribute if present takes from of:
     // style_number # 1-255
     // style_begin # or ''
@@ -318,8 +372,8 @@ class MDict {
     //   for i in range(0, len(lines), 3):
     //        header_info['_stylesheet'][lines[i]] = (lines[i + 1], lines[i + 2])
 
-    // before version 2.0, number is 4 bytes integer
-    // version 2.0 and above use 8 bytes
+    // before version 2.0, number is 4 bytes integer alias, int32
+    // version 2.0 and above use 8 bytes, alias int64
     this._version = parseFloat(this.header_info.GeneratedByEngineVersion);
     if (this._version >= 2.0) {
       this._number_width = 8;
@@ -328,7 +382,7 @@ class MDict {
       this._number_format = ">I";
       this._number_width = 4;
     }
-    // console.log(this.header_info);
+    console.log(this.header_info);
     if (!this.header_info.Encoding || this.header_info.Encoding == "") {
       this._encoding = UTF8;
       this._decoder = UTF_8_DECODER;
@@ -350,6 +404,55 @@ class MDict {
       }
     }
     // console.log(this._encoding);
+  }
+
+  _readkeyHeader() {
+    // header info struct:
+    // [0:8]/[0:4]   - number of key blocks
+    // [8:16]/[4:8]  - number of entries
+    // [16:24]/[8:12] - key block info decompressed size (if version >= 2.0, else not exist)
+    // [24:32]/null - key block info size
+    // [32:40]/[12:16] - key block size
+    // note: if version <2.0, the key info buffer size is 4 * 4
+    //       otherwise, ths key info buffer size is 5 * 8
+    // <2.0  the order of number is same
+
+    // set offset
+    this._keyHeaderStartOffset = this._headerEndOffset;
+
+    // version >= 2.0, key_header bytes number is 5 * 8, otherwise, 4 * 4
+    let num_bytes = this._version >= 2.0 ? 8 * 5: 4 * 4;
+    const key_info_b = this.__readfile(num_bytes);
+
+    // decrypt
+    if (this._encrypt & 1) {
+      if (!this._passcode || this._passcode == "") {
+        // TODO: encrypted file not support yet
+        throw Error(" user identification is needed to read encrypted file");
+      }
+      // regcode, userid = header_info['_passcode']
+      if (this.header_info.RegisterBy == "Email") {
+        // encrypted_key = _decrypt_regcode_by_email(regcode, userid);
+        throw Error("encrypted file not support yet");
+      } else {
+        throw Error("encrypted file not support yet");
+      }
+    }
+
+    let key_i_ofst = 0
+    // [0:8]   - number of key blocks
+    this.keyHeader.keyBlocksNum =
+    this.__readnumber(key_info_b.slice(tmp_ofset, key_i_ofst + this._number_width));
+    key_i_ofst += this._number_width;
+    // console.log("num_key_blocks", num_key_blocks.toString());
+
+
+    // number of entries
+    this.keyHeader.entriesNum =
+    this.__readnumber(key_info_b.slice(key_i_ofst, key_i_ofst + this._number_width));
+    key_i_ofst += this._number_width;
+    // console.log("num_entries", num_entries.toString());
+    this._num_entries = num_entries;
   }
 
   _read_keys() {
@@ -454,7 +557,8 @@ class MDict {
 
 
     // console.log("key_block_info_list", key_block_info_list);
-    const key_list = this._decode_key_block(key_block_compressed, key_block_info_list);
+   //  const key_list = this._decode_key_block(key_block_compressed, key_block_info_list);
+    const key_list = [];
     // console.log("key_list", key_list);
     this._record_block_offset = this.offset;
     return key_list;
@@ -874,7 +978,6 @@ class MDict {
       i += this._number_width;
       key_block_info_list.push([this.__toNumber(key_block_compressed_size),
         this.__toNumber(key_block_decompressed_size)]);
-      // break;
       count += 1;
     }
     assert(count_num_entries.equals(num_entries), "the number_entries should equal the count_num_entries");

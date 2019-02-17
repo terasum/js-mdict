@@ -5,7 +5,6 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "npm run build && mocha --require babel-core/register",
-    "dev": "babel-node src/test.js",
     "build": "babel src --out-dir lib",
     "eslint": "eslint src"
   },
@@ -21,19 +20,15 @@
   "author": "terasum <terasum@163.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/terasum/mdict/issues"
+    "url": "https://github.com/terasum/js-mdict/issues"
   },
-  "homepage": "https://github.com/terasum/mdict#readme",
+  "homepage": "https://github.com/terasum/js-mdict#readme",
   "dependencies": {
-    "@babel/plugin-transform-dotall-regex": "^7.0.0-beta.51",
-    "@everymundo/linenumber": "^1.0.0",
     "bl": "^2.0.1",
     "blob-to-buffer": "^1.2.6",
-    "bluebird": "^3.4.7",
     "buffer": "^5.0.7",
     "buffer-dataview": "0.0.2",
     "buffer-to-arraybuffer": "0.0.5",
-    "crypto-api": "^0.8.0",
     "detect-node": "^2.0.3",
     "doublearray": "0.0.2",
     "fs-web": "^1.0.1",
@@ -52,6 +47,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
+    "@babel/plugin-transform-dotall-regex": "^7.0.0-beta.51",
+    "@everymundo/linenumber": "^1.0.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-plugin-transform-es2015-destructuring": "^6.23.0",
@@ -65,10 +62,12 @@
     "chai": "^4.2.0",
     "eslint": "^4.19.1",
     "eslint-config-airbnb": "^16.1.0",
+    "eslint-config-alloy": "^1.4.2",
     "eslint-plugin-import": "^2.12.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.9.1",
     "microtime": "^2.1.8",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "typescript": "^3.3.3"
   }
 }

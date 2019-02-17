@@ -1,5 +1,6 @@
 
 import { TextDecoder } from "text-encoding";
+import { DOMParser } from "xmldom";
 
 const REGEXP_STRIPKEY = {
   mdx: /[()., '/\\@_-]()/g,
@@ -68,6 +69,24 @@ function levenshtein_distance(a, b) {
   return dp[m][n];
 }
 
+/**
+ * parse mdd/mdx header section
+ * @param {string} header_text
+ */
+function parseHeader(header_text) {
+  const doc = new DOMParser().parseFromString(header_text, "text/xml");
+  const header_attr = {};
+  let elem = doc.getElementsByTagName("Dictionary")[0];
+  if (!elem) {
+    elem = doc.getElementsByTagName("Library_Data")[0]; // eslint_disable_prefer_destructing
+  }
+  for (let i = 0, item; i < elem.attributes.length; i++) {
+    item = elem.attributes[i];
+    header_attr[item.nodeName] = item.nodeValue;
+  }
+  return header_attr;
+}
+
 
 export default {
   getExtension,
@@ -76,5 +95,6 @@ export default {
   REGEXP_STRIPKEY,
   UTF16,
   levenshtein_distance,
+  parseHeader,
 };
 
