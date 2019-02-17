@@ -1,6 +1,6 @@
 import { Benchmark } from "benchmark";
 
-import Mdict from "../src";
+import Mdict from "../src/MdictBase";
 
 const suite = new Benchmark.Suite();
 

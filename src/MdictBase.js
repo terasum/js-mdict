@@ -22,9 +22,9 @@ const GB18030 = "GB18030";
 
 /**
  *
- * class Mdict, the basic mdict diction parser class
+ * class MdictBase, the basic mdict diction parser class
  */
-class MDict {
+class MDictBase {
   /**
    * mdict constructor
    * @param {string} fname
@@ -51,6 +51,7 @@ class MDict {
     // read the diction header info
     this._headerStartOffset = 0;
     this._headerEndOffset = 0;
+    this.header = {};
     this._readHeader();
 
     // -------------------------
@@ -76,7 +77,6 @@ class MDict {
     // key block info list
     this.keyBlockInfoList = [];
     this._readKeyBlockInfo();
-    // console.log(this.keyBlockInfoList);
 
     // -------------------------
     // dict key block section
@@ -86,7 +86,6 @@ class MDict {
     this.keyList = [];
     // decodeKeyBlock method is very slow, avoid invoke dirctly
     // this._decodeKeyBlock();
-    // console.log(this.keyList);
 
     // -------------------------
     // dict record header section
@@ -100,7 +99,6 @@ class MDict {
       recordBlockCompSize: 0,
     };
     this._decodeRecordHeader();
-    // console.log(this.recordHeader);
 
     // -------------------------
     // dict record info section
@@ -109,9 +107,6 @@ class MDict {
     this._recordInfoEndOffset = 0;
     this.recordBlockInfoList = [];
     this._decodeRecordInfo();
-    // console.log(this.recordBlockInfoList);
-    // console.log(this.recordBlockInfoList);
-
 
     // -------------------------
     // dict record block section
@@ -121,161 +116,12 @@ class MDict {
     this.keyData = [];
     // decodeRecordBlock method is very slow, avoid invoke dirctly
     // this._decodeRecordBlock();
-    // console.log(this.keyData);
 
-    // console.log(this.key_data
-    // .map(keyword => ({ k: keyword.key, v: keyword })));
-    // TODO: out of memory
-    // this.bktree = new BKTree(this.key_data.length);
-    // this.trie = dart.builder()
-    //   .build(this.key_data
-    //     .map(keyword =>
-    //       // TODO: bktree here will out of memory
-    //       // this.bktree.add(keyword.key);
-    //       // cousole.log(keyword.key)
-    //       ({ k: keyword.key, v: keyword.idx })));
-    // const d5 = new Date().getTime();
-    // console.log(`dart build used: ${(d5 - d4) / 1000.0} s`);
-    // console.log(key_data[0]);
+    // ---------------------------------
+    // DICTIONARY CONSTRUCTION FINISHED
+    // ---------------------------------
   }
 
-  // returns if word exist or not
-  contains(word) {
-    if (!this.trie) {
-      throw new Error("trie not build finished");
-    }
-    return this.trie.contain(word);
-  }
-
-  similar(word, tol) {
-    return this.bktree.simWords(word, tol);
-  }
-
-  // return the word idx
-  _lookup_idx(word) {
-    if (!this.trie) {
-      throw new Error("trie not build finished");
-    }
-    if (!this.contains(word)) {
-      return -1;
-    }
-    return this.trie.lookup(word);
-  }
-  // look up the word definition
-  lookup(word) {
-    const idx = this._lookup_idx(word);
-    if (idx === -1) {
-      return "NOTFOUND";
-    }
-    return this.parse_defination(idx);
-  }
-
-  prefix(word) {
-    if (!this.trie) {
-      throw new Error("trie not init");
-    }
-    return this.trie.commonPrefixSearch(word);
-  }
-
-  /**
-   * fuzzy_search
-   * find latest `fuzzy_size` words, and filter by lavenshtein_distance
-   * return wordlist struct:
-   * [
-   * {
-   * ed: Number  // word edit distance
-   * idx: Number // word dict idx
-   * key: string // word key string
-   * }
-   * ]
-   */
-  fuzzy_search(word, fuzzy_size, ed_gap) {
-    const fuzzy_words = [];
-    this.prefix(word)
-      .map(item => this._find_nabor(item.v, fuzzy_size)
-        .map((w) => {
-          const ed = common.levenshtein_distance(word, w.key);
-          if (ed < (ed_gap || 5)) {
-            fuzzy_words.push({
-              ed,
-              idx: w.idx,
-              key: w.key,
-            });
-          }
-          return null;
-        }));
-    return fuzzy_words;
-  }
-
-  _find_nabor(sim_idx, fuzzy_size) {
-    const set_size = this.key_data.length;
-    const sim_idx_start = sim_idx - fuzzy_size < 0
-      ? 0
-      : sim_idx - fuzzy_size;
-    const sim_idx_end = sim_idx + fuzzy_size > set_size
-      ? set_size
-      : sim_idx + fuzzy_size;
-
-    const nabor_words = [];
-
-    for (let i = sim_idx_start; i < sim_idx_end; i++) {
-      nabor_words.push({
-        idx: i,
-        key: this.key_data[i].key,
-      });
-    }
-    return nabor_words;
-  }
-
-  _bsearch_sim_idx(word) {
-    let lo = 0;
-    let hi = this.key_data.length - 1;
-    let mid = 0;
-    // find last equal or less than key word
-    while (lo <= hi) {
-      mid = lo + ((hi - lo) >> 1);
-      if (this.key_data[mid].key.localeCompare(word) > 0 /* word > key */) { hi = mid - 1; } else {
-        lo = mid + 1;
-      }
-    }
-    return hi;
-  }
-
-  bsearch(word) {
-    let lo = 0;
-    let hi = this.key_data.length - 1;
-    let mid = 0;
-    while (lo <= hi) {
-      mid = lo + ((hi - lo) >> 1);
-      if (this.key_data[mid].key.localeCompare(word) > 0 /* word > key */) { hi = mid - 1; }
-      if (this.key_data[mid].key.localeCompare(word) < 0 /* word < key */) { lo = mid + 1; }
-      if (this.key_data[mid].key.localeCompare(word) == 0) { break; }
-    }
-    if (lo > hi) {
-      // not found
-      console.log("not found!");
-      return undefined;
-    }
-
-    return this.parse_defination(mid);
-  }
-  parse_defination(idx) {
-    const word_info = this.key_data[idx];
-    if (!word_info || word_info == undefined) {
-      return "NOTFOUND";
-    }
-    let defbuf = this._readBuffer(word_info.record_comp_start, word_info.record_compressed_size);
-    if (word_info.record_comp_type == "zlib") {
-      defbuf = pako.inflate(defbuf.slice(8, defbuf.length));
-    } else {
-      return "NOT_SUPPORT_COMPRESS_TYPE";
-    }
-    if (this.ext == "mdx") {
-      return this._decoder
-        .decode(defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end));
-    }
-    return defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end);
-  }
 
   /**
    * STEP 1. read diction header
@@ -315,19 +161,19 @@ class MDict {
     const headerText = common.readUTF16(headerBuffer, 0, headerByteSize - 2);
 
     // parse header info
-    this.headerInfo = common.parseHeader(headerText);
+    this.header = common.parseHeader(headerText);
 
 
     // encrypted flag
     // 0x00 - no encryption
     // 0x01 - encrypt record block
     // 0x02 - encrypt key info block
-    if (!this.headerInfo.Encrypted || this.headerInfo.Encrypted == "" || this.headerInfo.Encrypted == "No") {
+    if (!this.header.Encrypted || this.header.Encrypted == "" || this.header.Encrypted == "No") {
       this._encrypt = 0;
-    } else if (this.headerInfo.Encrypted == "Yes") {
+    } else if (this.header.Encrypted == "Yes") {
       this._encrypt = 1;
     } else {
-      this._encrypt = parseInt(this.headerInfo.Encrypted, 10);
+      this._encrypt = parseInt(this.header.Encrypted, 10);
     }
 
 
@@ -345,7 +191,7 @@ class MDict {
 
     // before version 2.0, number is 4 bytes integer alias, int32
     // version 2.0 and above use 8 bytes, alias int64
-    this._version = parseFloat(this.headerInfo.GeneratedByEngineVersion);
+    this._version = parseFloat(this.header.GeneratedByEngineVersion);
     if (this._version >= 2.0) {
       this._numWidth = 8;
       this._numFmt = common.NUMFMT_UINT64;
@@ -353,19 +199,19 @@ class MDict {
       this._numWidth = 4;
       this._numFmt = common.NUMFMT_UINT32;
     }
-    if (!this.headerInfo.Encoding || this.headerInfo.Encoding == "") {
+    if (!this.header.Encoding || this.header.Encoding == "") {
       this._encoding = UTF8;
       this._decoder = UTF_8_DECODER;
-    } else if (this.headerInfo.Encoding == "GBK" || this.headerInfo.Encoding == "GB2312") {
+    } else if (this.header.Encoding == "GBK" || this.header.Encoding == "GB2312") {
       this._encoding = GB18030;
       this._decoder = GB18030_DECODER;
-    } else if (this.headerInfo.Encoding.toLowerCase() == "big5") {
+    } else if (this.header.Encoding.toLowerCase() == "big5") {
       this._encoding = BIG5;
       this._decoder = BIG5_DECODER;
     } else {
       this._encoding =
-      (this.headerInfo.Encoding.toLowerCase() == "utf16"
-      || this.headerInfo.Encoding.toLowerCase() == "utf-16") ?
+      (this.header.Encoding.toLowerCase() == "utf16"
+      || this.header.Encoding.toLowerCase() == "utf-16") ?
         UTF16 : UTF8;
       if (this._encoding == UTF16) {
         this._decoder = UTF_16LE_DECODER;
@@ -373,7 +219,6 @@ class MDict {
         this._decoder = UTF_8_DECODER;
       }
     }
-    // console.log(this._encoding);
   }
 
   /**
@@ -405,7 +250,7 @@ class MDict {
         throw Error(" user identification is needed to read encrypted file");
       }
       // regcode, userid = header_info['_passcode']
-      if (this.headerInfo.RegisterBy == "Email") {
+      if (this.header.RegisterBy == "Email") {
         // encrypted_key = _decrypt_regcode_by_email(regcode, userid);
         throw Error("encrypted file not support yet");
       } else {
@@ -627,6 +472,33 @@ class MDict {
   }
 
   /**
+   * reduce word find the nearest key block
+   * @param {string} phrase searching phrase
+   * @param {function} stripfunc strip key string to compare
+   */
+  _reduceWordKeyBlock(phrase, _s) {
+    if (!_s || _s == undefined) {
+      // eslint-disable-next-line
+      _s = (word) => { return word; };
+    }
+    let left = 0;
+    let right = this.keyBlockInfoList.length;
+    let mid = 0;
+    while (left <= right) {
+      mid = left + ((right - left) >> 1);
+      if (_s(phrase) >= _s(this.keyBlockInfoList[mid].firstKey)
+          && _s(phrase) <= _s(this.keyBlockInfoList[mid].lastKey)) {
+        return mid;
+      } else if (_s(phrase) >= _s(this.keyBlockInfoList[mid].lastKey)) {
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+    return left;
+  }
+
+  /**
    * STEP 5. decode key block
    * decode key block return the total keys list,
    * Note: this method runs very slow, please do not use this unless special target
@@ -685,6 +557,54 @@ class MDict {
     this._keyBlockEndOffset = this._keyBlockStartOffset + this.keyHeader.keyBlocksTotalSize;
     this.keyList = key_list;
   }
+
+  /**
+   * decode key block by key block id (from key info list)
+   * @param {*} kbid key block id
+   */
+  _decodeKeyBlockByKBID(kbid) {
+    this._keyBlockStartOffset = this._keyBlockInfoEndOffset;
+    const compSize = this.keyBlockInfoList[kbid].keyBlockCompSize;
+    const decompSize = this.keyBlockInfoList[kbid].keyBlockDecompSize;
+    const startOffset =
+    this.keyBlockInfoList[kbid].keyBlockCompAccumulator + this._keyBlockStartOffset;
+    const kbCompBuff = this._readBuffer(startOffset, compSize);
+    const start = 0;
+    const end = compSize;
+    const kbCompType = new BufferList(kbCompBuff.slice(start, start + 4));
+    // TODO 4 bytes adler32 checksum
+    // # 4 bytes : adler checksum of decompressed key block
+    // adler32 = unpack('>I', key_block_compressed[start + 4:start + 8])[0]
+
+    let key_block;
+    if (kbCompType.toString("hex") == "00000000") {
+      key_block = kbCompBuff.slice(start + 8, end);
+    } else if (kbCompType.toString("hex") == "01000000") {
+      // # decompress key block
+      const header = new ArrayBuffer([0xf0, decompSize]);
+      const keyBlock = lzo1x.decompress(
+        common.appendBuffer(header, kbCompBuff.slice(start + 8, end)),
+        decompSize, 1308672,
+      );
+      key_block = bufferToArrayBuffer(keyBlock)
+        .slice(keyBlock.byteOffset, keyBlock.byteOffset + keyBlock.byteLength);
+    } else if (kbCompType.toString("hex") === "02000000") {
+      // decompress key block
+      key_block = pako.inflate(kbCompBuff.slice(start + 8, end));
+      // extract one single key block into a key list
+      // notice that adler32 returns signed value
+      // TODO compare with privious word
+      // assert(adler32 == zlib.adler32(key_block) & 0xffffffff)
+    } else {
+      throw Error(`cannot determine the compress type: ${kbCompType.toString("hex")}`);
+    }
+    const splitedKey = this._splitKeyBlock(
+      new BufferList(key_block),
+      this._numFmt, this._numWidth, this._encoding,
+    );
+    return splitedKey;
+  }
+
 
   /**
    * STEP 6. split keys from key block
@@ -948,9 +868,100 @@ class MDict {
     this._recordBlockEndOffset = this._recordBlockStartOffset + sizeCounter;
   }
 
+  /**
+   * find record which record start locate
+   * @param {number} recordStart record start offset
+   */
+  _reduceRecordBlock(recordStart) {
+    let left = 0;
+    let right = this.recordBlockInfoList.length - 1;
+    let mid = 0;
+    while (left <= right) {
+      mid = left + ((right - left) >> 1);
+      if (recordStart >= this.recordBlockInfoList[mid].decompAccumulator) {
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+    return left - 1;
+  }
+
+  /**
+   * decode record block by record block id quickly search
+   * @param {number} rbid record block id
+   * @param {string} keyText phrase word
+   * @param {number} start this word record start offset
+   * @param {number} nextStart next word record start offset
+   */
+  _decodeRecordBlockByRBID(rbid, keyText, start, nextStart) {
+    // decode record block by record block id
+    this._recordBlockStartOffset = this._recordInfoEndOffset;
+    const compSize = this.recordBlockInfoList[rbid].compSize;
+    const decompSize = this.recordBlockInfoList[rbid].decompSize;
+    const compAccumulator = this.recordBlockInfoList[rbid].compAccumulator;
+    const decompAccumulator = this.recordBlockInfoList[rbid].decompAccumulator;
+    const startOffset = compAccumulator + this._recordBlockStartOffset;
+    const rbCompBuff = this._readBuffer(startOffset, compSize);
+
+    // 4 bytes: compression type
+    const rbCompType = new BufferList(rbCompBuff.slice(0, 4));
+
+    // record_block stores the final record data
+    let recordBlock;
+
+    // TODO: igore adler32 offset
+    // Note: here ignore the checksum part
+    // bytes: adler32 checksum of decompressed record block
+    // adler32 = unpack('>I', record_block_compressed[4:8])[0]
+    if (rbCompType.toString("hex") === "00000000") {
+      recordBlock = rbCompBuff.slice(8, rbCompBuff.length);
+    } else {
+      // --------------
+      // decrypt
+      // --------------
+      let blockBufDecrypted = null;
+      // if encrypt type == 1, the record block was encrypted
+      if (this._encrypt === 1 /* || (this.ext == "mdd" && this._encrypt === 2 ) */) {
+        // const passkey = new Uint8Array(8);
+        // record_block_compressed.copy(passkey, 0, 4, 8);
+        // passkey.set([0x95, 0x36, 0x00, 0x00], 4); // key part 2: fixed data
+        blockBufDecrypted = common.mdxDecrypt(rbCompBuff);
+      } else {
+        blockBufDecrypted = rbCompBuff.slice(8, rbCompBuff.length);
+      }
+      // --------------
+      // decompress
+      // --------------
+      if (rbCompType.toString("hex") === "01000000") {
+        // the header was need by lzo library, should append before real compressed data
+        const header = new ArrayBuffer([0xf0, decompSize]);
+        // Note: if use lzo, here will LZO_E_OUTPUT_RUNOVER, so ,use mini lzo js
+        recordBlock =
+          lzo1x.decompress(common.appendBuffer(header, blockBufDecrypted), decompSize, 1308672);
+        recordBlock = bufferToArrayBuffer(recordBlock)
+          .slice(recordBlock.byteOffset, recordBlock.byteOffset + recordBlock.byteLength);
+      } else if (rbCompType.toString("hex") === "02000000") {
+        // zlib decompress
+        recordBlock = pako.inflate(blockBufDecrypted);
+      }
+    }
+    recordBlock = new BufferList(recordBlock);
+
+    // notice that adler32 return signed value
+    // TODO: ignore the checksum
+    // assert(adler32 == zlib.adler32(record_block) & 0xffffffff)
+    assert(recordBlock.length === decompSize);
+
+    const recordStart = start - decompAccumulator;
+    const recordEnd = nextStart - decompAccumulator;
+    const data = recordBlock.slice(recordStart, recordEnd);
+    return { keyText, definition: this._decoder.decode(data) };
+  }
+
   _readBuffer(start, length) {
     return readChunk.sync(this.fname, start, length);
   }
 }
 
-export default MDict;
+export default MDictBase;

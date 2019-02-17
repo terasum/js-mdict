@@ -1,8 +1,8 @@
 
+import BufferList from "bl";
 import { TextDecoder } from "text-encoding";
 import { DOMParser } from "xmldom";
 import ripemd128 from "./ripemd128";
-import BufferList from "bl";
 
 const REGEXP_STRIPKEY = {
   mdx: /[()., '/\\@_-]()/g,
@@ -184,7 +184,7 @@ function readNumber(bf, numfmt) {
 }
 
 /**
- * 
+ * fast_decrypt buffer
  * @param {Buffer} data data buffer
  * @param {Buffer} k key
  */
@@ -200,11 +200,6 @@ function fast_decrypt(data, k) {
   }
   return new BufferList(b);
 }
-
-
-// def _mdx_decrypt(comp_block):
-//   key = ripemd128(comp_block[4:8] + pack(b'<L', 0x3695))
-//   return comp_block[0:8] + _fast_decrypt(comp_block[8:], key)
 
 /**
  * mdx decrypt method
