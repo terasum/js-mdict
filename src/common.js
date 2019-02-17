@@ -1,8 +1,6 @@
 
 import { TextDecoder } from "text-encoding";
 import { DOMParser } from "xmldom";
-import BufferList from "bl";
-import Long from "long";
 
 const REGEXP_STRIPKEY = {
   mdx: /[()., '/\\@_-]()/g,
@@ -89,16 +87,50 @@ function parseHeader(header_text) {
   return header_attr;
 }
 
-function uint32BEtoNumber(bytes) {
+
+/**
+ * read in uint8BE Bytes return uint8 number
+ * @param {Buffer} bytes Big-endian byte buffer
+ */
+function uint8BEtoNumber(bytes) {
+  return bytes[0] & 0xFF;
+}
+
+
+/**
+ * read in uint16BE Bytes return uint16 number
+ * @param {Buffer} bytes Big-endian byte buffer
+ */
+function uint16BEtoNumber(bytes) {
   let n = 0;
-  for (let i = 0; i < 3; i++) {
-    n |= bytes[i] & 0xff;
+  for (let i = 0; i < 1; i++) {
+    n |= bytes[i];
     n <<= 8;
   }
-  n |= bytes[3] & 0xff;
+  n |= bytes[1];
   return n;
 }
 
+
+/**
+ * read in uint32BE Bytes return uint32 number
+ * @param {Buffer} bytes Big-endian byte buffer
+ */
+function uint32BEtoNumber(bytes) {
+  let n = 0;
+  for (let i = 0; i < 3; i++) {
+    n |= bytes[i];
+    n <<= 8;
+  }
+  n |= bytes[3];
+  return n;
+}
+
+
+/**
+ * read in uint32BE Bytes return uint32 number
+ * @param {Buffer} bytes Big-endian byte buffer
+ */
 function uint64BEtoNumber(bytes) {
   if (bytes[1] >= 0x20 || bytes[0] > 0) {
     throw new Error("uint64 larger than 2^53, JS may lost accuracy");
@@ -120,8 +152,11 @@ function uint64BEtoNumber(bytes) {
 }
 
 
+const NUMFMT_UINT8 = Symbol("NUM_FMT_UINT8");
+const NUMFMT_UINT16 = Symbol("NUM_FMT_UINT16");
 const NUMFMT_UINT32 = Symbol("NUM_FMT_UINT32");
 const NUMFMT_UINT64 = Symbol("NUM_FMT_UINT64");
+const NUMFMT_LUINT32 = Symbol("NUM_FMT_LITTLE_ENDIAN_UINT32");
 /**
  * read number from buffer
  * @param {BufferList} bf number buffer
@@ -130,16 +165,22 @@ const NUMFMT_UINT64 = Symbol("NUM_FMT_UINT64");
 function readNumber(bf, numfmt) {
   const value = new Uint8Array(bf);
   if (numfmt === NUMFMT_UINT32) {
-    // int32
-    return uint32BEtoNumber(bf);
+    // uint32
+    return uint32BEtoNumber(value);
   } else if (numfmt === NUMFMT_UINT64) {
-    // int64
+    // uint64
     return uint64BEtoNumber(value);
+  } else if (numfmt === NUMFMT_UINT16) {
+    // uint16
+    return uint16BEtoNumber(value);
+  } else if (numfmt === NUMFMT_UINT8) {
+    // uint8
+    return uint8BEtoNumber(value);
   }
+  return 0;
 
   // return struct.unpack(this._number_format, bf)[0];
 }
-
 
 export default {
   getExtension,
@@ -150,6 +191,8 @@ export default {
   levenshtein_distance,
   parseHeader,
   readNumber,
+  NUMFMT_UINT8,
+  NUMFMT_UINT16,
   NUMFMT_UINT32,
   NUMFMT_UINT64,
 };
