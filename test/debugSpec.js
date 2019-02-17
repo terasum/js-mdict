@@ -1,10 +1,6 @@
 import { expect } from "chai";
-import struct from "python-struct";
-
 
 import Mdict from "../src";
-
-console.log(struct.pack("<L", 0x3695));
 
 function recorder(dictName, dictPath, func) {
   const startTime = new Date().getTime();

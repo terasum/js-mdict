@@ -7,7 +7,6 @@ import { TextDecoder } from "text-encoding";
 
 import common from "./common";
 import lzo1x from "./lzo-wrapper";
-import ripemd128 from "./ripemd128";
 
 const UTF_16LE_DECODER = new TextDecoder("utf-16le");
 const UTF16 = "UTF-16";
@@ -21,34 +20,13 @@ const BIG5 = "BIG5";
 const GB18030_DECODER = new TextDecoder("gb18030");
 const GB18030 = "GB18030";
 
-
-//-----------------------------
-//        TOOL METHODS
-//-----------------------------
-
-
-/**
- * Creates a new Uint8Array based on two different ArrayBuffers
- *
- * @private
- * @param {ArrayBuffers} buffer1 The first buffer.
- * @param {ArrayBuffers} buffer2 The second buffer.
- * @return {ArrayBuffers} The new ArrayBuffer created out of the two.
- */
-function _appendBuffer(buffer1, buffer2) {
-  const tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
-  tmp.set(new Uint8Array(buffer1), 0);
-  tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
-  return tmp.buffer;
-}
-
 /**
  *
  * class Mdict, the basic mdict diction parser class
  */
 class MDict {
   /**
-   *
+   * mdict constructor
    * @param {string} fname
    * @param {string} passcode
    */
@@ -106,7 +84,9 @@ class MDict {
     this._keyBlockStartOffset = 0;
     this._keyBlockEndOffset = 0;
     this.keyList = [];
-    this._decodeKeyBlock();
+    // decodeKeyBlock method is very slow, avoid invoke dirctly
+    // this._decodeKeyBlock();
+    // console.log(this.keyList);
 
     // -------------------------
     // dict record header section
@@ -120,9 +100,7 @@ class MDict {
       recordBlockCompSize: 0,
     };
     this._decodeRecordHeader();
-    console.log(this.recordHeader);
-    // passed
-    // this._decode_record_block();
+    // console.log(this.recordHeader);
 
     // -------------------------
     // dict record info section
@@ -132,6 +110,7 @@ class MDict {
     this.recordBlockInfoList = [];
     this._decodeRecordInfo();
     // console.log(this.recordBlockInfoList);
+    // console.log(this.recordBlockInfoList);
 
 
     // -------------------------
@@ -140,22 +119,10 @@ class MDict {
     this._recordBlockStartOffset = 0;
     this._recordBlockEndOffset = 0;
     this.keyData = [];
-    this._decodeRecordBlock();
-    console.log(this.keyData);
+    // decodeRecordBlock method is very slow, avoid invoke dirctly
+    // this._decodeRecordBlock();
+    // console.log(this.keyData);
 
-
-    // const d1 = new Date().getTime();
-    // this._key_list = this._readKeyBlockInfo();
-    // const d2 = new Date().getTime();
-    // console.log(`read key used: ${(d2 - d1) / 1000.0} s`);
-
-    // const d3 = new Date().getTime();
-    // this.key_data = this._decode_record_block();
-    // const d4 = new Date().getTime();
-    // console.log(`decod record used: ${(d4 - d3) / 1000.0}`);
-    // for (let i = 0; i < 10; i++) {
-    //   console.log(this.key_data[i].key);
-    // }
     // console.log(this.key_data
     // .map(keyword => ({ k: keyword.key, v: keyword })));
     // TODO: out of memory
@@ -489,7 +456,6 @@ class MDict {
     if (this._version >= 2.0) {
       // this.__skip_bytes(4);
     }
-    console.log(this.keyHeader);
     // set end offset
     this._keyHeaderEndOffset =
     this._keyHeaderStartOffset + bytesNum + 4; /* 4 bytes adler32 checksum length */
@@ -534,7 +500,7 @@ class MDict {
       );
       let kbInfoCompBuff;
       if (this._encrypt === 2) {
-        kbInfoCompBuff = this.__mdx_decrypt(keyBlockInfoBuff);
+        kbInfoCompBuff = common.mdxDecrypt(keyBlockInfoBuff);
       }
       // For version 2.0, will compress by zlib, lzo just just for 1.0
       // key_block_info_compressed[0:8] => compress_type
@@ -661,6 +627,7 @@ class MDict {
   }
 
   /**
+   * STEP 5. decode key block
    * decode key block return the total keys list,
    * Note: this method runs very slow, please do not use this unless special target
    */
@@ -692,7 +659,7 @@ class MDict {
         // # decompress key block
         const header = new ArrayBuffer([0xf0, decompressed_size]);
         const keyBlock = lzo1x.decompress(
-          _appendBuffer(header, kbCompBuff.slice(start + 8, end)),
+          common.appendBuffer(header, kbCompBuff.slice(start + 8, end)),
           decompressed_size, 1308672,
         );
         key_block = bufferToArrayBuffer(keyBlock)
@@ -720,6 +687,7 @@ class MDict {
   }
 
   /**
+   * STEP 6. split keys from key block
    * split key from key block buffer
    * @param {Buffer} keyBlock key block buffer
    */
@@ -761,15 +729,16 @@ class MDict {
     return keyList;
   }
 
+  /**
+   * STEP 7.
+   * decode record header,
+   * includes:
+   * [0:8/4]    - record block number
+   * [8:16/4:8] - num entries the key-value entries number
+   * [16:24/8:12] - record block info size
+   * [24:32/12:16] - record block size
+   */
   _decodeRecordHeader() {
-    /**
-     * decode the record block header section
-     * [0:8/4]    - record block number
-     * [8:16/4:8] - num entries the key-value entries number
-     * [16:24/8:12] - record block info size
-     * [24:32/12:16] - record block size
-     */
-
     this._recordHeaderStartOffset = this._keyBlockInfoEndOffset + this.keyHeader.keyBlocksTotalSize;
     const rhlen = (this._version >= 2.0) ? 4 * 8 : 4 * 4;
     this._recordHeaderEndOffset = this._recordHeaderStartOffset + rhlen;
@@ -794,6 +763,16 @@ class MDict {
     };
   }
 
+  /**
+   * STEP 8.
+   * decode record Info,
+   * [{
+   * compSize,
+   * compAccu,
+   * decompSize,
+   * decomAccu
+   * }]
+   */
   _decodeRecordInfo() {
     this._recordInfoStartOffset = this._recordHeaderEndOffset;
     const riBuff =
@@ -834,8 +813,15 @@ class MDict {
     this.recordBlockInfoList = recordBlockInfoList;
     this._recordInfoEndOffset =
     this._recordInfoStartOffset + this.recordHeader.recordBlockInfoCompSize;
+    // avoid user not invoke the _decodeRecordBlock method
+    this._recordBlockStartOffset = this._recordInfoEndOffset;
   }
 
+  /**
+   * STEP 9.
+   * decode all records block,
+   * this is a slowly method, do not use!
+   */
   _decodeRecordBlock() {
     this._recordBlockStartOffset = this._recordInfoEndOffset;
     const keyData = [];
@@ -877,8 +863,7 @@ class MDict {
           // const passkey = new Uint8Array(8);
           // record_block_compressed.copy(passkey, 0, 4, 8);
           // passkey.set([0x95, 0x36, 0x00, 0x00], 4); // key part 2: fixed data
-          blockBufDecrypted =
-            this.__mdx_decrypt(rbCompBuff);
+          blockBufDecrypted = common.mdxDecrypt(rbCompBuff);
         } else {
           blockBufDecrypted = rbCompBuff.slice(8, rbCompBuff.length);
         }
@@ -891,7 +876,7 @@ class MDict {
           const header = new ArrayBuffer([0xf0, decompSize]);
           // Note: if use lzo, here will LZO_E_OUTPUT_RUNOVER, so ,use mini lzo js
           recordBlock =
-            lzo1x.decompress(_appendBuffer(header, blockBufDecrypted), decompSize, 1308672);
+            lzo1x.decompress(common.appendBuffer(header, blockBufDecrypted), decompSize, 1308672);
           recordBlock = bufferToArrayBuffer(recordBlock)
             .slice(recordBlock.byteOffset, recordBlock.byteOffset + recordBlock.byteLength);
         } else if (rbCompType.toString("hex") === "02000000") {
@@ -961,34 +946,6 @@ class MDict {
 
     this.keyData = keyData;
     this._recordBlockEndOffset = this._recordBlockStartOffset + sizeCounter;
-  }
-
-
-  //-----------------------
-  //  assistant functions
-  //-----------------------
-
-  // def _mdx_decrypt(comp_block):
-  //   key = ripemd128(comp_block[4:8] + pack(b'<L', 0x3695))
-  //   return comp_block[0:8] + _fast_decrypt(comp_block[8:], key)
-  __mdx_decrypt(comp_block) {
-    const key = ripemd128.ripemd128(new BufferList(comp_block.slice(4, 8))
-      .append(Buffer.from([0x95, 0x36, 0x00, 0x00])).slice(0, 8));
-    return new BufferList(comp_block.slice(0, 8))
-      .append(this.__fast_decrypt(comp_block.slice(8), key));
-  }
-
-  __fast_decrypt(data, k) {
-    const b = new Uint8Array(data);
-    const key = new Uint8Array(k);
-    let previous = 0x36;
-    for (let i = 0; i < b.length; ++i) {
-      let t = ((b[i] >> 4) | (b[i] << 4)) & 0xff;
-      t = t ^ previous ^ (i & 0xff) ^ key[i % key.length];
-      previous = b[i];
-      b[i] = t;
-    }
-    return new BufferList(b);
   }
 
   _readBuffer(start, length) {
