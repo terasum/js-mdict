@@ -1,6 +1,8 @@
 
 import { TextDecoder } from "text-encoding";
 import { DOMParser } from "xmldom";
+import BufferList from "bl";
+import Long from "long";
 
 const REGEXP_STRIPKEY = {
   mdx: /[()., '/\\@_-]()/g,
@@ -87,6 +89,57 @@ function parseHeader(header_text) {
   return header_attr;
 }
 
+function uint32BEtoNumber(bytes) {
+  let n = 0;
+  for (let i = 0; i < 3; i++) {
+    n |= bytes[i] & 0xff;
+    n <<= 8;
+  }
+  n |= bytes[3] & 0xff;
+  return n;
+}
+
+function uint64BEtoNumber(bytes) {
+  if (bytes[1] >= 0x20 || bytes[0] > 0) {
+    throw new Error("uint64 larger than 2^53, JS may lost accuracy");
+  }
+  let high = 0;
+  for (let i = 0; i < 3; i++) {
+    high |= bytes[i] & 0xff;
+    high <<= 8;
+  }
+  high |= bytes[3] & 0xff;
+  // ignore > 2^53
+  high = (high & 0x001FFFFF) * 0x100000000;
+  high += bytes[4] * 0x1000000;
+  high += bytes[5] * 0x10000;
+  high += bytes[6] * 0x100;
+  high += bytes[7] & 0xFF;
+
+  return high;
+}
+
+
+const NUMFMT_UINT32 = Symbol("NUM_FMT_UINT32");
+const NUMFMT_UINT64 = Symbol("NUM_FMT_UINT64");
+/**
+ * read number from buffer
+ * @param {BufferList} bf number buffer
+ * @param {string} numfmt number format
+ */
+function readNumber(bf, numfmt) {
+  const value = new Uint8Array(bf);
+  if (numfmt === NUMFMT_UINT32) {
+    // int32
+    return uint32BEtoNumber(bf);
+  } else if (numfmt === NUMFMT_UINT64) {
+    // int64
+    return uint64BEtoNumber(value);
+  }
+
+  // return struct.unpack(this._number_format, bf)[0];
+}
+
 
 export default {
   getExtension,
@@ -96,5 +149,8 @@ export default {
   UTF16,
   levenshtein_distance,
   parseHeader,
+  readNumber,
+  NUMFMT_UINT32,
+  NUMFMT_UINT64,
 };
 
