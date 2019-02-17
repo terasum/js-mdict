@@ -1,5 +1,5 @@
 {
-  "extends": "eslint-config-airbnb",
+  "extends": ["eslint-config-airbnb"],
   "rules": {
     "eqeqeq": "off",
     "curly": "error",
@@ -9,7 +9,13 @@
     "no-plusplus": "off",
     "prefer-destructuring": "off",
     "class-methods-use-this": "off",
-    "camelcase":"off"
+    "camelcase": "off",
+    "no-param-reassign": "off",
+    "no-nested-ternary": "off",
+    "no-mixed-operators": "off",
+    "no-continue": "off",
+    "indent": [2, 2],
+    "no-multi-assign": "off"
 
   }
 }
