@@ -1,4 +1,8 @@
 import pako from "pako";
+import { lemmatizer } from "lemmatizer";
+import dictionary from "dictionary-en-us";
+import nspell from "nspell";
+
 
 import MdictBase from "./MdictBase";
 import common from "./common";
@@ -13,22 +17,6 @@ function isTrue(v) {
 }
 class Mdict extends MdictBase {
 //   constructor(fname, passcode) {
-//       super(fname, passcode);
-
-//     // console.log(this.key_data
-//     // .map(keyword => ({ k: keyword.key, v: keyword })));
-//     // TODO: out of memory
-//     // this.bktree = new BKTree(this.key_data.length);
-//     // this.trie = dart.builder()
-//     //   .build(this.key_data
-//     //     .map(keyword =>
-//     //       // TODO: bktree here will out of memory
-//     //       // this.bktree.add(keyword.key);
-//     //       // cousole.log(keyword.key)
-//     //       ({ k: keyword.key, v: keyword.idx })));
-//     // const d5 = new Date().getTime();
-//     // console.log(`dart build used: ${(d5 - d4) / 1000.0} s`);
-//     // console.log(key_data[0]);
 //   }
   _stripKey() {
     const regexp = common.REGEXP_STRIPKEY[this.ext];
@@ -62,6 +50,7 @@ class Mdict extends MdictBase {
     );
     return data;
   }
+
   _binarySearh(list, word, _s) {
     if (!_s || _s == undefined) {
       // eslint-disable-next-line
@@ -81,6 +70,35 @@ class Mdict extends MdictBase {
       }
     }
     return left;
+  }
+
+  /**
+   * return word's lemmatizer
+   * @param {string} phrase word phrase
+   */
+  lemmer(phrase) {
+    return lemmatizer(phrase);
+  }
+
+  _loadDict() {
+    return new Promise((resolve, reject) => {
+      function onDictLoad(err, dict) {
+        if (err) {
+          reject(err);
+        }
+        resolve(dict);
+      }
+      dictionary(onDictLoad);
+    });
+  }
+
+  suggest(phrase) {
+    return this._loadDict().then((dict) => {
+      const spell = nspell(dict);
+      return spell.suggest(phrase);
+    }, (err) => {
+      throw err;
+    });
   }
 
   /**

@@ -6,9 +6,10 @@ function recorder(dictName, dictPath, func) {
   const startTime = new Date().getTime();
   const mdict = new Mdict(dictPath);
 
-  const word = "star";
-  const data = mdict.lookup(word);
-  console.log(data);
+  const word = "html";
+  mdict.suggest(word).then((data) => {
+    console.log(data);
+  });
 
   const endTime = new Date().getTime();
   const elapsedTime = endTime - startTime;

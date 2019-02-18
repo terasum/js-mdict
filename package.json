@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "npm run build && mocha --require babel-core/register",
+    "coverage": "npm run build && nyc mocha --require babel-core/register",
     "build": "babel src --out-dir lib",
     "eslint": "eslint src"
   },
@@ -30,10 +31,13 @@
     "buffer-dataview": "0.0.2",
     "buffer-to-arraybuffer": "0.0.5",
     "detect-node": "^2.0.3",
+    "dictionary-en-us": "^2.0.0",
     "doublearray": "0.0.2",
     "fs-web": "^1.0.1",
     "js-bktree": "^1.0.0",
+    "lemmatizer": "0.0.1",
     "lodash": "^4.17.10",
+    "nspell": "^2.1.1",
     "pako": "^1.0.6",
     "read-chunk": "^2.1.0",
     "string-to-arraybuffer": "^1.0.0",
@@ -64,8 +68,10 @@
     "eslint-plugin-import": "^2.12.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.9.1",
+    "levenshtein-edit-distance": "^2.0.3",
     "microtime": "^2.1.8",
     "mocha": "^5.2.0",
+    "nyc": "^13.3.0",
     "typescript": "^3.3.3"
   }
 }
