@@ -1,7 +1,7 @@
-import pako from "pako";
 import { lemmatizer } from "lemmatizer";
 import dictionary from "dictionary-en-us";
 import nspell from "nspell";
+import dart from "doublearray";
 
 
 import MdictBase from "./MdictBase";
@@ -51,6 +51,14 @@ class Mdict extends MdictBase {
     return data;
   }
 
+  _lookupKID(word) {
+    const sfunc = this._stripKey();
+    const kbid = this._reduceWordKeyBlock(word, sfunc);
+    const list = this._decodeKeyBlockByKBID(kbid);
+    const i = this._binarySearh(list, word, sfunc);
+    return { idx: i, list };
+  }
+
   _binarySearh(list, word, _s) {
     if (!_s || _s == undefined) {
       // eslint-disable-next-line
@@ -71,6 +79,58 @@ class Mdict extends MdictBase {
     }
     return left;
   }
+
+  /**
+   * get word prefix words
+   * @param {string} phrase the word which needs to find prefix
+   */
+  prefix(phrase) {
+    const sfunc = this._stripKey();
+    const kbid = this._reduceWordKeyBlock(phrase, sfunc);
+    const list = this._decodeKeyBlockByKBID(kbid);
+    const trie = dart.builder()
+      .build(list
+        .map(keyword =>
+          ({ k: keyword.keyText, v: keyword.recordStartOffset })));
+    return trie.commonPrefixSearch(phrase);
+  }
+
+  /**
+   * fuzzy_search
+   * find latest `fuzzy_size` words, and filter by lavenshtein_distance
+   * return wordlist struct:
+   * [
+   * {
+   * ed: Number  // word edit distance
+   * idx: Number // word dict idx
+   * key: string // word key string
+   * }
+   * ]
+   */
+
+  fuzzy_search(word, fuzzy_size, ed_gap) {
+    let fwords = [];
+    const fuzzy_words = [];
+    fwords = fwords.concat(this.prefix(word)
+      .map(kv => ({
+        key: kv.k,
+        idx: kv.v,
+        ed: common.levenshtein_distance(word, kv.k),
+      })));
+    fuzzy_size = fuzzy_size - fwords.length < 0 ? 0 : fuzzy_size - fwords.length;
+    fwords.map((fw) => {
+      const { idx, list } = this._lookupKID(fw.key);
+      return this._find_nabor(idx, Math.ceil(fuzzy_size / fwords.length), list)
+        .filter(item => common.levenshtein_distance(item.keyText, word) <= ed_gap)
+        .map(kitem => fuzzy_words.push({
+          key: kitem.keyText,
+          rofset: kitem.recordStartOffset,
+          ed: common.levenshtein_distance(word, kitem.keyText),
+        }));
+    });
+    return fuzzy_words;
+  }
+
 
   /**
    * return word's lemmatizer
@@ -101,103 +161,34 @@ class Mdict extends MdictBase {
     });
   }
 
+  _find_nabor(idx, fuzsize, list) {
+    const imax = list.length;
+    const istart = idx - fuzsize < 0 ? 0 : idx - fuzsize;
+    const iend = idx + fuzsize > imax ? imax : idx + fuzsize;
+    return list.slice(istart, iend);
+  }
+
+
   /**
-   * fuzzy_search
-   * find latest `fuzzy_size` words, and filter by lavenshtein_distance
-   * return wordlist struct:
-   * [
-   * {
-   * ed: Number  // word edit distance
-   * idx: Number // word dict idx
-   * key: string // word key string
-   * }
-   * ]
+   * parse the definition by word and ofset
+   * @param {string} word the target word
+   * @param {number} rstartofset the record start offset (fuzzy_start rofset)
    */
-  fuzzy_search(word, fuzzy_size, ed_gap) {
-    const fuzzy_words = [];
-    this.prefix(word)
-      .map(item => this._find_nabor(item.v, fuzzy_size)
-        .map((w) => {
-          const ed = common.levenshtein_distance(word, w.key);
-          if (ed < (ed_gap || 5)) {
-            fuzzy_words.push({
-              ed,
-              idx: w.idx,
-              key: w.key,
-            });
-          }
-          return null;
-        }));
-    return fuzzy_words;
-  }
-
-  _find_nabor(sim_idx, fuzzy_size) {
-    const set_size = this.key_data.length;
-    const sim_idx_start = sim_idx - fuzzy_size < 0
-      ? 0
-      : sim_idx - fuzzy_size;
-    const sim_idx_end = sim_idx + fuzzy_size > set_size
-      ? set_size
-      : sim_idx + fuzzy_size;
-
-    const nabor_words = [];
-
-    for (let i = sim_idx_start; i < sim_idx_end; i++) {
-      nabor_words.push({
-        idx: i,
-        key: this.key_data[i].key,
-      });
-    }
-    return nabor_words;
-  }
-
-  _bsearch_sim_idx(word) {
-    let lo = 0;
-    let hi = this.key_data.length - 1;
-    let mid = 0;
-    // find last equal or less than key word
-    while (lo <= hi) {
-      mid = lo + ((hi - lo) >> 1);
-      if (this.key_data[mid].key.localeCompare(word) > 0 /* word > key */) { hi = mid - 1; } else {
-        lo = mid + 1;
-      }
-    }
-    return hi;
-  }
-
-  bsearch(word) {
-    let lo = 0;
-    let hi = this.key_data.length - 1;
-    let mid = 0;
-    while (lo <= hi) {
-      mid = lo + ((hi - lo) >> 1);
-      if (this.key_data[mid].key.localeCompare(word) > 0 /* word > key */) { hi = mid - 1; }
-      if (this.key_data[mid].key.localeCompare(word) < 0 /* word < key */) { lo = mid + 1; }
-      if (this.key_data[mid].key.localeCompare(word) == 0) { break; }
-    }
-    if (lo > hi) {
-      // not found
-      return undefined;
-    }
-
-    return this.parse_defination(mid);
-  }
-  parse_defination(idx) {
-    const word_info = this.key_data[idx];
-    if (!word_info || word_info == undefined) {
-      return "NOTFOUND";
-    }
-    let defbuf = this._readBuffer(word_info.record_comp_start, word_info.record_compressed_size);
-    if (word_info.record_comp_type == "zlib") {
-      defbuf = pako.inflate(defbuf.slice(8, defbuf.length));
-    } else {
-      return "NOT_SUPPORT_COMPRESS_TYPE";
-    }
-    if (this.ext == "mdx") {
-      return this._decoder
-        .decode(defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end));
-    }
-    return defbuf.slice(word_info.relateive_record_start, word_info.relative_record_end);
+  parse_defination(word, rstartofset) {
+    const rid = this._reduceRecordBlock(rstartofset);
+    const { idx, list } = this._lookupKID(word);
+    const nextStart = idx + 1 >= list.length
+      ? this._recordBlockStartOffset +
+      this.recordBlockInfoList[this.recordBlockInfoList.length - 1].keyBlockDecompAccumulator +
+      this.recordBlockInfoList[this.recordBlockInfoList.length - 1].keyBlockDecompSize
+      : list[idx + 1].recordStartOffset;
+    const data = this._decodeRecordBlockByRBID(
+      rid,
+      list[idx].keyText,
+      list[idx].recordStartOffset,
+      nextStart,
+    );
+    return data;
   }
 }
 

@@ -38,6 +38,12 @@ function triple_min(a, b, c) {
 // Damerau–Levenshtein distance  implemention
 // ref: https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
 function levenshtein_distance(a, b) {
+  if (!a || a == undefined) {
+    return 9999;
+  }
+  if (!b || b == undefined) {
+    return 9999;
+  }
   // create a 2 dimensions array
   const m = a.length;
   const n = b.length;
