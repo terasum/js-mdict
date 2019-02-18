@@ -91,7 +91,7 @@ Mdict#fuzzy_search x 2.82 ops/sec ±9.73% (12 runs sampled)
 
 ## Note
 
-**depreciate** if you use js-mdict@3.x, please upgrade to js-mdict@4.0.2+,
+**depreciate** if you use js-mdict@3.x, please upgrade to js-mdict@4.0.3+,
 because js-mdict@3.x was loaded the whole dictionary data to build the index,
 took a lot of time.
 
