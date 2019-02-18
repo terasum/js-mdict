@@ -1,8 +1,8 @@
 {
   "name": "js-mdict",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "mdict (*.mdx, *.mdd) file reader",
-  "main": "lib/index.js",
+  "main": "lib/Mdict.js",
   "scripts": {
     "test": "npm run build && mocha --require babel-core/register",
     "coverage": "npm run build && nyc mocha --require babel-core/register",
