@@ -92,7 +92,7 @@ class Mdict extends MdictBase {
       .build(list
         .map(keyword =>
           ({ k: keyword.keyText, v: keyword.recordStartOffset })));
-    return trie.commonPrefixSearch(phrase);
+    return trie.commonPrefixSearch(phrase).map(item => ({ key: item.k, rofset: item.v }));
   }
 
   /**
@@ -113,8 +113,8 @@ class Mdict extends MdictBase {
     const fuzzy_words = [];
     fwords = fwords.concat(this.prefix(word)
       .map(kv => ({
-        key: kv.k,
-        idx: kv.v,
+        key: kv.key,
+        idx: kv.rofset,
         ed: common.levenshtein_distance(word, kv.k),
       })));
     fuzzy_size = fuzzy_size - fwords.length < 0 ? 0 : fuzzy_size - fwords.length;

@@ -17,6 +17,12 @@ suite
   .add("Mdict#lookup", () => {
     mdict.lookup("incited");
   })
+  .add("Mdict#prefix", () => {
+    mdict.prefix("incited");
+  })
+  .add("Mdict#fuzzy_search", () => {
+    mdict.fuzzy_search("incited");
+  })
   // add listeners
   .on("cycle", (event) => {
     // eslint-disable-next-line no-console
