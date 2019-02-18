@@ -80,7 +80,7 @@ class Mdict extends MdictBase {
     return lemmatizer(phrase);
   }
 
-  _loadDict() {
+  _loadSuggDict() {
     return new Promise((resolve, reject) => {
       function onDictLoad(err, dict) {
         if (err) {
@@ -93,7 +93,7 @@ class Mdict extends MdictBase {
   }
 
   suggest(phrase) {
-    return this._loadDict().then((dict) => {
+    return this._loadSuggDict().then((dict) => {
       const spell = nspell(dict);
       return spell.suggest(phrase);
     }, (err) => {
@@ -177,7 +177,6 @@ class Mdict extends MdictBase {
     }
     if (lo > hi) {
       // not found
-      console.log("not found!");
       return undefined;
     }
 

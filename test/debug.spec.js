@@ -8,12 +8,14 @@ function recorder(dictName, dictPath, func) {
 
   const word = "html";
   mdict.suggest(word).then((data) => {
+    // eslint-disable-next-line
     console.log(data);
   });
 
   const endTime = new Date().getTime();
   const elapsedTime = endTime - startTime;
   func(mdict, elapsedTime);
+  // eslint-disable-next-line
   console.log(`loading ${dictName} dict used: ${(elapsedTime) / 1000.0} s`);
 }
 
