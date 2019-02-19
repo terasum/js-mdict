@@ -1,3 +1,5 @@
+/// <reference path="../typings/Mdict.d.ts" />
+
 import { lemmatizer } from "lemmatizer";
 import dictionary from "dictionary-en-us";
 import nspell from "nspell";

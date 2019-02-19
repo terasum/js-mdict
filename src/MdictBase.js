@@ -1,3 +1,5 @@
+/// <reference path="../typings/MdictBase.d.ts">
+
 import readChunk from "read-chunk";
 import assert from "assert";
 import BufferList from "bl";
