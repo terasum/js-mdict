@@ -15,7 +15,17 @@
     "no-mixed-operators": "off",
     "no-continue": "off",
     "indent": [2, 2],
-    "no-multi-assign": "off"
-
+    "no-multi-assign": "off",
+    "spaced-comment": ["error", "always", {
+      "line": {
+        "markers": ["/"],
+        "exceptions": ["-", "+"]
+      },
+      "block": {
+        "markers": ["!"],
+        "exceptions": ["*"],
+        "balanced": true
+      }
+    }]
   }
 }

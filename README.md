@@ -44,9 +44,9 @@ const mdict = new Mdict(dictPath);
   */
   console.log(mdict.prefix("hello"));
   /*
-  [ { v: 64744840, k: 'he' },
-  { v: 65513175, k: 'hell' },
-  { v: 65552694, k: 'hello' } ]
+  [ { roffset: 64744840, key: 'he' },
+  { roffset: 65513175, key: 'hell' },
+  { roffset: 65552694, key: 'hello' } ]
   */
 
   let word = "informations";
