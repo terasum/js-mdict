@@ -98,6 +98,17 @@ class Mdict extends MdictBase {
   }
 
   /**
+   * get words associated
+   * @param {string} phrase the word which needs to be associated
+   */
+  associate(phrase) {
+    const sfunc = this._stripKey();
+    const kbid = this._reduceWordKeyBlock(phrase, sfunc);
+    const list = this._decodeKeyBlockByKBID(kbid);
+    return list.filter(item => item.keyText.startsWith(phrase))
+  }
+
+  /**
    * fuzzy_search
    * find latest `fuzzy_size` words, and filter by lavenshtein_distance
    * return wordlist struct:
