@@ -1,6 +1,6 @@
 {
   "name": "js-mdict",
-  "version": "4.0.5",
+  "version": "4.0.6",
   "description": "mdict (*.mdx, *.mdd) file reader",
   "main": "lib/Mdict.js",
   "types": "typings/Mdict.d.ts",
@@ -37,13 +37,13 @@
     "fs-web": "^1.0.1",
     "js-bktree": "^1.0.0",
     "lemmatizer": "0.0.1",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.19",
     "nspell": "^2.1.1",
     "pako": "^1.0.6",
     "read-chunk": "^2.1.0",
     "string-to-arraybuffer": "^1.0.0",
     "text-encoding": "^0.6.4",
-    "xmldom": "^0.1.27"
+    "xmldom": "^0.5.0"
   },
   "engines": {
     "node": ">=3.0.0"
