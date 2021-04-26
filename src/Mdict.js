@@ -103,9 +103,15 @@ class Mdict extends MdictBase {
    */
   associate(phrase) {
     const sfunc = this._stripKey();
-    const kbid = this._reduceWordKeyBlock(phrase, sfunc);
+    let kbid = this._reduceWordKeyBlock(phrase, sfunc);
     const list = this._decodeKeyBlockByKBID(kbid);
-    return list.filter(item => item.keyText.startsWith(phrase))
+    const matched = list.filter(item => item.keyText.startsWith(sfunc(phrase)));
+    // in case there are matched items in the next key block
+    while (matched[matched.length-1] === list[list.length-1]) {
+      kbid ++; 
+      matched.concat(this._decodeKeyBlockByKBID(kbid).filter(item => item.keyText.startsWith(sfunc(phrase)))); 
+    };
+    return matched
   }
 
   /**
