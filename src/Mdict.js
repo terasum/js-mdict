@@ -107,7 +107,7 @@ class Mdict extends MdictBase {
     const list = this._decodeKeyBlockByKBID(kbid);
     const matched = list.filter(item => item.keyText.startsWith(sfunc(phrase)));
     // in case there are matched items in the next key block
-    while (matched[matched.length-1].keyText === list[list.length-1].keyText) {
+    while (matched[matched.length-1].keyText === list[list.length-1].keyText && kbid < this.keyBlockInfoList.length) {
       kbid ++;
       list = this._decodeKeyBlockByKBID(kbid);
       matched.concat(list.filter(item => item.keyText.startsWith(sfunc(phrase)))); 
