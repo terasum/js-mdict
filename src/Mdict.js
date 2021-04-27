@@ -104,7 +104,7 @@ class Mdict extends MdictBase {
   associate(phrase) {
     const sfunc = this._stripKey();
     let kbid = this._reduceWordKeyBlock(phrase, sfunc);
-    const list = this._decodeKeyBlockByKBID(kbid);
+    let list = this._decodeKeyBlockByKBID(kbid);
     const matched = list.filter(item => item.keyText.startsWith(sfunc(phrase)));
     // in case there are matched items in the next key block
     while (matched[matched.length-1].keyText === list[list.length-1].keyText && kbid < this.keyBlockInfoList.length) {
