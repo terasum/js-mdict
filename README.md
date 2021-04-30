@@ -85,6 +85,47 @@ const mdict = new Mdict(dictPath);
   */
   console.log(mdict.parse_defination(fws[0].key, fws[0].rofset));
 
+  const matched = mdict.associate("on");
+  console.log(matched);
+  /*
+[
+  { recordStartOffset: 97048935, keyText: 'on' },
+  { recordStartOffset: 97082810, keyText: 'on about' },
+  { recordStartOffset: 97082836, keyText: 'on account' },
+  { recordStartOffset: 97085518, keyText: 'on account of' },
+  { recordStartOffset: 97085549, keyText: 'on account of sb' },
+  { recordStartOffset: 97085580, keyText: 'on account of sb/sth' },
+  { recordStartOffset: 97086890, keyText: 'on account of sth' },
+  { recordStartOffset: 97086921, keyText: 'on a collision course' },
+  { recordStartOffset: 97086970, keyText: 'on aggregate' },
+  { recordStartOffset: 97088131, keyText: 'on a hiding to nothing' },
+  { recordStartOffset: 97089084, keyText: 'on-air' },
+  { recordStartOffset: 97091515, keyText: 'on air' },
+  { recordStartOffset: 97091538, keyText: 'on a knife-edge' },
+  { recordStartOffset: 97093165, keyText: 'on all fours' },
+  { recordStartOffset: 97094283, keyText: 'on all sides' },
+  { recordStartOffset: 97094311, keyText: 'on and off' },
+  { recordStartOffset: 97094343, keyText: 'on and on' },
+  { recordStartOffset: 97095318, keyText: 'on a need-to-know basis' },
+  { recordStartOffset: 97096498, keyText: 'on an even keel' },
+  { recordStartOffset: 97097359, keyText: 'onanism' },
+  { recordStartOffset: 97099666, keyText: 'on a par with' },
+  { recordStartOffset: 97099697, keyText: 'on a par with sb' },
+  { recordStartOffset: 97099728, keyText: 'on a par with sb/sth' },
+  { recordStartOffset: 97100535, keyText: 'on a par with sth' },
+  { recordStartOffset: 97100566, keyText: 'on a razor edge' },
+  { recordStartOffset: 97100595, keyText: 'on a roll' },
+  { recordStartOffset: 97100618, keyText: 'on a shoestring' },
+  { recordStartOffset: 97101718, keyText: 'on a short fuse' },
+  { recordStartOffset: 97101747, keyText: 'on a silver platter' },
+  { recordStartOffset: 97102883, keyText: 'on at to do' },
+  { recordStartOffset: 97102915, keyText: 'on automatic pilot' },
+  { recordStartOffset: 97102947, keyText: 'on a wing and a prayer' },
+  ... 400+ more items
+]
+  */
+  console.log(mdict.parse_defination(matched[0].keyText, matched[0].recordStartOffset));
+
 ```
 
 ## Benchmark

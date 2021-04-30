@@ -23,6 +23,9 @@ suite
   .add("Mdict#fuzzy_search", () => {
     mdict.fuzzy_search("incited");
   })
+  .add("Mdict#associate", () => {
+    mdict.associate("on");
+  })
   // add listeners
   .on("cycle", (event) => {
     // eslint-disable-next-line no-console
