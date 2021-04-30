@@ -1,6 +1,7 @@
 node_modules
 npm-debug.log
 *.mdx
+!mdx/oale8.mdx
 *.mdd
 .DS_Store
 build
