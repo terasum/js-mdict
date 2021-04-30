@@ -1,6 +1,3 @@
-// this is a temporary test file
-//  however, do not delete this file
-
 import { assert } from "chai";
 import Mdict from "../src/Mdict";
 

@@ -132,9 +132,12 @@ const mdict = new Mdict(dictPath);
 
 ```
 Mdict#loading time: 0 sec
-Mdict#lookup x 11.95 ops/sec ±5.33% (39 runs sampled)
-Mdict#prefix x 12.80 ops/sec ±4.67% (34 runs sampled)
-Mdict#fuzzy_search x 2.82 ops/sec ±9.73% (12 runs sampled)
+Mdict#lookup x 34.17 ops/sec ±0.52% (59 runs sampled)
+wooorm#levenshtein x 173,386 ops/sec ±1.51% (88 runs sampled)
+Mdict#prefix x 26.98 ops/sec ±5.89% (47 runs sampled)
+Mdict#fuzzy_search x 6.89 ops/sec ±8.83% (22 runs sampled)
+Mdict#associate x 16.59 ops/sec ±2.94% (44 runs sampled)
+Fastest is Mdict#lookup
 ```
 
 ## Note
