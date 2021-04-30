@@ -13,13 +13,19 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov]
 
 ## Release
 
-### Ver. 4.0.x
+### v 4.0.6
+
+1. support search words by prefix `associate` (the phrase as the words' prefix, not the phrase's prefix as search token just like `prefix` function)
+
+> very thanks to @Danjame
+
+### v4.0.x
 
 1. ES6 implemention
 2. rewrite the decode code, more readable decode api
 3. *NOT SUPPORT BROWSER CURRENTLY*
 
-### Ver 3.1.0 (2018-08-22)
+### v3.1.0 (2018-08-22)
 
 1. add `fuzzy_search` method, which supports fuzzy word search
 
