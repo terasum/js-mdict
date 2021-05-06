@@ -10,6 +10,6 @@
         "outDir": "build/"
     },
     "files": [
-        "./typings/Mdict.d.ts",
+        "typings/mdict.d.ts",
     ]
 }

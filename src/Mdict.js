@@ -1,4 +1,4 @@
-/// <reference path="../typings/Mdict.d.ts" />
+/// <reference path="../typings/mdict.d.ts" />
 
 import { lemmatizer } from "lemmatizer";
 import dictionary from "dictionary-en-us";
@@ -6,7 +6,7 @@ import nspell from "nspell";
 import dart from "doublearray";
 
 
-import MdictBase from "./MdictBase";
+import MdictBase from "./mdict-base";
 import common from "./common";
 
 /**
