@@ -13,7 +13,10 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov]
 
 ## Release
 
-### v 4.0.6
+### v4.0.7
+1. rename Mdict.js to mdict.js , rename MdictBase.js to mdict-base.js, fix import error on ubuntu.
+
+### v4.0.6
 
 1. support search words by prefix `associate` (the phrase as the words' prefix, not the phrase's prefix as search token just like `prefix` function)
 2. some security updates
