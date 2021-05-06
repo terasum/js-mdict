@@ -1,4 +1,4 @@
-declare module "Mdict" {
+declare module "mdict" {
     class KeyHeader {
         keyBlocksNum: number;
         entriesNum: number;
@@ -103,6 +103,7 @@ declare module "Mdict" {
         prefix(word: string): Array<WordIndex>;
         suggest(word: string): Array<string>;
         fuzzy_search(word: string): Array<WordIndex>;
+        associate(word: string): Array<WordIndex>;
         parse_defination(key: string, rofset: number): string;
     }
 

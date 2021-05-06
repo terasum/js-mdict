@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import Mdict from "../src/Mdict";
+import Mdict from "../src/mdict";
 
 function recorder(dictName, dictPath, func) {
   const startTime = new Date().getTime();
