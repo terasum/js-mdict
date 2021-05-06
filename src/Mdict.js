@@ -105,12 +105,13 @@ class Mdict extends MdictBase {
     const sfunc = this._stripKey();
     let kbid = this._reduceWordKeyBlock(phrase, sfunc);
     let list = this._decodeKeyBlockByKBID(kbid);
-    const matched = list.filter(item => item.keyText.startsWith(sfunc(phrase)));
-    // in case there are matched items in the next key block
+    const matched = list.filter(item => item.keyText.toLowerCase().startsWith(sfunc(phrase)));
+    if (!matched.length) return matched;
+    // in case there are matched items in next key block
     while (matched[matched.length-1].keyText === list[list.length-1].keyText && kbid < this.keyBlockInfoList.length) {
       kbid ++;
       list = this._decodeKeyBlockByKBID(kbid);
-      matched.concat(list.filter(item => item.keyText.startsWith(sfunc(phrase)))); 
+      matched.concat(list.filter(item => item.keyText.toLowerCase().startsWith(sfunc(phrase)))); 
     };
     return matched;
   }
