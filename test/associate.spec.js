@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import Mdict from "../src/Mdict";
+import Mdict from "../src/mdict";
 
 
 // loading dictionary
