@@ -958,7 +958,7 @@ class MDictBase {
     const recordStart = start - decompAccumulator;
     const recordEnd = nextStart - decompAccumulator;
     const data = recordBlock.slice(recordStart, recordEnd);
-    return { keyText, definition: this._decoder.decode(data) };
+    return { keyText, recordStartOffset: start, definition: this._decoder.decode(data) };
   }
 
   _readBuffer(start, length) {

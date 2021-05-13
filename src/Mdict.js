@@ -58,7 +58,7 @@ class Mdict extends MdictBase {
     const kbid = this._reduceWordKeyBlock(word, sfunc);
     const list = this._decodeKeyBlockByKBID(kbid);
     const i = this._binarySearh(list, word, sfunc);
-    return { idx: i, list };
+    return { idx: i, list, kbid };
   }
 
   _binarySearh(list, word, _s) {
@@ -94,7 +94,7 @@ class Mdict extends MdictBase {
       .build(list
         .map(keyword =>
           ({ k: keyword.keyText, v: keyword.recordStartOffset })));
-    return trie.commonPrefixSearch(phrase).map(item => ({ key: item.k, rofset: item.v }));
+    return trie.commonPrefixSearch(phrase).map(item => ({ key: item.k, roffset: item.v }));
   }
 
   /**
@@ -135,7 +135,7 @@ class Mdict extends MdictBase {
     fwords = fwords.concat(this.prefix(word)
       .map(kv => ({
         key: kv.key,
-        idx: kv.rofset,
+        idx: kv.roffset,
         ed: common.levenshtein_distance(word, kv.k),
       })));
     fuzzy_size = fuzzy_size - fwords.length < 0 ? 0 : fuzzy_size - fwords.length;
@@ -145,7 +145,7 @@ class Mdict extends MdictBase {
         .filter(item => common.levenshtein_distance(item.keyText, word) <= ed_gap)
         .map(kitem => fuzzy_words.push({
           key: kitem.keyText,
-          rofset: kitem.recordStartOffset,
+          roffset: kitem.recordStartOffset,
           ed: common.levenshtein_distance(word, kitem.keyText),
         }));
     });
@@ -191,13 +191,38 @@ class Mdict extends MdictBase {
 
 
   /**
-   * parse the definition by word and ofset
+   * parse definition by word and roffset
    * @param {string} word the target word
-   * @param {number} rstartofset the record start offset (fuzzy_start rofset)
+   * @param {number} roffset the record start offset
    */
-  parse_defination(word, rstartofset) {
-    const rid = this._reduceRecordBlock(rstartofset);
-    const { idx, list } = this._lookupKID(word);
+  parse_defination(word, roffset) {
+    const rid = this._reduceRecordBlock(roffset);
+    let { idx, list, kbid } = this._lookupKID(word);
+
+    if (list[idx].recordStartOffset !== roffset) {
+
+      const findIndex = (list, roffset) => {
+        let i;
+        list.forEach((item, index) => {
+          if (item.recordStartOffset === roffset) {
+            i = index;
+          };
+        });
+        return i;
+      };
+
+      let i = findIndex(list, roffset);
+      if (!i && kbid > 0) {
+        list = this._decodeKeyBlockByKBID(kbid - 1);
+        i = findIndex(list, roffset);
+      };
+      if (!i && kbid < this.keyBlockInfoList.length) {
+        list = this._decodeKeyBlockByKBID(kbid + 1);
+        i = findIndex(list, roffset);
+      };
+      idx = i;
+    }
+
     const nextStart = idx + 1 >= list.length
       ? this._recordBlockStartOffset +
       this.recordBlockInfoList[this.recordBlockInfoList.length - 1].keyBlockDecompAccumulator +
