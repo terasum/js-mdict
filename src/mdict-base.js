@@ -136,6 +136,7 @@ class MDictBase {
    *
    */
   _readHeader() {
+
     // [0:4], 4 bytes header length (header_byte_size), big-endian, 4 bytes, 16 bits
     const header_size_buffer = this._readBuffer(0, 4);
     const headerByteSize = common.readNumber(header_size_buffer, common.NUMFMT_UINT32);
@@ -165,6 +166,9 @@ class MDictBase {
     // parse header info
     this.header = common.parseHeader(headerText);
 
+    // set header default configuration 
+    this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || "Yes";
+    this.header.StripKey = this.header.StripKey || "Yes";
 
     // encrypted flag
     // 0x00 - no encryption

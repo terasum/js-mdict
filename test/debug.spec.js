@@ -57,7 +57,58 @@ function recorder(dictName, dictPath, func) {
   console.log(`loading ${dictName} dict used: ${(elapsedTime) / 1000.0} s`);
 }
 
-recorder("oale8", "mdx/oale8.mdx", (mdict) => {
-  expect(mdict._version).to.be.equal(2);
-});
+
+function debugSearch(dictName, dictPath, word, callback) {
+  const startTime = new Date().getTime();
+  const mdict = new Mdict(dictPath);
+  const wordIndex = mdict.lookup(word);
+  const endTime = new Date().getTime();
+  console.log(`time costs ${endTime - startTime} ms, wordIndex ${wordIndex}`);
+  callback(wordIndex);
+  
+}
+
+
+function debugStripKey(dictName, dictPath, word, callback) {
+  const startTime = new Date().getTime();
+  const mdict = new Mdict(dictPath);
+  const stripfn = mdict._stripKey();
+  console.log(`stripKey fn: ${stripfn}`);
+  const strippedKey = stripfn(word);
+  const endTime = new Date().getTime();
+  console.log(`time costs ${endTime - startTime} ms, strippedKey: ${strippedKey}`);
+  callback(strippedKey);
+}
+
+
+!function(){
+  // debug case 1:
+  // recorder("oale8", "mdx/oale8.mdx", (mdict) => {
+  //   expect(mdict._version).to.be.equal(2);
+  // });
+
+  // debug case 2
+  // https://github.com/terasum/js-mdict/pull/27
+  debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (wordIndex) =>{
+    console.log(wordIndex);
+  });
+
+  // debug case 3
+  // https://github.com/terasum/js-mdict/pull/27
+  debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'Holanda', (wordIndex) =>{
+    console.log(wordIndex);
+  })
+
+  // debug case 4
+  debugStripKey('dict-01-phhp','mdx/dict-01-phhp.mdx', 'Holanda', (strippedKey) =>{
+    console.log(strippedKey);
+  })
+  // debug case 5
+  debugStripKey('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (strippedKey) =>{
+    console.log(strippedKey);
+  })
+
+
+}();
+
 
