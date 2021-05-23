@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { expect, assert } from "chai";
 
 import Mdict from "../src/mdict";
 
@@ -71,9 +71,8 @@ function debugSearch(dictName, dictPath, word, callback) {
 
 function debugStripKey(dictName, dictPath, word, callback) {
   const startTime = new Date().getTime();
-  const mdict = new Mdict(dictPath);
+  const mdict = new Mdict(dictPath,{keyCaseSensitive: true, stripKey: true});
   const stripfn = mdict._stripKey();
-  console.log(`stripKey fn: ${stripfn}`);
   const strippedKey = stripfn(word);
   const endTime = new Date().getTime();
   console.log(`time costs ${endTime - startTime} ms, strippedKey: ${strippedKey}`);
@@ -83,32 +82,30 @@ function debugStripKey(dictName, dictPath, word, callback) {
 
 !function(){
   // debug case 1:
-  // recorder("oale8", "mdx/oale8.mdx", (mdict) => {
-  //   expect(mdict._version).to.be.equal(2);
-  // });
+  recorder("oale8", "mdx/oale8.mdx", (mdict) => {
+    expect(mdict._version).to.be.equal(2);
+  });
 
   // debug case 2
   // https://github.com/terasum/js-mdict/pull/27
-  debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (wordIndex) =>{
-    console.log(wordIndex);
+  debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'Holanda', (def) =>{
+    assert.isTrue(def.definition === '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>Holanda</font>\r\n<br> 荷兰(欧洲)\r\n\u0000');
   });
 
   // debug case 3
   // https://github.com/terasum/js-mdict/pull/27
-  debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'Holanda', (wordIndex) =>{
-    console.log(wordIndex);
-  })
+  debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (def) =>{
+    assert.isTrue(def.definition === '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>holanda</font>\r\n<br><font color=red> s.f. </font>\r\n<br> 洁白亚麻细布;荷兰麻布\r\n\u0000') }
+  )
 
   // debug case 4
   debugStripKey('dict-01-phhp','mdx/dict-01-phhp.mdx', 'Holanda', (strippedKey) =>{
-    console.log(strippedKey);
+    assert.isTrue(strippedKey === 'Holanda');
   })
   // debug case 5
   debugStripKey('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (strippedKey) =>{
-    console.log(strippedKey);
+    assert.isTrue(strippedKey === 'holanda');
   })
-
-
 }();
 
 

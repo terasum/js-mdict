@@ -232,6 +232,34 @@ function appendBuffer(buffer1, buffer2) {
   return tmp.buffer;
 }
 
+function wordCompare(word1, word2) {
+  if (!word1 || !word2) {
+    throw new error(`invalid word comparation ${word1} and ${word2}`);
+  }
+  // if the two words are indentical, return 0 directly
+  if (word1 === word2) {
+    return 0;
+  }
+  let len = word1.length > word2.length ? word2.length : word1.length;
+  for(let i = 0; i < len; i++) {
+    let w1 = word1[i];
+    let w2 = word2[i];
+    if(w1 == w2) {
+      continue;
+      // case1: w1: `H` w2: `h` or `h` and `H`continue
+    } else if (w1.toLowerCase() == w2.toLowerCase()){
+      continue;
+      // case3: w1: `H` w2: `k`, h < k return -1
+    } else if (w1.toLowerCase() < w2.toLowerCase()) {
+      return -1;
+      // case4: w1: `H` w2: `a`, h > a return 1
+    } else if (w1.toLowerCase() > w2.toLowerCase()) {
+      return 1;
+   }
+  }
+  // case5: `Hello` and `Hellocat`
+  return word1.length < word2.length ? -1 : 1;
+}
 
 export default {
   getExtension,
@@ -244,6 +272,7 @@ export default {
   readNumber,
   mdxDecrypt,
   appendBuffer,
+  wordCompare,
   NUMFMT_UINT8,
   NUMFMT_UINT16,
   NUMFMT_UINT32,
