@@ -14,20 +14,31 @@ import common from "./common";
  * ref: https://github.com/fengdh/mdict-js/blob/efc3fa368edd6e57de229375e2b73bbfe189e6ee/mdict-parser.js:235
  */
 function isTrue(v) {
+  if (!v) return false;
   v = (v).toLowerCase();
   return v === "yes" || v === "true";
 }
 class Mdict extends MdictBase {
-//   constructor(fname, passcode) {
-//   }
+  constructor(fname, searchOptions = {}) {
+    const passcode = searchOptions.passcode || undefined;
+    super(fname, passcode);
+    this.searchOptions = {};
+    searchOptions = searchOptions || {};
+    this.searchOptions.passcode = searchOptions.passcode || undefined;
+    this.searchOptions.keyCaseSensitive = searchOptions.keyCaseSensitive || true;
+    this.searchOptions.stripKey = searchOptions.stripKey || true;
+  }
+
   _stripKey() {
+    const keyCaseSensitive = this.searchOptions.keyCaseSensitive || isTrue(this.header.KeyCaseSensitive);
+    const stripKey = this.searchOptions.stripKey || isTrue(this.header.stripKey);
     const regexp = common.REGEXP_STRIPKEY[this.ext];
-    if (isTrue(this.header.KeyCaseSensitive)) {
-      return isTrue(this.header.StripKey)
+    if (keyCaseSensitive) {
+      return stripKey
         ? function _s(key) { return key.replace(regexp, "$1"); }
         : function _s(key) { return key; };
     }
-    return isTrue(this.header.StripKey || (this._version >= 2.0 ? "" : "yes"))
+    return this.searchOptions.stripKey || isTrue(this.header.stripKey || (this._version >= 2.0 ? "" : "yes"))
       ? function _s(key) { return key.toLowerCase().replace(regexp, "$1"); }
       : function _s(key) { return key.toLowerCase(); };
   }
@@ -38,6 +49,8 @@ class Mdict extends MdictBase {
     const kbid = this._reduceWordKeyBlock(word, sfunc);
     const list = this._decodeKeyBlockByKBID(kbid);
     const i = this._binarySearh(list, word, sfunc);
+    // if not found the key block, return undefined
+    if (!list[i]) return undefined;
     const rid = this._reduceRecordBlock(list[i].recordStartOffset);
     const nextStart = i + 1 >= list.length
       ? this._recordBlockStartOffset +
@@ -71,9 +84,14 @@ class Mdict extends MdictBase {
     let mid = 0;
     while (left < right) {
       mid = left + ((right - left) >> 1);
-      if (_s(word) > _s(list[mid].keyText)) {
+      // if case sensitive, the uppercase word is smaller than lowercase word
+      // for example: `Holanda` is smaller than `abacaxi`
+      // so when comparing with the words, we should use the dictionary order,
+      // however, if we change the word to lowercase, the binary search algorithm will be confused
+      // so, we use the enhanced compare function `common.wordCompare`
+      if (common.wordCompare(_s(word), _s(list[mid].keyText)) > 0) { 
         left = mid + 1;
-      } else if (_s(word) == _s(list[mid].keyText)) {
+      } else if (common.wordCompare(_s(word), _s(list[mid].keyText)) == 0) {
         return mid;
       } else {
         right = mid - 1;
@@ -81,6 +99,8 @@ class Mdict extends MdictBase {
     }
     return left;
   }
+
+
 
   /**
    * get word prefix words

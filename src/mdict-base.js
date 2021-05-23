@@ -490,12 +490,15 @@ class MDictBase {
     let left = 0;
     let right = this.keyBlockInfoList.length;
     let mid = 0;
+
+    // when compare the word, the uppercase words are less than lowercase words
+    // so we compare with the greater symbol is wrong, we needs to use the `common.wordCompare` function
     while (left <= right) {
       mid = left + ((right - left) >> 1);
-      if (_s(phrase) >= _s(this.keyBlockInfoList[mid].firstKey)
-          && _s(phrase) <= _s(this.keyBlockInfoList[mid].lastKey)) {
+      if (common.wordCompare(_s(phrase), _s(this.keyBlockInfoList[mid].firstKey)) >=0
+          && common.wordCompare(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey)) <= 0) {
         return mid;
-      } else if (_s(phrase) >= _s(this.keyBlockInfoList[mid].lastKey)) {
+      } else if (common.wordCompare(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey))>=0) {
         left = mid + 1;
       } else {
         right = mid - 1;

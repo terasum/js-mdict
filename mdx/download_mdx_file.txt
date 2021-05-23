@@ -1,3 +1,7 @@
 oale8.mdx
 Download URL: https://pan.baidu.com/s/1lVc9MnzW9mfNMgkTaVI_sw
 Access token: nsqg
+
+mdx/dict-01-phhp.mdx alias mdx/dict-01-袖珍葡漢漢葡詞典(簡體版).mdx
+Download URL: https://pan.baidu.com/s/1qbLNus_DVv0KlzifvTnhJA 
+Access token: iztp
