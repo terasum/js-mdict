@@ -13,6 +13,11 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov]
 
 ## Release
 
+### v4.0.8
+1. fix uppercase words comparing missed bug
+2. fix `out of index error` when cannot locate word offset
+3. if cannot find the word key block, return `undefined`
+
 ### v4.0.7
 1. rename Mdict.js to mdict.js , rename MdictBase.js to mdict-base.js, fix import error on ubuntu.
 
