@@ -9,15 +9,7 @@ import dart from "doublearray";
 import MdictBase from "./mdict-base";
 import common from "./common";
 
-/**
- * Test if a value of dictionary attribute is true or not.
- * ref: https://github.com/fengdh/mdict-js/blob/efc3fa368edd6e57de229375e2b73bbfe189e6ee/mdict-parser.js:235
- */
-function isTrue(v) {
-  if (!v) return false;
-  v = (v).toLowerCase();
-  return v === "yes" || v === "true";
-}
+
 class Mdict extends MdictBase {
   constructor(fname, searchOptions = {}) {
     const passcode = searchOptions.passcode || undefined;
@@ -30,15 +22,15 @@ class Mdict extends MdictBase {
   }
 
   _stripKey() {
-    const keyCaseSensitive = this.searchOptions.keyCaseSensitive || isTrue(this.header.KeyCaseSensitive);
-    const stripKey = this.searchOptions.stripKey || isTrue(this.header.stripKey);
+    const keyCaseSensitive = this.searchOptions.keyCaseSensitive || common.isTrue(this.header.KeyCaseSensitive);
+    const stripKey = this.searchOptions.stripKey || common.isTrue(this.header.stripKey);
     const regexp = common.REGEXP_STRIPKEY[this.ext];
     if (keyCaseSensitive) {
       return stripKey
         ? function _s(key) { return key.replace(regexp, "$1"); }
         : function _s(key) { return key; };
     }
-    return this.searchOptions.stripKey || isTrue(this.header.stripKey || (this._version >= 2.0 ? "" : "yes"))
+    return this.searchOptions.stripKey || common.isTrue(this.header.stripKey || (this._version >= 2.0 ? "" : "yes"))
       ? function _s(key) { return key.toLowerCase().replace(regexp, "$1"); }
       : function _s(key) { return key.toLowerCase(); };
   }
@@ -89,9 +81,11 @@ class Mdict extends MdictBase {
       // so when comparing with the words, we should use the dictionary order,
       // however, if we change the word to lowercase, the binary search algorithm will be confused
       // so, we use the enhanced compare function `common.wordCompare`
-      if (common.wordCompare(_s(word), _s(list[mid].keyText)) > 0) { 
+      const compareResult = this.compareFn(_s(word), _s(list[mid].keyText))
+      // console.log(`@#@# wordCompare ${_s(word)} ${_s(list[mid].keyText)} ${compareResult} l: ${left} r: ${right} mid: ${mid} ${list[mid].keyText}`)
+      if (compareResult > 0) { 
         left = mid + 1;
-      } else if (common.wordCompare(_s(word), _s(list[mid].keyText)) == 0) {
+      } else if (compareResult == 0) {
         return mid;
       } else {
         right = mid - 1;

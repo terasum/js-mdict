@@ -261,6 +261,29 @@ function wordCompare(word1, word2) {
   return word1.length < word2.length ? -1 : 1;
 }
 
+// if this.header.KeyCaseSensitive = YES,
+// Uppercase character is placed in the start position of the directionary
+// so if `this.header.KeyCaseSensitive = YES` use normalUpperCaseWordCompare, else use wordCompare
+function normalUpperCaseWordCompare(word1, word2) {
+  if (word1 === word2) {
+    return 0;
+  } else if (word1 > word2){
+    return 1;
+  } else {
+    return -1;
+  }
+}
+
+/**
+ * Test if a value of dictionary attribute is true or not.
+ * ref: https://github.com/fengdh/mdict-js/blob/efc3fa368edd6e57de229375e2b73bbfe189e6ee/mdict-parser.js:235
+ */
+function isTrue(v) {
+  if (!v) return false;
+  v = (v).toLowerCase();
+  return v === "yes" || v === "true";
+}
+
 export default {
   getExtension,
   readUTF16,
@@ -273,6 +296,8 @@ export default {
   mdxDecrypt,
   appendBuffer,
   wordCompare,
+  normalUpperCaseWordCompare,
+  isTrue,
   NUMFMT_UINT8,
   NUMFMT_UINT16,
   NUMFMT_UINT32,

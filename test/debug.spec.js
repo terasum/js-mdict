@@ -63,7 +63,7 @@ function debugSearch(dictName, dictPath, word, callback) {
   const mdict = new Mdict(dictPath);
   const wordIndex = mdict.lookup(word);
   const endTime = new Date().getTime();
-  console.log(`time costs ${endTime - startTime} ms, wordIndex ${wordIndex}`);
+  console.log(`${dictName}: time costs ${endTime - startTime} ms, wordIndex ${wordIndex}`);
   callback(wordIndex);
   
 }
@@ -75,7 +75,7 @@ function debugStripKey(dictName, dictPath, word, callback) {
   const stripfn = mdict._stripKey();
   const strippedKey = stripfn(word);
   const endTime = new Date().getTime();
-  console.log(`time costs ${endTime - startTime} ms, strippedKey: ${strippedKey}`);
+  console.log(`${dictName}: time costs ${endTime - startTime} ms, strippedKey: ${strippedKey}`);
   callback(strippedKey);
 }
 
@@ -106,6 +106,22 @@ function debugStripKey(dictName, dictPath, word, callback) {
   debugStripKey('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (strippedKey) =>{
     assert.isTrue(strippedKey === 'holanda');
   })
+  // debug case 6
+  debugStripKey('dict-03-keySensitive', 'mdx/dict-03-ptDict_KeyCaseSensitive.mdx', 'Holanda', (strippedKey) =>{
+    assert.isTrue(strippedKey === 'Holanda');
+  })
+
+    // debug case 7
+  debugSearch('dict-03-keySensitive', 'mdx/dict-03-ptDict_KeyCaseSensitive.mdx', 'Holanda', (def) =>{
+      console.log(def);
+      assert.isTrue(def.keyText === 'Holanda');
+  })
+  // debug case 8
+  debugSearch('dict-01-phhp', 'mdx/dict-01-phhp.mdx', 'Holanda', (def) =>{
+      console.log(def);
+      assert.isTrue(def.keyText === 'Holanda');
+  })
+
 }();
 
 
