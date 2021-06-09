@@ -167,7 +167,8 @@ class MDictBase {
     this.header = common.parseHeader(headerText);
 
     // set header default configuration 
-    this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || "Yes";
+    this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || "No";
+    this.compareFn = common.isTrue(this.header.KeyCaseSensitive) ? common.normalUpperCaseWordCompare : common.wordCompare;
     this.header.StripKey = this.header.StripKey || "Yes";
 
     // encrypted flag
@@ -495,10 +496,10 @@ class MDictBase {
     // so we compare with the greater symbol is wrong, we needs to use the `common.wordCompare` function
     while (left <= right) {
       mid = left + ((right - left) >> 1);
-      if (common.wordCompare(_s(phrase), _s(this.keyBlockInfoList[mid].firstKey)) >=0
-          && common.wordCompare(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey)) <= 0) {
+      if (this.compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].firstKey)) >=0
+          && this.compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey)) <= 0) {
         return mid;
-      } else if (common.wordCompare(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey))>=0) {
+      } else if (this.compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey))>=0) {
         left = mid + 1;
       } else {
         right = mid - 1;
