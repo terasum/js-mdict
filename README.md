@@ -13,6 +13,9 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov]
 
 ## Release
 
+### v4.0.10
+1. rewrite `typings/mdict.d.ts`
+
 ### v4.0.9
 1. rename `typings/Mdict.d.ts` to `typings/mdict.d.ts`
 
