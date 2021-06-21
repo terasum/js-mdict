@@ -68,10 +68,30 @@ function debugSearch(dictName, dictPath, word, callback) {
   
 }
 
+function debugLoadResource(dictName, dictPath, word, callback) {
+  const startTime = new Date().getTime();
+  const mdict = new Mdict(dictPath);
+  const wordIndex = mdict.lookup(word, {resourceKey: true});
+  const endTime = new Date().getTime();
+  console.log(`${dictName}: time costs ${endTime - startTime} ms, wordIndex ${wordIndex}`);
+  callback(wordIndex);
+  
+}
+
 
 function debugStripKey(dictName, dictPath, word, callback) {
   const startTime = new Date().getTime();
   const mdict = new Mdict(dictPath,{keyCaseSensitive: true, stripKey: true});
+  const stripfn = mdict._stripKey();
+  const strippedKey = stripfn(word);
+  const endTime = new Date().getTime();
+  console.log(`${dictName}: time costs ${endTime - startTime} ms, strippedKey: ${strippedKey}`);
+  callback(strippedKey);
+}
+
+function debugNonStripKey(dictName, dictPath, word, callback) {
+  const startTime = new Date().getTime();
+  const mdict = new Mdict(dictPath,{keyCaseSensitive: true, stripKey: false, resourceKey: true});
   const stripfn = mdict._stripKey();
   const strippedKey = stripfn(word);
   const endTime = new Date().getTime();
@@ -120,6 +140,19 @@ function debugStripKey(dictName, dictPath, word, callback) {
   debugSearch('dict-01-phhp', 'mdx/dict-01-phhp.mdx', 'Holanda', (def) =>{
       console.log(def);
       assert.isTrue(def.keyText === 'Holanda');
+  })
+
+  debugNonStripKey('oale8', 'mdx/oale8.mdx', '/uk/headache__gb_1.mp3', (def) =>{
+    console.log(def);
+  })
+
+  debugLoadResource('oale8', 'mdx/oale8.mdd', "\\uk\\xcontend__gb_1.mp3", (def) => {
+    console.log(def.keyText);
+    console.log(def.definition);
+  })
+
+  debugRangeOver('oale8', 'mdx/oale8.mdd', '\\uk\\headache__gb_1.mp3', (def) =>{
+    console.log(def);
   })
 
 }();

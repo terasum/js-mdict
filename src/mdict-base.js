@@ -22,6 +22,10 @@ const BIG5 = "BIG5";
 const GB18030_DECODER = new TextDecoder("gb18030");
 const GB18030 = "GB18030";
 
+const BASE64ENCODER = function(arrayBuffer) {
+  return arrayBuffer.toString('base64');
+}
+
 /**
  *
  * class MdictBase, the basic mdict diction parser class
@@ -168,7 +172,7 @@ class MDictBase {
 
     // set header default configuration 
     this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || "No";
-    this.compareFn = common.isTrue(this.header.KeyCaseSensitive) ? common.normalUpperCaseWordCompare : common.wordCompare;
+    this.compareFn = (common.isTrue(this.header.KeyCaseSensitive) || this.ext === 'mdd') ? common.normalUpperCaseWordCompare : common.wordCompare;
     this.header.StripKey = this.header.StripKey || "Yes";
 
     // encrypted flag
@@ -403,7 +407,7 @@ class MDictBase {
       let stepGap = 0;
       // term_size is for first key and last key
       // let term_size = 0;
-      if (this._encoding === UTF16) {
+      if (this._encoding === UTF16 || this.ext==='mdd') {
         stepGap = (firstKeySize + textTerm) * 2;
         termSize = textTerm * 2;
       } else {
@@ -417,7 +421,7 @@ class MDictBase {
       // text tail
       const lastKeySize = common.readNumber(kbInfoBuff.slice(i, i + byteWidth), byteFmt);
       i += byteWidth;
-      if (this._encoding === UTF16) {
+      if (this._encoding === UTF16 || this.ext==='mdd') {
         stepGap = (lastKeySize + textTerm) * 2;
         // TODO: this is for last key output
         termSize = textTerm * 2;
@@ -473,7 +477,7 @@ class MDictBase {
       kbCompSizeAccu += kbCompSize;
       kbDeCompSizeAccu += kbDecompSize;
     }
-    assert(countEntriesNum === num_entries, "the number_entries should equal the count_num_entries");
+    assert(countEntriesNum === num_entries, `the number_entries ${num_entries} should equal the count_num_entries ${countEntriesNum}`);
     assert(kbCompSizeAccu === this.keyHeader.keyBlocksTotalSize);
     return key_block_info_list;
   }
@@ -494,7 +498,7 @@ class MDictBase {
 
     // when compare the word, the uppercase words are less than lowercase words
     // so we compare with the greater symbol is wrong, we needs to use the `common.wordCompare` function
-    while (left <= right) {
+    while (left < right) {
       mid = left + ((right - left) >> 1);
       if (this.compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].firstKey)) >=0
           && this.compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey)) <= 0) {
@@ -504,6 +508,9 @@ class MDictBase {
       } else {
         right = mid - 1;
       }
+    }
+    if (left >= this.keyBlockInfoList.length) {
+      return -1;
     }
     return left;
   }
@@ -624,7 +631,7 @@ class MDictBase {
   _splitKeyBlock(keyBlock) {
     let delimiter;
     let width;
-    if (this._encoding == "UTF-16") {
+    if (this._encoding == "UTF-16" || this.ext == 'mdd') {
       delimiter = "0000";
       width = 2;
     } else {
@@ -966,6 +973,9 @@ class MDictBase {
     const recordStart = start - decompAccumulator;
     const recordEnd = nextStart - decompAccumulator;
     const data = recordBlock.slice(recordStart, recordEnd);
+    if (this.ext === 'mdd') {
+      return {keyText, definition: BASE64ENCODER(data)}
+    }
     return { keyText, definition: this._decoder.decode(data) };
   }
 
