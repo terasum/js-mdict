@@ -13,6 +13,9 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov]
 
 ## Release
 
+### v4.0.11
+1. fix some `.mdd` file reading issues, and if you search mdd file, use `lookup` method, and it will return base64 data
+
 ### v4.0.10
 1. rewrite `typings/mdict.d.ts`
 

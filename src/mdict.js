@@ -19,12 +19,18 @@ class Mdict extends MdictBase {
     this.searchOptions.passcode = searchOptions.passcode || undefined;
     this.searchOptions.keyCaseSensitive = searchOptions.keyCaseSensitive || true;
     this.searchOptions.stripKey = searchOptions.stripKey || true;
+    this.searchOptions.resourceKey = searchOptions.resourceKey || false;
   }
 
   _stripKey() {
     const keyCaseSensitive = this.searchOptions.keyCaseSensitive || common.isTrue(this.header.KeyCaseSensitive);
+    const resourceKey = this.searchOptions.resourceKey || false;
     const stripKey = this.searchOptions.stripKey || common.isTrue(this.header.stripKey);
     const regexp = common.REGEXP_STRIPKEY[this.ext];
+    if (resourceKey) {
+      return function _s(key) { 
+        return key; }
+    }
     if (keyCaseSensitive) {
       return stripKey
         ? function _s(key) { return key.replace(regexp, "$1"); }
@@ -36,9 +42,14 @@ class Mdict extends MdictBase {
   }
 
 
-  lookup(word) {
+  lookup(word, options = undefined) {
+    this.searchOptions.resourceKey = (options && options.resourceKey) ||  this.searchOptions.resourceKey || false;
     const sfunc = this._stripKey();
     const kbid = this._reduceWordKeyBlock(word, sfunc);
+    // not found
+    if (kbid < 0) {
+      return { keyText: word, definition: null };
+    }
     const list = this._decodeKeyBlockByKBID(kbid);
     const i = this._binarySearh(list, word, sfunc);
     // if not found the key block, return undefined
