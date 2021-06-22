@@ -76,6 +76,7 @@ declare interface WordDefinition {
 declare interface WordIndex {
   keyText: string
   roffset: number
+  recordStartOffset?: number
   ed?: number
 }
 
@@ -83,7 +84,7 @@ declare class Mdict extends mdict.MdictBase {
   constructor(path: string)
   lookup(word: string): WordDefinition
   prefix(word: string): Array<WordIndex>
-  suggest(word: string): Array<string>
+  suggest(word: string): Promise<Array<string>>
   fuzzy_search(word: string): Array<WordIndex>
   associate(word: string): Array<WordIndex>
   parse_defination(key: string, rofset: number): string

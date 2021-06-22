@@ -101,59 +101,59 @@ function debugNonStripKey(dictName, dictPath, word, callback) {
 
 
 !function(){
-  // debug case 1:
-  recorder("oale8", "mdx/oale8.mdx", (mdict) => {
-    expect(mdict._version).to.be.equal(2);
-  });
+  // // debug case 1:
+  // recorder("oale8", "mdx/oale8.mdx", (mdict) => {
+  //   expect(mdict._version).to.be.equal(2);
+  // });
 
-  // debug case 2
-  // https://github.com/terasum/js-mdict/pull/27
-  debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'Holanda', (def) =>{
-    assert.isTrue(def.definition === '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>Holanda</font>\r\n<br> 荷兰(欧洲)\r\n\u0000');
-  });
+  // // debug case 2
+  // // https://github.com/terasum/js-mdict/pull/27
+  // debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'Holanda', (def) =>{
+  //   assert.isTrue(def.definition === '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>Holanda</font>\r\n<br> 荷兰(欧洲)\r\n\u0000');
+  // });
 
-  // debug case 3
-  // https://github.com/terasum/js-mdict/pull/27
-  debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (def) =>{
-    assert.isTrue(def.definition === '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>holanda</font>\r\n<br><font color=red> s.f. </font>\r\n<br> 洁白亚麻细布;荷兰麻布\r\n\u0000') }
-  )
+  // // debug case 3
+  // // https://github.com/terasum/js-mdict/pull/27
+  // debugSearch('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (def) =>{
+  //   assert.isTrue(def.definition === '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>holanda</font>\r\n<br><font color=red> s.f. </font>\r\n<br> 洁白亚麻细布;荷兰麻布\r\n\u0000') }
+  // )
 
-  // debug case 4
-  debugStripKey('dict-01-phhp','mdx/dict-01-phhp.mdx', 'Holanda', (strippedKey) =>{
-    assert.isTrue(strippedKey === 'Holanda');
-  })
-  // debug case 5
-  debugStripKey('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (strippedKey) =>{
-    assert.isTrue(strippedKey === 'holanda');
-  })
-  // debug case 6
-  debugStripKey('dict-03-keySensitive', 'mdx/dict-03-ptDict_KeyCaseSensitive.mdx', 'Holanda', (strippedKey) =>{
-    assert.isTrue(strippedKey === 'Holanda');
-  })
+  // // debug case 4
+  // debugStripKey('dict-01-phhp','mdx/dict-01-phhp.mdx', 'Holanda', (strippedKey) =>{
+  //   assert.isTrue(strippedKey === 'Holanda');
+  // })
+  // // debug case 5
+  // debugStripKey('dict-01-phhp','mdx/dict-01-phhp.mdx', 'holanda', (strippedKey) =>{
+  //   assert.isTrue(strippedKey === 'holanda');
+  // })
+  // // debug case 6
+  // debugStripKey('dict-03-keySensitive', 'mdx/dict-03-ptDict_KeyCaseSensitive.mdx', 'Holanda', (strippedKey) =>{
+  //   assert.isTrue(strippedKey === 'Holanda');
+  // })
 
-    // debug case 7
-  debugSearch('dict-03-keySensitive', 'mdx/dict-03-ptDict_KeyCaseSensitive.mdx', 'Holanda', (def) =>{
-      console.log(def);
-      assert.isTrue(def.keyText === 'Holanda');
-  })
-  // debug case 8
-  debugSearch('dict-01-phhp', 'mdx/dict-01-phhp.mdx', 'Holanda', (def) =>{
-      console.log(def);
-      assert.isTrue(def.keyText === 'Holanda');
-  })
+  //   // debug case 7
+  // debugSearch('dict-03-keySensitive', 'mdx/dict-03-ptDict_KeyCaseSensitive.mdx', 'Holanda', (def) =>{
+  //     console.log(def);
+  //     assert.isTrue(def.keyText === 'Holanda');
+  // })
+  // // debug case 8
+  // debugSearch('dict-01-phhp', 'mdx/dict-01-phhp.mdx', 'Holanda', (def) =>{
+  //     console.log(def);
+  //     assert.isTrue(def.keyText === 'Holanda');
+  // })
 
-  debugNonStripKey('oale8', 'mdx/oale8.mdx', '/uk/headache__gb_1.mp3', (def) =>{
-    console.log(def);
-  })
+  // debugNonStripKey('oale8', 'mdx/oale8.mdx', '/uk/headache__gb_1.mp3', (def) =>{
+  //   console.log(def);
+  // })
 
-  debugLoadResource('oale8', 'mdx/oale8.mdd', "\\uk\\xcontend__gb_1.mp3", (def) => {
+  debugLoadResource('oale8', 'mdx/oale8.mdd', "\\us_pron.png", (def) => {
     console.log(def.keyText);
     console.log(def.definition);
   })
 
-  debugRangeOver('oale8', 'mdx/oale8.mdd', '\\uk\\headache__gb_1.mp3', (def) =>{
-    console.log(def);
-  })
+  // debugRangeOver('oale8', 'mdx/oale8.mdd', '\\uk\\headache__gb_1.mp3', (def) =>{
+  //   console.log(def);
+  // })
 
 }();
 
