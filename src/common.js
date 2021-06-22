@@ -1,17 +1,15 @@
-
-import BufferList from "bl";
-import { TextDecoder } from "text-encoding";
-import { DOMParser } from "xmldom";
-import ripemd128 from "./ripemd128";
+import BufferList from 'bl';
+import { TextDecoder } from 'text-encoding';
+import { DOMParser } from 'xmldom';
+import ripemd128 from './ripemd128';
 
 const REGEXP_STRIPKEY = {
   mdx: /[()., '/\\@_-]()/g,
   mdd: /([.][^.]*$)|[()., '/\\@_-]/g, // strip '.' before file extension that is keeping the last period
 };
 
-const UTF_16LE_DECODER = new TextDecoder("utf-16le");
-const UTF16 = "UTF-16";
-
+const UTF_16LE_DECODER = new TextDecoder('utf-16le');
+const UTF16 = 'UTF-16';
 
 function newUint8Array(buf, offset, len) {
   let ret = new Uint8Array(len);
@@ -19,11 +17,9 @@ function newUint8Array(buf, offset, len) {
   return ret;
 }
 
-
 function readUTF16(buf, offset, length) {
   return UTF_16LE_DECODER.decode(newUint8Array(buf, offset, length));
 }
-
 
 function getExtension(filename, defaultExt) {
   return /(?:\.([^.]+))?$/.exec(filename)[1] || defaultExt;
@@ -67,7 +63,7 @@ function levenshtein_distance(a, b) {
         dp[i][j] = triple_min(
           1 + dp[i - 1][j], // deletion
           1 + dp[i][j - 1], // insertion
-          1 + dp[i - 1][j - 1], // replacement
+          1 + dp[i - 1][j - 1] // replacement
         );
       } else {
         dp[i][j] = dp[i - 1][j - 1];
@@ -82,11 +78,11 @@ function levenshtein_distance(a, b) {
  * @param {string} header_text
  */
 function parseHeader(header_text) {
-  const doc = new DOMParser().parseFromString(header_text, "text/xml");
+  const doc = new DOMParser().parseFromString(header_text, 'text/xml');
   const header_attr = {};
-  let elem = doc.getElementsByTagName("Dictionary")[0];
+  let elem = doc.getElementsByTagName('Dictionary')[0];
   if (!elem) {
-    elem = doc.getElementsByTagName("Library_Data")[0]; // eslint_disable_prefer_destructing
+    elem = doc.getElementsByTagName('Library_Data')[0]; // eslint_disable_prefer_destructing
   }
   for (let i = 0, item; i < elem.attributes.length; i++) {
     item = elem.attributes[i];
@@ -95,15 +91,13 @@ function parseHeader(header_text) {
   return header_attr;
 }
 
-
 /**
  * read in uint8BE Bytes return uint8 number
  * @param {Buffer} bytes Big-endian byte buffer
  */
 function uint8BEtoNumber(bytes) {
-  return bytes[0] & 0xFF;
+  return bytes[0] & 0xff;
 }
-
 
 /**
  * read in uint16BE Bytes return uint16 number
@@ -119,7 +113,6 @@ function uint16BEtoNumber(bytes) {
   return n;
 }
 
-
 /**
  * read in uint32BE Bytes return uint32 number
  * @param {Buffer} bytes Big-endian byte buffer
@@ -133,7 +126,6 @@ function uint32BEtoNumber(bytes) {
   n |= bytes[3];
   return n;
 }
-
 
 /**
  * read in uint32BE Bytes return uint32 number
@@ -150,20 +142,19 @@ function uint64BEtoNumber(bytes) {
   }
   high |= bytes[3] & 0xff;
   // ignore > 2^53
-  high = (high & 0x001FFFFF) * 0x100000000;
+  high = (high & 0x001fffff) * 0x100000000;
   high += bytes[4] * 0x1000000;
   high += bytes[5] * 0x10000;
   high += bytes[6] * 0x100;
-  high += bytes[7] & 0xFF;
+  high += bytes[7] & 0xff;
 
   return high;
 }
 
-
-const NUMFMT_UINT8 = Symbol("NUM_FMT_UINT8");
-const NUMFMT_UINT16 = Symbol("NUM_FMT_UINT16");
-const NUMFMT_UINT32 = Symbol("NUM_FMT_UINT32");
-const NUMFMT_UINT64 = Symbol("NUM_FMT_UINT64");
+const NUMFMT_UINT8 = Symbol('NUM_FMT_UINT8');
+const NUMFMT_UINT16 = Symbol('NUM_FMT_UINT16');
+const NUMFMT_UINT32 = Symbol('NUM_FMT_UINT32');
+const NUMFMT_UINT64 = Symbol('NUM_FMT_UINT64');
 /**
  * read number from buffer
  * @param {BufferList} bf number buffer
@@ -212,10 +203,14 @@ function fast_decrypt(data, k) {
  * @param {Buffer} comp_block data buffer needs to decrypt
  */
 function mdxDecrypt(comp_block) {
-  const key = ripemd128.ripemd128(new BufferList(comp_block.slice(4, 8))
-    .append(Buffer.from([0x95, 0x36, 0x00, 0x00])).slice(0, 8));
-  return new BufferList(comp_block.slice(0, 8))
-    .append(fast_decrypt(comp_block.slice(8), key));
+  const key = ripemd128.ripemd128(
+    new BufferList(comp_block.slice(4, 8))
+      .append(Buffer.from([0x95, 0x36, 0x00, 0x00]))
+      .slice(0, 8)
+  );
+  return new BufferList(comp_block.slice(0, 8)).append(
+    fast_decrypt(comp_block.slice(8), key)
+  );
 }
 
 /**
@@ -241,13 +236,13 @@ function wordCompare(word1, word2) {
     return 0;
   }
   let len = word1.length > word2.length ? word2.length : word1.length;
-  for(let i = 0; i < len; i++) {
+  for (let i = 0; i < len; i++) {
     let w1 = word1[i];
     let w2 = word2[i];
-    if(w1 == w2) {
+    if (w1 == w2) {
       continue;
       // case1: w1: `H` w2: `h` or `h` and `H`continue
-    } else if (w1.toLowerCase() == w2.toLowerCase()){
+    } else if (w1.toLowerCase() == w2.toLowerCase()) {
       continue;
       // case3: w1: `H` w2: `k`, h < k return -1
     } else if (w1.toLowerCase() < w2.toLowerCase()) {
@@ -255,7 +250,7 @@ function wordCompare(word1, word2) {
       // case4: w1: `H` w2: `a`, h > a return 1
     } else if (w1.toLowerCase() > w2.toLowerCase()) {
       return 1;
-   }
+    }
   }
   // case5: `Hello` and `Hellocat`
   return word1.length < word2.length ? -1 : 1;
@@ -265,7 +260,7 @@ function wordCompare(word1, word2) {
 // Uppercase character is placed in the start position of the directionary
 // so if `this.header.KeyCaseSensitive = YES` use normalUpperCaseWordCompare, else use wordCompare
 function normalUpperCaseWordCompare(word1, word2) {
-    return word1.localeCompare(word2);
+  return word1.localeCompare(word2);
   // if (word1 === word2) {
   //   return 0;
   // } else if (word1 > word2){
@@ -281,8 +276,8 @@ function normalUpperCaseWordCompare(word1, word2) {
  */
 function isTrue(v) {
   if (!v) return false;
-  v = (v).toLowerCase();
-  return v === "yes" || v === "true";
+  v = v.toLowerCase();
+  return v === 'yes' || v === 'true';
 }
 
 export default {
@@ -304,4 +299,3 @@ export default {
   NUMFMT_UINT32,
   NUMFMT_UINT64,
 };
-

@@ -11,7 +11,6 @@
  * RIPEMD-128 (c) 1996 Hans Dobbertin, Antoon Bosselaers, and Bart Preneel
  */
 
-
 // implementation
 
 // convert array of number to Uint32Array
@@ -21,7 +20,8 @@ function asUint32Array(arr) {
 
 // concat 2 typed array
 function concat(a, b) {
-  if (!a && !b) throw new Error("Please specify valid arguments for parameters a and b.");
+  if (!a && !b)
+    throw new Error('Please specify valid arguments for parameters a and b.');
   if (!b || b.length === 0) return a;
   if (!a || a.length === 0) return b;
   const c = new a.constructor(a.length + b.length);
@@ -70,16 +70,16 @@ const K = asUint32Array([
 ]);
 const F = [
   function F1(x, y, z) {
-    return (x ^ y ^ z);
+    return x ^ y ^ z;
   },
   function F2(x, y, z) {
-    return (x & y) | ((~x) & z);
+    return (x & y) | (~x & z);
   },
   function F3(x, y, z) {
-    return (x | (~y)) ^ z;
+    return (x | ~y) ^ z;
   },
   function F4(x, y, z) {
-    return (x & z) | (y & (~z));
+    return (x & z) | (y & ~z);
   },
 ];
 
@@ -99,10 +99,15 @@ exports.ripemd128 = function ripemd128(data) {
   let t;
   let tmp;
   let x;
-  const hash = new Uint32Array([0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476]);
+  const hash = new Uint32Array([
+    0x67452301,
+    0xefcdab89,
+    0x98badcfe,
+    0x10325476,
+  ]);
   let bytes = data.length;
 
-  const padding = new Uint8Array(((bytes % 64) < 56 ? 56 : 120) - (bytes % 64));
+  const padding = new Uint8Array((bytes % 64 < 56 ? 56 : 120) - (bytes % 64));
   padding[0] = [0x80];
 
   data = new Uint32Array(concat(data, padding).buffer);
@@ -110,7 +115,7 @@ exports.ripemd128 = function ripemd128(data) {
   // ending with check bits (= little endian 64-bit int, 8 * data.length)
   bytes <<= 3;
   // eslint-disable-next-line
-  x = concat(data, [bytes, bytes >> 31 >> 1]);
+  x = concat(data, [bytes, (bytes >> 31) >> 1]);
   // update hash
   for (i = 0, t = 0, l = x.length; i < l; i += 16, t = 0) {
     aa = aaa = hash[0];
@@ -120,7 +125,10 @@ exports.ripemd128 = function ripemd128(data) {
 
     for (; t < 64; ++t) {
       r = ~~(t / 16);
-      aa = rotl(aa + F[r](bb, cc, dd) + x[i + X[r][t % 16]] + K[r], S[r][t % 16]);
+      aa = rotl(
+        aa + F[r](bb, cc, dd) + x[i + X[r][t % 16]] + K[r],
+        S[r][t % 16]
+      );
 
       tmp = dd;
       dd = cc;
@@ -132,7 +140,10 @@ exports.ripemd128 = function ripemd128(data) {
     for (; t < 128; ++t) {
       r = ~~(t / 16);
       rr = ~~((63 - (t % 64)) / 16);
-      aaa = rotl(aaa + F[rr](bbb, ccc, ddd) + x[i + X[r][t % 16]] + K[r], S[r][t % 16]);
+      aaa = rotl(
+        aaa + F[rr](bbb, ccc, ddd) + x[i + X[r][t % 16]] + K[r],
+        S[r][t % 16]
+      );
 
       tmp = ddd;
       ddd = ccc;
@@ -150,4 +161,3 @@ exports.ripemd128 = function ripemd128(data) {
 
   return new Uint8Array(hash.buffer);
 };
-
