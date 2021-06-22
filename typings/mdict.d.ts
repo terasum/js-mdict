@@ -85,7 +85,7 @@ declare class Mdict extends mdict.MdictBase {
   lookup(word: string): WordDefinition;
   prefix(word: string): Array<WordIndex>;
   suggest(word: string): Promise<Array<string>>;
-  fuzzy_search(word: string): Array<WordIndex>;
+  fuzzy_search(word: string, fuzzy_size: number, ed_gap: number): Array<WordIndex>;
   associate(word: string): Array<WordIndex>;
   parse_defination(key: string, rofset: number): string;
 }
