@@ -6,28 +6,36 @@
 [![GitHub stars](https://img.shields.io/github/stars/terasum/js-mdict.svg)](https://github.com/terasum/js-mdict/stargazers)
 [![GitHub license](https://img.shields.io/github/license/terasum/js-mdict.svg)](https://github.com/terasum/js-mdict/blob/develop/LICENSE)
 
+mdict (_.mdd _.mdx) file reader based on [jeka-kiselyov/mdict](https://github.com/jeka-kiselyov/mdict) .
 
-mdict (*.mdd *.mdx) file reader based on [jeka-kiselyov/mdict](https://github.com/jeka-kiselyov/mdict) .
-
-Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov](https://github.com/jeka-kiselyov/mdict).
+Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](https://github.com/jeka-kiselyov/mdict).
 
 ## Release
 
+## v4.0.12
+
+1. fix typings declaring and reformat codebase
+
 ### v4.0.11
+
 1. fix some `.mdd` file reading issues, and if you search mdd file, use `lookup` method, and it will return base64 data
 
 ### v4.0.10
+
 1. rewrite `typings/mdict.d.ts`
 
 ### v4.0.9
+
 1. rename `typings/Mdict.d.ts` to `typings/mdict.d.ts`
 
 ### v4.0.8
+
 1. fix uppercase words comparing missed bug
 2. fix `out of index error` when cannot locate word offset
 3. if cannot find the word key block, return `undefined`
 
 ### v4.0.7
+
 1. rename Mdict.js to mdict.js , rename MdictBase.js to mdict-base.js, fix import error on ubuntu.
 
 ### v4.0.6
@@ -41,7 +49,7 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and  [jeka-kiselyov]
 
 1. ES6 implemention
 2. rewrite the decode code, more readable decode api
-3. *NOT SUPPORT BROWSER CURRENTLY*
+3. _NOT SUPPORT BROWSER CURRENTLY_
 
 ### v3.1.0 (2018-08-22)
 
@@ -56,34 +64,34 @@ npm install js-mdict
 ```
 
 ```javascript
-import Mdict from "js-mdict";
+import Mdict from 'js-mdict';
 
-const mdict = new Mdict("mdx/oale8.mdx");
+const mdict = new Mdict('mdx/oale8.mdx');
 const mdict = new Mdict(dictPath);
-  console.log(mdict.lookup("hello"));
-  /*
+console.log(mdict.lookup('hello'));
+/*
   { keyText: "hello",
     definition: "你好",
   }
   */
-  console.log(mdict.prefix("hello"));
-  /*
+console.log(mdict.prefix('hello'));
+/*
   [ { roffset: 64744840, key: 'he' },
   { roffset: 65513175, key: 'hell' },
   { roffset: 65552694, key: 'hello' } ]
   */
 
-  let word = "informations";
-  mdict.suggest(word).then((sw) => {
-    // eslint-disable-next-line
-    console.log(sw);
-    // [ 'INFORMATION\'S', 'information' ]
-  });
+let word = 'informations';
+mdict.suggest(word).then((sw) => {
+  // eslint-disable-next-line
+  console.log(sw);
+  // [ 'INFORMATION\'S', 'information' ]
+});
 
-  word = "hitch";
-  const fws = mdict.fuzzy_search(word, 20, 5);
-  console.log(fws);
-  /*
+word = 'hitch';
+const fws = mdict.fuzzy_search(word, 20, 5);
+console.log(fws);
+/*
  [ { key: 'history', rofset: 66627131, ed: 4 },
   { key: 'hit', rofset: 66648124, ed: 2 },
   { key: 'hit back', rofset: 66697464, ed: 4 },
@@ -100,11 +108,11 @@ const mdict = new Mdict(dictPath);
   { key: 'hit for', rofset: 66713795, ed: 4 } ]
 
   */
-  console.log(mdict.parse_defination(fws[0].key, fws[0].rofset));
+console.log(mdict.parse_defination(fws[0].key, fws[0].rofset));
 
-  const matched = mdict.associate("on");
-  console.log(matched);
-  /*
+const matched = mdict.associate('on');
+console.log(matched);
+/*
 [
   { recordStartOffset: 97048935, keyText: 'on' },
   { recordStartOffset: 97082810, keyText: 'on about' },
@@ -141,8 +149,9 @@ const mdict = new Mdict(dictPath);
   ... 400+ more items
 ]
   */
-  console.log(mdict.parse_defination(matched[0].keyText, matched[0].recordStartOffset));
-
+console.log(
+  mdict.parse_defination(matched[0].keyText, matched[0].recordStartOffset)
+);
 ```
 
 ## Benchmark
@@ -168,14 +177,18 @@ and the api has already changed, please do not use that version.
 the api of js-mdict@3.x:
 
 ```javascript
-import Mdict from "js-mdict";
+import Mdict from 'js-mdict';
 
-const mdict = new Mdict("mdx/oale8.mdx");
-console.log(mdict.lookup("hello"));
-console.log(mdict.prefix("hello"));
+const mdict = new Mdict('mdx/oale8.mdx');
+console.log(mdict.lookup('hello'));
+console.log(mdict.prefix('hello'));
 
 // get fuzzy words
-fuzzy_words = mdict.fuzzy_search("wrapper", 5, /* fuzzy words size */ 5, /* edit_distance */);
+fuzzy_words = mdict.fuzzy_search(
+  'wrapper',
+  5,
+  /* fuzzy words size */ 5 /* edit_distance */
+);
 
 /*
 example output:
@@ -193,23 +206,26 @@ example output:
 console.log(mdict.parse_defination(fuzzy_words[0].idx));
 ```
 
-
-
 **depreciate** if you use js-mdict @2.0.3, you can use api shown below:
 
 > Note: 2.0.3 not supports mdd file, and record info encrypted file
 
 ```javascript
-import path from "path";
-import Mdict from "js-mdict";
+import path from 'path';
+import Mdict from 'js-mdict';
 
-const dictPath = path.join(__dirname, "../resource/Collins.mdx");
+const dictPath = path.join(__dirname, '../resource/Collins.mdx');
 const mdict = new Mdict(dictPath);
-mdict.build().then((_mdict) => {
-  console.log("hello", _mdict.lookup("hello"));
-  console.log("world", _mdict.lookup("world"));
-  console.log( _mdict.attr());
-}).catch((err) => { console.error(err); });
+mdict
+  .build()
+  .then((_mdict) => {
+    console.log('hello', _mdict.lookup('hello'));
+    console.log('world', _mdict.lookup('world'));
+    console.log(_mdict.attr());
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 ```
 
 code by terasum with ❤️
