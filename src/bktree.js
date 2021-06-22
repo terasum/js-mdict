@@ -29,7 +29,7 @@ function edit_distance(a, b) {
         dp[i][j] = triple_min(
           1 + dp[i - 1][j], // deletion
           1 + dp[i][j - 1], // insertion
-          1 + dp[i - 1][j - 1], // replacement
+          1 + dp[i - 1][j - 1] // replacement
         );
       } else {
         dp[i][j] = dp[i - 1][j - 1];
@@ -60,18 +60,17 @@ BKNode.prototype.set_word = function set_word(w) {
   this.word = w;
 };
 
-
 class BKTree {
   constructor(word_num) {
     this.tree = new Array(word_num);
     for (let i = 0; i < this.tree.length; i++) {
-      this.tree[i] = new BKNode("");
+      this.tree[i] = new BKNode('');
     }
-    this.rt = new BKNode("");
+    this.rt = new BKNode('');
     this.ptr = 0;
   }
   _add(idx, curr) {
-    if (this.rt.word === "") {
+    if (this.rt.word === '') {
       this.rt.set_word(curr.word);
       this.tree[0] = this.rt;
       return;
@@ -81,7 +80,7 @@ class BKTree {
     // throw Error("stop");
     if (this.tree[idx].next[dist] === -1) {
       /* if no Node exists at this dist from root
-      * make it child of root Node */
+       * make it child of root Node */
 
       // incrementing the pointer for curr Node
       this.ptr++;
@@ -101,7 +100,7 @@ class BKTree {
       return ret;
     }
 
-    if (this.rt.word === "") {
+    if (this.rt.word === '') {
       return ret;
     }
     const cur_rt = this.tree[idx];
@@ -128,7 +127,7 @@ class BKTree {
   }
   add(words) {
     if (!Array.isArray(words)) {
-      throw new Error("words is not array");
+      throw new Error('words is not array');
     }
     words.forEach((element) => {
       this._add(0, new BKNode(element));
@@ -141,4 +140,3 @@ class BKTree {
 }
 
 export default BKTree;
-
