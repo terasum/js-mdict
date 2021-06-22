@@ -173,10 +173,12 @@ class MDictBase {
 
     // set header default configuration
     this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || 'No';
-    this.compareFn =
-      common.isTrue(this.header.KeyCaseSensitive) || this.ext === 'mdd'
-        ? common.normalUpperCaseWordCompare
-        : common.wordCompare;
+    this.compareFn = common.isTrue(this.header.KeyCaseSensitive)
+      ? common.normalUpperCaseWordCompare
+      : common.wordCompare;
+    if (this.ext === 'mdd') {
+      this.compareFn = common.localCompare;
+    }
     this.header.StripKey = this.header.StripKey || 'Yes';
 
     // encrypted flag

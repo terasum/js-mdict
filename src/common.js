@@ -133,7 +133,7 @@ function uint32BEtoNumber(bytes) {
  */
 function uint64BEtoNumber(bytes) {
   if (bytes[1] >= 0x20 || bytes[0] > 0) {
-    throw new Error(`uint64 larger than 2^53, JS may lost accuracy: ${bytes}`);
+    throw new Error(`uint64 larger than 2^53, JS may lost accuracy`);
   }
   let high = 0;
   for (let i = 0; i < 3; i++) {
@@ -260,14 +260,18 @@ function wordCompare(word1, word2) {
 // Uppercase character is placed in the start position of the directionary
 // so if `this.header.KeyCaseSensitive = YES` use normalUpperCaseWordCompare, else use wordCompare
 function normalUpperCaseWordCompare(word1, word2) {
+  if (word1 === word2) {
+    return 0;
+  } else if (word1 > word2) {
+    return 1;
+  } else {
+    return -1;
+  }
+}
+
+// this compare function is for mdd file
+function localCompare(word1, word2) {
   return word1.localeCompare(word2);
-  // if (word1 === word2) {
-  //   return 0;
-  // } else if (word1 > word2){
-  //   return 1;
-  // } else {
-  //   return -1;
-  // }
 }
 
 /**
@@ -293,6 +297,7 @@ export default {
   appendBuffer,
   wordCompare,
   normalUpperCaseWordCompare,
+  localCompare,
   isTrue,
   NUMFMT_UINT8,
   NUMFMT_UINT16,
