@@ -15,8 +15,12 @@ class Mdict extends MdictBase {
     this.searchOptions = {};
     searchOptions = searchOptions || {};
     this.searchOptions.passcode = searchOptions.passcode || undefined;
-    this.searchOptions.keyCaseSensitive = searchOptions.keyCaseSensitive == undefined ? true:searchOptions.stripKey;
-    this.searchOptions.stripKey = searchOptions.stripKey == undefined ? true:searchOptions.stripKey;
+    this.searchOptions.keyCaseSensitive =
+      searchOptions.keyCaseSensitive == undefined
+        ? true
+        : searchOptions.stripKey;
+    this.searchOptions.stripKey =
+      searchOptions.stripKey == undefined ? true : searchOptions.stripKey;
   }
 
   _stripKey() {
@@ -171,6 +175,17 @@ class Mdict extends MdictBase {
   /**
    * fuzzy_search
    * find latest `fuzzy_size` words, and filter by lavenshtein_distance
+   * `fuzzy_size` means find the word's `fuzzy_size` number nabors
+   * and filter with `ed_gap`
+   *
+   * for example, fuzzy_size('hello', 3, 1)
+   * first find hello's nabor:
+   * hell   --> edit distance: 1
+   * hallo  --> edit distance: 1
+   * hall   --> edit distance: 2
+   * the result is:
+   * [hell, hallo]
+   *
    * return wordlist struct:
    * [
    * {

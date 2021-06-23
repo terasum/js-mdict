@@ -271,7 +271,14 @@ function normalUpperCaseWordCompare(word1, word2) {
 
 // this compare function is for mdd file
 function localCompare(word1, word2) {
-  return word1.localeCompare(word2);
+  // return word1.localeCompare(word2);
+  if (word1.localeCompare(word2) === 0) {
+    return 0;
+  } else if (word1 > word2) {
+    return 1;
+  } else {
+    return -1;
+  }
 }
 
 /**

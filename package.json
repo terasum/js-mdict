@@ -8,8 +8,10 @@
     "debug": "npm run build && mocha --require @babel/register test/debug.test.js",
     "test": "npm run build && mocha --require @babel/register test/*.spec.js",
     "coverage": "npm run build && nyc mocha --require @babel/register",
+    "jest": "npm run build && jest test/*.spec.js",
     "build": "babel src --out-dir lib",
-    "eslint": "eslint src"
+    "eslint": "eslint src",
+    "example": "babel-node example/example01.js"
   },
   "repository": "git+https://github.com/terasum/js-mdict.git",
   "keywords": [
@@ -52,6 +54,7 @@
   "devDependencies": {
     "@babel/cli": "^7.14.5",
     "@babel/core": "^7.14.6",
+    "@babel/node": "^7.14.7",
     "@babel/plugin-transform-arrow-functions": "^7.14.5",
     "@babel/plugin-transform-runtime": "^7.14.5",
     "@babel/polyfill": "^7.12.1",

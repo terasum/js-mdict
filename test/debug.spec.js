@@ -18,14 +18,7 @@ function recorder(dictName, dictPath, func) {
   { v: 65552694, k: 'hello' } ]
   */
 
-  let word = 'informations';
-  mdict.suggest(word).then((sw) => {
-    // eslint-disable-next-line
-    console.log(sw);
-    // [ 'INFORMATION\'S', 'information' ]
-  });
-
-  word = 'hitch';
+  const word = 'hitch';
   const fws = mdict.fuzzy_search(word, 20, 5);
   console.log(fws);
   /*
@@ -46,9 +39,6 @@ function recorder(dictName, dictPath, func) {
 
   */
   console.log(mdict.parse_defination(fws[0].key, fws[0].rofset));
-  /*
-  {}
-  */
 
   const endTime = new Date().getTime();
   const elapsedTime = endTime - startTime;
@@ -122,105 +112,136 @@ function debugNonStripKey(dictName, dictPath, word, callback) {
   callback(strippedKey);
 }
 
-!(function () {
-  // debug case 1:
-  recorder('01-oale8', 'mdx/testdict/oale8.mdx', (mdict) => {
-    expect(mdict._version).to.be.equal(2);
+describe('MultDictionary', () => {
+  describe('oale8.mdx', () => {
+    it('#version', () => {
+      // debug case 1:
+      recorder('01-oale8', 'mdx/testdict/oale8.mdx', (mdict) => {
+        expect(mdict._version).to.be.equal(2);
+      });
+    });
   });
 
-  // debug case 2
-  // https://github.com/terasum/js-mdict/pull/27
-  debugSearch(
-    '02-葡汉汉葡',
-    'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
-    'Holanda',
-    (def) => {
-      assert.isTrue(
-        def.definition ===
-          '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>Holanda</font>\r\n<br> 荷兰(欧洲)\r\n\u0000'
+  describe('袖珍葡汉汉葡词典(简体版).mdx', () => {
+    it('#Holanda', () => {
+      // debug case 2
+      // https://github.com/terasum/js-mdict/pull/27
+      debugSearch(
+        '02-葡汉汉葡',
+        'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
+        'Holanda',
+        (def) => {
+          assert.isTrue(
+            def.definition ===
+              '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>Holanda</font>\r\n<br> 荷兰(欧洲)\r\n\u0000'
+          );
+        }
       );
-    }
-  );
+    });
+  });
 
-  // debug case 3
-  // https://github.com/terasum/js-mdict/pull/27
-  debugSearch(
-    '03-葡汉汉葡',
-    'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
-    'holanda',
-    (def) => {
-      assert.isTrue(
-        def.definition ===
-          '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>holanda</font>\r\n<br><font color=red> s.f. </font>\r\n<br> 洁白亚麻细布;荷兰麻布\r\n\u0000'
-      );
-    }
-  );
+  it('#holanda', () => {
+    // debug case 3
+    // https://github.com/terasum/js-mdict/pull/27
+    debugSearch(
+      '03-葡汉汉葡',
+      'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
+      'holanda',
+      (def) => {
+        assert.isTrue(
+          def.definition ===
+            '<br><img src=file://11.gif>\r\n<p><font color=blue size=4>holanda</font>\r\n<br><font color=red> s.f. </font>\r\n<br> 洁白亚麻细布;荷兰麻布\r\n\u0000'
+        );
+      }
+    );
+  });
 
-  // debug case 4
-  debugStripKey(
-    '04-葡汉汉葡',
-    'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
-    'Holanda',
-    (strippedKey) => {
-      assert.isTrue(strippedKey === 'Holanda');
-    }
-  );
-  // debug case 5
-  debugStripKey(
-    '05-葡汉汉葡',
-    'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
-    'holanda',
-    (strippedKey) => {
-      assert.isTrue(strippedKey === 'holanda');
-    }
-  );
-  // debug case 6
-  debugStripKey(
-    '06-大小写敏感',
-    'mdx/testdict/dict-03-ptDict_KeyCaseSensitive.mdx',
-    'Holanda',
-    (strippedKey) => {
-      assert.isTrue(strippedKey === 'Holanda');
-    }
-  );
+  it('#stripKey', () => {
+    // debug case 4
+    debugStripKey(
+      '04-葡汉汉葡',
+      'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
+      'Holanda',
+      (strippedKey) => {
+        assert.isTrue(strippedKey === 'Holanda');
+      }
+    );
+  });
 
-  // debug case 7
-  debugSearchCaseSensitive(
-    '07-大小写敏感',
-    'mdx/testdict/dict-03-ptDict_KeyCaseSensitive.mdx',
-    'Holanda',
-    (def) => {
-      console.log(def);
-      assert.isTrue(def.keyText === 'Holanda');
-    }
-  );
-  // debug case 8
-  debugSearch(
-    '08-葡汉汉葡',
-    'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
-    'Holanda',
-    (def) => {
-      console.log(def);
-      assert.isTrue(def.keyText === 'Holanda');
-    }
-  );
+  it('#stripKey', () => {
+    // debug case 5
+    debugStripKey(
+      '05-葡汉汉葡',
+      'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
+      'holanda',
+      (strippedKey) => {
+        assert.isTrue(strippedKey === 'holanda');
+      }
+    );
+  });
 
-  debugNonStripKey(
-    '09-oale8',
-    'mdx/testdict/oale8.mdx',
-    '/uk/headache__gb_1.mp3',
-    (def) => {
-      console.log(def);
-    }
-  );
+  it('#stripKey', () => {
+    // debug case 8
+    debugSearch(
+      '08-葡汉汉葡',
+      'mdx/testdict/dict-01-袖珍葡汉汉葡词典(简体版).mdx',
+      'Holanda',
+      (def) => {
+        console.log(def);
+        assert.isTrue(def.keyText === 'Holanda');
+      }
+    );
+  });
+});
 
-  debugLoadResource(
-    '10-oale8',
-    'mdx/testdict/oale8.mdd',
-    '\\us_pron.png',
-    (def) => {
-      console.log(def.keyText);
-      console.log(def.definition);
-    }
-  );
-})();
+describe('袖珍葡汉汉葡词典(简体版).mdx', () => {
+  it('#大小写敏感', () => {
+    // debug case 6
+    debugStripKey(
+      '06-大小写敏感',
+      'mdx/testdict/dict-03-ptDict_KeyCaseSensitive.mdx',
+      'Holanda',
+      (strippedKey) => {
+        assert.isTrue(strippedKey === 'Holanda');
+      }
+    );
+  });
+
+  it('#大小写敏感', () => {
+    // debug case 7
+    debugSearchCaseSensitive(
+      '07-大小写敏感',
+      'mdx/testdict/dict-03-ptDict_KeyCaseSensitive.mdx',
+      'Holanda',
+      (def) => {
+        console.log(def);
+        assert.isTrue(def.keyText === 'Holanda');
+      }
+    );
+  });
+});
+
+describe('oale8.mdd', () => {
+  it('#loadResource(1)', () => {
+    debugNonStripKey(
+      '09-oale8',
+      'mdx/testdict/oale8.mdx',
+      '/uk/headache__gb_1.mp3',
+      (def) => {
+        console.log(def);
+      }
+    );
+  });
+
+  it('#loadResource(2)', () => {
+    debugLoadResource(
+      '10-oale8',
+      'mdx/testdict/oale8.mdd',
+      '\\us_pron.png',
+      (def) => {
+        console.log(def.keyText);
+        console.log(def.definition);
+      }
+    );
+  });
+});
