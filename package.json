@@ -11,7 +11,7 @@
     "jest": "npm run build && jest test/*.spec.js",
     "build": "babel src --out-dir lib",
     "eslint": "eslint src",
-    "example": "babel-node example/example01.js"
+    "example": "babel-node example/example.js"
   },
   "repository": "git+https://github.com/terasum/js-mdict.git",
   "keywords": [
