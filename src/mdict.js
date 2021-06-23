@@ -27,12 +27,6 @@ class Mdict extends MdictBase {
       this.searchOptions.stripKey || common.isTrue(this.header.StripKey);
     const regexp = common.REGEXP_STRIPKEY[this.ext];
 
-    if (this.ext === 'mdd') {
-      return function _s(key) {
-        return key;
-      };
-    }
-
     if (keyCaseSensitive) {
       return stripKey
         ? function _s(key) {
