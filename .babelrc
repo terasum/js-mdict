@@ -1,12 +1,4 @@
 {
-    "presets": [
-        ["es2015"]
-    ],
-    "plugins": [
-        "transform-strict-mode",
-        "transform-es2015-modules-commonjs",
-        "transform-es2015-spread",
-        "transform-es2015-destructuring",
-        "transform-es2015-parameters"
-    ]
+  "presets": ["@babel/preset-env"],
+  "plugins": ["@babel/plugin-transform-arrow-functions"]
 }

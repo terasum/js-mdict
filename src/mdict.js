@@ -63,7 +63,7 @@ class Mdict extends MdictBase {
     const list = this._decodeKeyBlockByKBID(kbid);
     const i = this._binarySearh(list, word, sfunc);
     // if not found the key block, return undefined
-    if (!list[i]) return { keyText: word, definition: null };
+    if (i !== -1) return { keyText: word, definition: null };
     const rid = this._reduceRecordBlock(list[i].recordStartOffset);
     const nextStart =
       i + 1 >= list.length
@@ -115,7 +115,7 @@ class Mdict extends MdictBase {
         right = mid - 1;
       }
     }
-    return left;
+    return -1;
   }
 
   /**
