@@ -162,7 +162,7 @@ class Mdict extends MdictBase {
     }
     // to meet the typings
     matched.map((item) => {
-      item.rofset = item.recordStartOffset;
+      item.roffset = item.recordStartOffset;
     });
 
     return matched;
