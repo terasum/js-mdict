@@ -399,6 +399,8 @@ class MDictBase {
       let kbInfoCompBuff;
       if (this._encrypt === 2) {
         kbInfoCompBuff = common.mdxDecrypt(keyBlockInfoBuff);
+      } else if (this._encrypt === 0) {
+        kbInfoCompBuff = keyBlockInfoBuff;
       }
       // For version 2.0, will compress by zlib, lzo just just for 1.0
       // key_block_info_compressed[0:8] => compress_type
