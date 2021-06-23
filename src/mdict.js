@@ -15,8 +15,8 @@ class Mdict extends MdictBase {
     this.searchOptions = {};
     searchOptions = searchOptions || {};
     this.searchOptions.passcode = searchOptions.passcode || undefined;
-    this.searchOptions.keyCaseSensitive = searchOptions.keyCaseSensitive;
-    this.searchOptions.stripKey = searchOptions.stripKey;
+    this.searchOptions.keyCaseSensitive = searchOptions.keyCaseSensitive == undefined ? true:searchOptions.stripKey;
+    this.searchOptions.stripKey = searchOptions.stripKey == undefined ? true:searchOptions.stripKey;
   }
 
   _stripKey() {
