@@ -5,7 +5,7 @@
   "main": "lib/mdict.js",
   "types": "typings/mdict.d.ts",
   "scripts": {
-    "debug": "npm run build && mocha --require @babel/register test/debug.test.js",
+    "debug": "npm run build && mocha --require @babel/register test/debug.spec.js",
     "test": "npm run build && mocha --require @babel/register test/*.spec.js",
     "coverage": "npm run build && nyc mocha --require @babel/register",
     "jest": "npm run build && jest test/*.spec.js",
