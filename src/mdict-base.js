@@ -45,11 +45,6 @@ class MDictBase {
     this._offset = 0;
     // the dictionary file extension
     this.ext = common.getExtension(fname, 'mdx');
-    // determine the encoding and decoder, if extension is *.mdd
-    if (this.ext === 'mdd') {
-      this._encoding = UTF16;
-      this._decoder = UTF_16LE_DECODER;
-    }
 
     // -------------------------
     // dict header section
@@ -178,6 +173,7 @@ class MDictBase {
       : common.wordCompare;
     if (this.ext === 'mdd') {
       this.compareFn = common.localCompare;
+      // this.compareFn = common.normalUpperCaseWordCompare;
     }
     this.header.StripKey = this.header.StripKey || 'Yes';
 
@@ -242,6 +238,11 @@ class MDictBase {
       } else {
         this._decoder = UTF_8_DECODER;
       }
+    }
+    // determine the encoding and decoder, if extension is *.mdd
+    if (this.ext === 'mdd') {
+      this._encoding = UTF16;
+      this._decoder = UTF_16LE_DECODER;
     }
   }
 
@@ -557,12 +558,12 @@ class MDictBase {
       };
     }
     let left = 0;
-    let right = this.keyBlockInfoList.length;
+    let right = this.keyBlockInfoList.length - 1;
     let mid = 0;
 
     // when compare the word, the uppercase words are less than lowercase words
     // so we compare with the greater symbol is wrong, we needs to use the `common.wordCompare` function
-    while (left < right) {
+    while (left <= right) {
       mid = left + ((right - left) >> 1);
       if (
         this.compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].firstKey)) >=
@@ -578,10 +579,10 @@ class MDictBase {
         right = mid - 1;
       }
     }
-    if (left >= this.keyBlockInfoList.length) {
-      return -1;
-    }
-    return left;
+    // if (left >= this.keyBlockInfoList.length) {
+    //   return -1;
+    // }
+    return -1;
   }
 
   /**
