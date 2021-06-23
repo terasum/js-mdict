@@ -1,1 +1,2 @@
-/testdict
+/testdict/*
+!/testdict/.gitkeep
