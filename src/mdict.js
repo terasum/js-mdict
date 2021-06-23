@@ -28,7 +28,7 @@ class Mdict extends MdictBase {
       this.searchOptions.keyCaseSensitive ||
       common.isTrue(this.header.KeyCaseSensitive);
     const stripKey =
-      this.searchOptions.stripKey || common.isTrue(this.header.stripKey);
+      this.searchOptions.stripKey || common.isTrue(this.header.StripKey);
     const regexp = common.REGEXP_STRIPKEY[this.ext];
 
     if (this.ext === 'mdd') {
@@ -48,7 +48,7 @@ class Mdict extends MdictBase {
     }
 
     return this.searchOptions.stripKey ||
-      common.isTrue(this.header.stripKey || (this._version >= 2.0 ? '' : 'yes'))
+      common.isTrue(this.header.StripKey || (this._version >= 2.0 ? '' : 'yes'))
       ? function _s(key) {
           return key.toLowerCase().replace(regexp, '$1');
         }
