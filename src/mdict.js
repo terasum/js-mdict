@@ -69,9 +69,9 @@ class Mdict extends MdictBase {
       i + 1 >= list.length
         ? this._recordBlockStartOffset +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .keyBlockDecompAccumulator +
+            .decompAccumulator +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .keyBlockDecompSize
+            .decompSize
         : list[i + 1].recordStartOffset;
     const data = this._decodeRecordBlockByRBID(
       rid,
@@ -261,9 +261,9 @@ class Mdict extends MdictBase {
       idx + 1 >= list.length
         ? this._recordBlockStartOffset +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .keyBlockDecompAccumulator +
+            .decompAccumulator +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .keyBlockDecompSize
+            .decompSize
         : list[idx + 1].recordStartOffset;
     const data = this._decodeRecordBlockByRBID(
       rid,
