@@ -15,8 +15,8 @@ class Mdict extends MdictBase {
     this.searchOptions = {};
     searchOptions = searchOptions || {};
     this.searchOptions.passcode = searchOptions.passcode || undefined;
-    this.searchOptions.keyCaseSensitive = searchOptions.keyCaseSensitive;
-    this.searchOptions.stripKey = searchOptions.stripKey;
+    this.searchOptions.keyCaseSensitive = searchOptions.keyCaseSensitive == undefined ? true:searchOptions.stripKey;
+    this.searchOptions.stripKey = searchOptions.stripKey == undefined ? true:searchOptions.stripKey;
   }
 
   _stripKey() {
@@ -63,15 +63,15 @@ class Mdict extends MdictBase {
     const list = this._decodeKeyBlockByKBID(kbid);
     const i = this._binarySearh(list, word, sfunc);
     // if not found the key block, return undefined
-    if (i !== -1) return { keyText: word, definition: null };
+    if (i === -1) return { keyText: word, definition: null };
     const rid = this._reduceRecordBlock(list[i].recordStartOffset);
     const nextStart =
       i + 1 >= list.length
         ? this._recordBlockStartOffset +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .keyBlockDecompAccumulator +
+            .decompAccumulator +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .keyBlockDecompSize
+            .decompSize
         : list[i + 1].recordStartOffset;
     const data = this._decodeRecordBlockByRBID(
       rid,
@@ -115,7 +115,7 @@ class Mdict extends MdictBase {
         right = mid - 1;
       }
     }
-    return -1;
+    return left;
   }
 
   /**
@@ -261,9 +261,9 @@ class Mdict extends MdictBase {
       idx + 1 >= list.length
         ? this._recordBlockStartOffset +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .keyBlockDecompAccumulator +
+            .decompAccumulator +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .keyBlockDecompSize
+            .decompSize
         : list[idx + 1].recordStartOffset;
     const data = this._decodeRecordBlockByRBID(
       rid,
