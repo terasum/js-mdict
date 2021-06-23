@@ -70,7 +70,7 @@
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.9.1",
     "levenshtein-edit-distance": "^2.0.3",
-    "microtime": "^2.1.8",
+    "microtime": "^3.0.0",
     "mocha": "^5.2.0",
     "nyc": "^13.3.0",
     "prettier": "2.3.1",

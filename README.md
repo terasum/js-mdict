@@ -76,9 +76,9 @@ console.log(mdict.lookup('hello'));
   */
 console.log(mdict.prefix('hello'));
 /*
-  [ { roffset: 64744840, key: 'he' },
-  { roffset: 65513175, key: 'hell' },
-  { roffset: 65552694, key: 'hello' } ]
+  [ { rofset: 64744840, key: 'he' },
+  { rofset: 65513175, key: 'hell' },
+  { rofset: 65552694, key: 'hello' } ]
   */
 
 let word = 'informations';

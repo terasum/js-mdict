@@ -5,3 +5,6 @@ npm-debug.log
 .DS_Store
 build
 .vscode
+/.nyc_output
+/coverage
+/coverage/*
