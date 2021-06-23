@@ -20,71 +20,85 @@ class Mdict extends MdictBase {
   }
 
   _stripKey() {
-    const keyCaseSensitive =
-      this.searchOptions.keyCaseSensitive ||
-      common.isTrue(this.header.KeyCaseSensitive);
     const stripKey =
       this.searchOptions.stripKey || common.isTrue(this.header.StripKey);
     const regexp = common.REGEXP_STRIPKEY[this.ext];
 
-    if (keyCaseSensitive) {
-      return stripKey
-        ? function _s(key) {
-            return key.replace(regexp, '$1');
-          }
-        : function _s(key) {
-            return key;
-          };
-    }
-
-    return this.searchOptions.stripKey ||
-      common.isTrue(this.header.StripKey || (this._version >= 2.0 ? '' : 'yes'))
+    return stripKey
       ? function _s(key) {
-          return key.toLowerCase().replace(regexp, '$1');
-        }
+        return key.replace(regexp, "$1");
+      }
       : function _s(key) {
-          return key.toLowerCase();
-        };
+        return key;
+      };
   }
 
   lookup(word) {
-    const sfunc = this._stripKey();
-    const kbid = this._reduceWordKeyBlock(word, sfunc);
-    // not found
-    if (kbid < 0) {
-      return { keyText: word, definition: null };
-    }
-    const list = this._decodeKeyBlockByKBID(kbid);
-    const i = this._binarySearh(list, word, sfunc);
+    const record = this._lookupKID(word);
+
     // if not found the key block, return undefined
-    if (i === undefined) return { keyText: word, definition: null };
+    if (record === undefined) {
+      return {
+        keyText: word,
+        definition: null,
+      };
+    }
+
+    const i = record.idx;
+    const list = record.list;
+
     const rid = this._reduceRecordBlock(list[i].recordStartOffset);
     const nextStart =
       i + 1 >= list.length
         ? this._recordBlockStartOffset +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompAccumulator +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompSize
+        this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
+          .decompAccumulator +
+        this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
+          .decompSize
         : list[i + 1].recordStartOffset;
     const data = this._decodeRecordBlockByRBID(
       rid,
       list[i].keyText,
       list[i].recordStartOffset,
-      nextStart
+      nextStart,
     );
     return data;
   }
 
-  _lookupKID(word) {
-    const sfunc = this._stripKey();
-    const kbid = this._reduceWordKeyBlock(word, sfunc);
-    const list = this._decodeKeyBlockByKBID(kbid);
-    const i = this._binarySearh(list, word, sfunc);
-    return { idx: i, list };
+  _isKeyCaseSensitive() {
+    return this.searchOptions.keyCaseSensitive ||
+      common.isTrue(this.header.KeyCaseSensitive);
   }
 
-  _binarySearh(list, word, _s) {
+  _lookupKID(word) {
+    const lookupInternal = (compareFn) => {
+      const sfunc = this._stripKey();
+      const kbid = this._reduceWordKeyBlock(word, sfunc, compareFn);
+      // not found
+      if (kbid < 0) {
+        return undefined;
+      }
+      const list = this._decodeKeyBlockByKBID(kbid);
+      const i = this._binarySearh(list, word, sfunc, compareFn);
+      if (i === undefined) {
+        return undefined;
+      }
+      return { idx: i, list };
+    };
+
+    let record;
+    if (this._isKeyCaseSensitive()) {
+      record = lookupInternal(common.normalUpperCaseWordCompare);
+    } else {
+      record = lookupInternal(common.normalUpperCaseWordCompare);
+      if (record === undefined) {
+        record = lookupInternal(common.wordCompare);
+      }
+    }
+    return record;
+  }
+
+  _binarySearh(list, word, _s, compareFn) {
     if (!_s || _s == undefined) {
       // eslint-disable-next-line
       _s = this._stripKey();
@@ -99,7 +113,7 @@ class Mdict extends MdictBase {
       // so when comparing with the words, we should use the dictionary order,
       // however, if we change the word to lowercase, the binary search algorithm will be confused
       // so, we use the enhanced compare function `common.wordCompare`
-      const compareResult = this.compareFn(_s(word), _s(list[mid].keyText));
+      const compareResult = compareFn(_s(word), _s(list[mid].keyText));
       // console.log(`@#@# wordCompare ${_s(word)} ${_s(list[mid].keyText)} ${compareResult} l: ${left} r: ${right} mid: ${mid} ${list[mid].keyText}`)
       if (compareResult > 0) {
         left = mid + 1;
@@ -112,14 +126,35 @@ class Mdict extends MdictBase {
     return undefined;
   }
 
+  _findList(word) {
+    const findListInternal = (compareFn) => {
+      const sfunc = this._stripKey();
+      const kbid = this._reduceWordKeyBlock(word, sfunc, compareFn);
+      // not found
+      if (kbid < 0) {
+        return undefined;
+      }
+      return {sfunc, kbid, list:this._decodeKeyBlockByKBID(kbid)};
+    };
+
+    let list;
+    if (this._isKeyCaseSensitive()) {
+      list = findListInternal(common.normalUpperCaseWordCompare);
+    } else {
+      list = findListInternal(common.normalUpperCaseWordCompare);
+      if (list === undefined) {
+        list = findListInternal(common.wordCompare);
+      }
+    }
+    return list;
+  }
+
   /**
    * get word prefix words
    * @param {string} phrase the word which needs to find prefix
    */
   prefix(phrase) {
-    const sfunc = this._stripKey();
-    const kbid = this._reduceWordKeyBlock(phrase, sfunc);
-    const list = this._decodeKeyBlockByKBID(kbid);
+    const list = this._findList(phrase).list;
     const trie = dart.builder().build(
       list.map((keyword) => ({
         k: keyword.keyText,
@@ -136,9 +171,10 @@ class Mdict extends MdictBase {
    * @param {string} phrase the word which needs to be associated
    */
   associate(phrase) {
-    const sfunc = this._stripKey();
-    let kbid = this._reduceWordKeyBlock(phrase, sfunc);
-    let list = this._decodeKeyBlockByKBID(kbid);
+    const record = this._findList(phrase);
+    const sfunc = record.sfunc;
+    let kbid = record.kbid;
+    let list = record.list;
     const matched = list.filter((item) =>
       sfunc(item.keyText).startsWith(sfunc(phrase))
     );

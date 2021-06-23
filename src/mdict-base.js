@@ -168,13 +168,7 @@ class MDictBase {
 
     // set header default configuration
     this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || 'No';
-    this.compareFn = common.isTrue(this.header.KeyCaseSensitive)
-      ? common.normalUpperCaseWordCompare
-      : common.wordCompare;
-    if (this.ext === 'mdd') {
-      this.compareFn = common.localCompare;
-      // this.compareFn = common.normalUpperCaseWordCompare;
-    }
+
     this.header.StripKey = this.header.StripKey || 'Yes';
 
     // encrypted flag
@@ -550,7 +544,7 @@ class MDictBase {
    * @param {string} phrase searching phrase
    * @param {function} stripfunc strip key string to compare
    */
-  _reduceWordKeyBlock(phrase, _s) {
+  _reduceWordKeyBlock(phrase, _s, compareFn) {
     if (!_s || _s == undefined) {
       // eslint-disable-next-line
       _s = (word) => {
@@ -566,13 +560,13 @@ class MDictBase {
     while (left <= right) {
       mid = left + ((right - left) >> 1);
       if (
-        this.compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].firstKey)) >=
+        compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].firstKey)) >=
           0 &&
-        this.compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey)) <= 0
+        compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey)) <= 0
       ) {
         return mid;
       } else if (
-        this.compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey)) >= 0
+        compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey)) >= 0
       ) {
         left = mid + 1;
       } else {
