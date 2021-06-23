@@ -67,7 +67,7 @@ class Mdict extends MdictBase {
     const list = this._decodeKeyBlockByKBID(kbid);
     const i = this._binarySearh(list, word, sfunc);
     // if not found the key block, return undefined
-    if (!list[i]) return { keyText: word, definition: null };
+    if (i === undefined) return { keyText: word, definition: null };
     const rid = this._reduceRecordBlock(list[i].recordStartOffset);
     const nextStart =
       i + 1 >= list.length
@@ -102,7 +102,7 @@ class Mdict extends MdictBase {
     let left = 0;
     let right = list.length;
     let mid = 0;
-    while (left < right) {
+    while (left <= right) {
       mid = left + ((right - left) >> 1);
       // if case sensitive, the uppercase word is smaller than lowercase word
       // for example: `Holanda` is smaller than `abacaxi`
@@ -119,7 +119,7 @@ class Mdict extends MdictBase {
         right = mid - 1;
       }
     }
-    return left;
+    return undefined;
   }
 
   /**
