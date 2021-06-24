@@ -104,7 +104,7 @@ class Mdict extends MdictBase {
       _s = this._stripKey();
     }
     let left = 0;
-    let right = list.length;
+    let right = list.length - 1;
     let mid = 0;
     while (left <= right) {
       mid = left + ((right - left) >> 1);
