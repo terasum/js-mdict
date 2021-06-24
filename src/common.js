@@ -229,7 +229,7 @@ function appendBuffer(buffer1, buffer2) {
 
 function wordCompare(word1, word2) {
   if (!word1 || !word2) {
-    throw new error(`invalid word comparation ${word1} and ${word2}`);
+    throw new Error(`invalid word comparation ${word1} and ${word2}`);
   }
   // if the two words are indentical, return 0 directly
   if (word1 === word2) {
