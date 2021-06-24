@@ -347,7 +347,7 @@ class MDictBase {
     this._keyHeaderEndOffset =
       this._keyHeaderStartOffset +
       bytesNum +
-      4; /* 4 bytes adler32 checksum length */
+      (this._version >= 2.0 ? 4 : 0); /* 4 bytes adler32 checksum length, only for version >= 2.0 */
   }
 
   /**
@@ -402,13 +402,16 @@ class MDictBase {
       // TODO: check the alder32 checksum
       // adler32 = unpack('>I', key_block_info_compressed[4:8])[0]
       // assert(adler32 == zlib.adler32(key_block_info) & 0xffffffff)
+
+      // this.keyHeader.keyBlockInfoDecompSize only exist when version >= 2.0
+      assert(
+        this.keyHeader.keyBlockInfoDecompSize == kbInfoBuff.length,
+        'key_block_info length should equal'
+      );
     } else {
       kbInfoBuff = keyBlockInfoBuff;
     }
-    assert(
-      this.keyHeader.keyBlockInfoDecompSize == kbInfoBuff.length,
-      'key_block_info length should equal'
-    );
+
     const key_block_info_list = [];
 
     // init tmp variables
