@@ -2,9 +2,9 @@ import { assert } from 'chai';
 import Mdict from '../src/mdict';
 
 describe('Mdict', () => {
-  describe('Collins', () => {
+  describe('Oxford', () => {
     const mdict = new Mdict(
-      "mdx/testdict/v1.2/Collins COBUILD Advanced Learner's English-Chinese Dictionary/Collins COBUILD Advanced Learner's English-Chinese Dictionary.mdx"
+      "mdx/testdict/v1.2/Oxford Advanced Learner's Dictionary 7th/Oxford Advanced Learner's Dictionary 7th.mdx"
     );
     it('#associate&#parse_defination', () => {
       const matched = mdict.associate('on');
@@ -19,7 +19,7 @@ describe('Mdict', () => {
 
       assert.isTrue(
         defination.definition.startsWith(
-          `<font size=+1 color=purple>on</font><font color=gold>`
+          `<head><link rel=\"stylesheet\" type=\"text/css\" href=\"O7.css\"/>`
         )
       );
     });
@@ -56,8 +56,8 @@ describe('Mdict', () => {
       assert.isArray(result);
       assert.equal(
         result.length,
-        7,
-        'fuzzy_search result.length should be equal with 7'
+        6,
+        'fuzzy_search result.length should be equal with 6'
       );
     });
   });
