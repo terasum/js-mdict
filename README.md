@@ -72,7 +72,7 @@ npm install js-mdict
 ```
 
 ```javascript
-import Mdict from '../src/mdict';
+import Mdict from 'js-mdict';
 
 // Note: *.mdd file only support lookup method.
 
