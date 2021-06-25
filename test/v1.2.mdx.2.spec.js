@@ -2,12 +2,12 @@ import { assert } from 'chai';
 import Mdict from '../src/mdict';
 
 describe('Mdict', () => {
-  describe('Collins', () => {
+  describe('American Heritage', () => {
     const mdict = new Mdict(
-      "mdx/testdict/v1.2/Collins COBUILD Advanced Learner's English-Chinese Dictionary/Collins COBUILD Advanced Learner's English-Chinese Dictionary.mdx"
+      'mdx/testdict/v1.2/The American Heritage Dictionary of English Language/The American Heritage Dictionary of English Language.mdx'
     );
     it('#associate&#parse_defination', () => {
-      const matched = mdict.associate('on');
+      const matched = mdict.associate('bri');
       assert.isTrue(matched.length > 0);
       assert.isTrue(matched != undefined);
       assert.isTrue(matched[0] != undefined);
@@ -19,7 +19,7 @@ describe('Mdict', () => {
 
       assert.isTrue(
         defination.definition.startsWith(
-          `<font size=+1 color=purple>on</font><font color=gold>`
+          `<DIV id=main_wnd>\r\n<DIV style=\"PADDING-RIGHT: 10px; PADDING-LEFT: 10px; FONT-SIZE: 10.5pt; PADDING-BOTTOM: 0px; WIDTH: 100%; LINE-HEIGHT: 1.2em; PADDING-TOP: 10px; FONT-FAMILY: 'Tahoma'\" groupid=\"2\">`
         )
       );
     });
@@ -37,8 +37,8 @@ describe('Mdict', () => {
       assert.isArray(prefix);
       assert.equal(
         prefix.length,
-        2,
-        'definition result.length should be equal with 2'
+        3,
+        'definition result.length should be equal with 3'
       );
     });
     it('#suggest', async () => {
@@ -56,8 +56,8 @@ describe('Mdict', () => {
       assert.isArray(result);
       assert.equal(
         result.length,
-        7,
-        'fuzzy_search result.length should be equal with 7'
+        4,
+        'fuzzy_search result.length should be equal with 4'
       );
     });
   });
