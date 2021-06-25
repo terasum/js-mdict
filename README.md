@@ -12,6 +12,14 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 ## Release
 
+## v4.0.13
+
+1. fix UpperCase key sensitive options logic, details [#41](https://github.com/terasum/js-mdict/issues/41)
+2. fix 1.2 mdx keyblock read bug
+3. correct some Header properties (StripKey..)
+
+> very thanks to @songxiaocheng
+
 ## v4.0.12
 
 1. fix typings declaring and reformat codebase
@@ -64,35 +72,49 @@ npm install js-mdict
 ```
 
 ```javascript
-import Mdict from 'js-mdict';
+import Mdict from '../src/mdict';
 
-const mdict = new Mdict('mdx/oale8.mdx');
-const mdict = new Mdict(dictPath);
-console.log(mdict.lookup('hello'));
+// Note: *.mdd file only support lookup method.
+
+// loading dictionary
+const dict = new Mdict('mdx/testdict/oale8.mdx');
+// console.log(mdict.lookup('interactive'));
+// console.log(mdict.bsearch('interactive'));
+// console.log(mdict.fuzzy_search('interactive', 5));
+// console.log(mdict.prefix('interactive'));
+
+console.log(dict.lookup('hello'));
 /*
   { keyText: "hello",
     definition: "你好",
   }
   */
-console.log(mdict.prefix('hello'));
+
+console.log(dict.prefix('hello'));
+
 /*
-  [ { rofset: 64744840, key: 'he' },
-  { rofset: 65513175, key: 'hell' },
-  { rofset: 65552694, key: 'hello' } ]
+[
+  { key: 'he', rofset: 64744840 },
+  { key: 'hell', rofset: 65513175 },
+  { key: 'hello', rofset: 65552694 }
+]
   */
 
 let word = 'informations';
-mdict.suggest(word).then((sw) => {
+dict.suggest(word).then((sw) => {
   // eslint-disable-next-line
   console.log(sw);
-  // [ 'INFORMATION\'S', 'information' ]
+  /*
+    [ 'information', "information's" ]
+    */
 });
 
 word = 'hitch';
-const fws = mdict.fuzzy_search(word, 20, 5);
+const fws = dict.fuzzy_search(word, 20, 5);
 console.log(fws);
 /*
- [ { key: 'history', rofset: 66627131, ed: 4 },
+[
+  { key: 'history', rofset: 66627131, ed: 4 },
   { key: 'hit', rofset: 66648124, ed: 2 },
   { key: 'hit back', rofset: 66697464, ed: 4 },
   { key: 'hit back', rofset: 66697464, ed: 4 },
@@ -105,53 +127,18 @@ console.log(fws);
   { key: 'hitchhiker', rofset: 66710697, ed: 5 },
   { key: 'hitching', rofset: 66712273, ed: 3 },
   { key: 'hi-tech', rofset: 66712289, ed: 2 },
-  { key: 'hit for', rofset: 66713795, ed: 4 } ]
-
-  */
-console.log(mdict.parse_defination(fws[0].key, fws[0].rofset));
-
-const matched = mdict.associate('on');
-console.log(matched);
-/*
-[
-  { recordStartOffset: 97048935, keyText: 'on' },
-  { recordStartOffset: 97082810, keyText: 'on about' },
-  { recordStartOffset: 97082836, keyText: 'on account' },
-  { recordStartOffset: 97085518, keyText: 'on account of' },
-  { recordStartOffset: 97085549, keyText: 'on account of sb' },
-  { recordStartOffset: 97085580, keyText: 'on account of sb/sth' },
-  { recordStartOffset: 97086890, keyText: 'on account of sth' },
-  { recordStartOffset: 97086921, keyText: 'on a collision course' },
-  { recordStartOffset: 97086970, keyText: 'on aggregate' },
-  { recordStartOffset: 97088131, keyText: 'on a hiding to nothing' },
-  { recordStartOffset: 97089084, keyText: 'on-air' },
-  { recordStartOffset: 97091515, keyText: 'on air' },
-  { recordStartOffset: 97091538, keyText: 'on a knife-edge' },
-  { recordStartOffset: 97093165, keyText: 'on all fours' },
-  { recordStartOffset: 97094283, keyText: 'on all sides' },
-  { recordStartOffset: 97094311, keyText: 'on and off' },
-  { recordStartOffset: 97094343, keyText: 'on and on' },
-  { recordStartOffset: 97095318, keyText: 'on a need-to-know basis' },
-  { recordStartOffset: 97096498, keyText: 'on an even keel' },
-  { recordStartOffset: 97097359, keyText: 'onanism' },
-  { recordStartOffset: 97099666, keyText: 'on a par with' },
-  { recordStartOffset: 97099697, keyText: 'on a par with sb' },
-  { recordStartOffset: 97099728, keyText: 'on a par with sb/sth' },
-  { recordStartOffset: 97100535, keyText: 'on a par with sth' },
-  { recordStartOffset: 97100566, keyText: 'on a razor edge' },
-  { recordStartOffset: 97100595, keyText: 'on a roll' },
-  { recordStartOffset: 97100618, keyText: 'on a shoestring' },
-  { recordStartOffset: 97101718, keyText: 'on a short fuse' },
-  { recordStartOffset: 97101747, keyText: 'on a silver platter' },
-  { recordStartOffset: 97102883, keyText: 'on at to do' },
-  { recordStartOffset: 97102915, keyText: 'on automatic pilot' },
-  { recordStartOffset: 97102947, keyText: 'on a wing and a prayer' },
-  ... 400+ more items
+  { key: 'hit for', rofset: 66713795, ed: 4 }
 ]
+
   */
-console.log(
-  mdict.parse_defination(matched[0].keyText, matched[0].recordStartOffset)
-);
+console.log(dict.parse_defination(fws[0].key, fws[0].rofset));
+/*
+
+{
+  keyText: 'history',
+  definition: `<link rel="stylesheet" type="text/css" href="oalecd8e.css"><script src="jquery.js" charset="utf-8" type="text/javascript" language="javascript"></script><script src="oalecd8e.js" charset="utf-8" type="text/javascript" language="javascript"></script><span id="history_e" name="history" idm_id="000017272" class="entry"><span class="h-g"><span class="top-g"><span...
+}
+  */
 ```
 
 ## Benchmark
