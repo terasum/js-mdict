@@ -88,11 +88,11 @@ class Mdict extends MdictBase {
 
     let record;
     if (this._isKeyCaseSensitive()) {
-      record = lookupInternal(common.normalUpperCaseWordCompare);
+      record = lookupInternal(common.caseSensitiveCompare);
     } else {
-      record = lookupInternal(common.normalUpperCaseWordCompare);
+      record = lookupInternal(common.caseSensitiveMatchCompare);
       if (record === undefined) {
-        record = lookupInternal(common.wordCompare);
+        record = lookupInternal(common.caseInsensitiveMatchCompare);
       }
     }
     return record;
@@ -108,13 +108,7 @@ class Mdict extends MdictBase {
     let mid = 0;
     while (left <= right) {
       mid = left + ((right - left) >> 1);
-      // if case sensitive, the uppercase word is smaller than lowercase word
-      // for example: `Holanda` is smaller than `abacaxi`
-      // so when comparing with the words, we should use the dictionary order,
-      // however, if we change the word to lowercase, the binary search algorithm will be confused
-      // so, we use the enhanced compare function `common.wordCompare`
       const compareResult = compareFn(_s(word), _s(list[mid].keyText));
-      // console.log(`@#@# wordCompare ${_s(word)} ${_s(list[mid].keyText)} ${compareResult} l: ${left} r: ${right} mid: ${mid} ${list[mid].keyText}`)
       if (compareResult > 0) {
         left = mid + 1;
       } else if (compareResult == 0) {
@@ -139,12 +133,9 @@ class Mdict extends MdictBase {
 
     let list;
     if (this._isKeyCaseSensitive()) {
-      list = findListInternal(common.normalUpperCaseWordCompare);
+      list = findListInternal(common.caseSensitiveCompare);
     } else {
-      list = findListInternal(common.normalUpperCaseWordCompare);
-      if (list === undefined) {
-        list = findListInternal(common.wordCompare);
-      }
+      list = findListInternal(common.caseSensitiveMatchCompare);
     }
     return list;
   }

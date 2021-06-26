@@ -227,58 +227,34 @@ function appendBuffer(buffer1, buffer2) {
   return tmp.buffer;
 }
 
-function wordCompare(word1, word2) {
+// by ASCII
+function plainCompare(word1, word2) {
+  return word1 === word2 ? 0 : (word1 > word2 ? 1 : -1);
+}
+
+// Case-sensitive match comparison but in case-insensitive mdict key order (aAbB...yYzZ)
+function caseSensitiveMatchCompare(word1, word2) {
   if (!word1 || !word2) {
-    throw new Error(`invalid word comparation ${word1} and ${word2}`);
+    throw new Error(`invalid word comparison ${word1} and ${word2}`);
   }
-  // if the two words are indentical, return 0 directly
-  if (word1 === word2) {
-    return 0;
-  }
-  let len = word1.length > word2.length ? word2.length : word1.length;
-  for (let i = 0; i < len; i++) {
-    let w1 = word1[i];
-    let w2 = word2[i];
-    if (w1 == w2) {
-      continue;
-      // case1: w1: `H` w2: `h` or `h` and `H`continue
-    } else if (w1.toLowerCase() == w2.toLowerCase()) {
-      continue;
-      // case3: w1: `H` w2: `k`, h < k return -1
-    } else if (w1.toLowerCase() < w2.toLowerCase()) {
-      return -1;
-      // case4: w1: `H` w2: `a`, h > a return 1
-    } else if (w1.toLowerCase() > w2.toLowerCase()) {
-      return 1;
-    }
-  }
-  // case5: `Hello` and `Hellocat`
-  return word1.length < word2.length ? -1 : 1;
+  const compare = plainCompare(word1.toLocaleLowerCase(), word2.toLocaleLowerCase());
+  return compare === 0 ? -plainCompare(word1, word2) : compare;
 }
 
-// if this.header.KeyCaseSensitive = YES,
-// Uppercase character is placed in the start position of the directionary
-// so if `this.header.KeyCaseSensitive = YES` use normalUpperCaseWordCompare, else use wordCompare
-function normalUpperCaseWordCompare(word1, word2) {
-  if (word1 === word2) {
-    return 0;
-  } else if (word1 > word2) {
-    return 1;
-  } else {
-    return -1;
+// Case-insensitive match comparison in case-insensitive mdict key order (aAbB...yYzZ)
+function caseInsensitiveMatchCompare(word1, word2) {
+  if (!word1 || !word2) {
+    throw new Error(`invalid word comparison ${word1} and ${word2}`);
   }
+  return plainCompare(word1.toLocaleLowerCase(), word2.toLocaleLowerCase());
 }
 
-// this compare function is for mdd file
-function localCompare(word1, word2) {
-  // return word1.localeCompare(word2);
-  if (word1.localeCompare(word2) === 0) {
-    return 0;
-  } else if (word1 > word2) {
-    return 1;
-  } else {
-    return -1;
+// Case-sensitive match comparison in case-sensitive mdict key order (AB...YZab...cd)
+function caseSensitiveCompare(word1, word2) {
+  if (!word1 || !word2) {
+    throw new Error(`invalid word comparison ${word1} and ${word2}`);
   }
+  return plainCompare(word1, word2);
 }
 
 /**
@@ -302,9 +278,9 @@ export default {
   readNumber,
   mdxDecrypt,
   appendBuffer,
-  wordCompare,
-  normalUpperCaseWordCompare,
-  localCompare,
+  caseSensitiveMatchCompare,
+  caseInsensitiveMatchCompare,
+  caseSensitiveCompare,
   isTrue,
   NUMFMT_UINT8,
   NUMFMT_UINT16,
