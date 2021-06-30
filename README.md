@@ -12,7 +12,11 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 ## Release
 
-## v4.0.13
+## v4.0.14
+1. fix babel-runtime dependencies issue
+
+
+### v4.0.13
 
 1. fix UpperCase key sensitive options logic, details [#41](https://github.com/terasum/js-mdict/issues/41)
 2. fix 1.2 mdx keyblock read bug
@@ -20,7 +24,7 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 > very thanks to @songxiaocheng
 
-## v4.0.12
+### v4.0.12
 
 1. fix typings declaring and reformat codebase
 
