@@ -26,11 +26,11 @@ class Mdict extends MdictBase {
 
     return stripKey
       ? function _s(key) {
-        return key.replace(regexp, "$1");
-      }
+          return key.replace(regexp, '$1');
+        }
       : function _s(key) {
-        return key;
-      };
+          return key;
+        };
   }
 
   lookup(word) {
@@ -51,23 +51,25 @@ class Mdict extends MdictBase {
     const nextStart =
       i + 1 >= list.length
         ? this._recordBlockStartOffset +
-        this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-          .decompAccumulator +
-        this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-          .decompSize
+          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
+            .decompAccumulator +
+          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
+            .decompSize
         : list[i + 1].recordStartOffset;
     const data = this._decodeRecordBlockByRBID(
       rid,
       list[i].keyText,
       list[i].recordStartOffset,
-      nextStart,
+      nextStart
     );
     return data;
   }
 
   _isKeyCaseSensitive() {
-    return this.searchOptions.keyCaseSensitive ||
-      common.isTrue(this.header.KeyCaseSensitive);
+    return (
+      this.searchOptions.keyCaseSensitive ||
+      common.isTrue(this.header.KeyCaseSensitive)
+    );
   }
 
   _lookupKID(word) {
@@ -134,7 +136,7 @@ class Mdict extends MdictBase {
       if (kbid < 0) {
         return undefined;
       }
-      return {sfunc, kbid, list:this._decodeKeyBlockByKBID(kbid)};
+      return { sfunc, kbid, list: this._decodeKeyBlockByKBID(kbid) };
     };
 
     let list;
@@ -155,6 +157,9 @@ class Mdict extends MdictBase {
    */
   prefix(phrase) {
     const list = this._findList(phrase).list;
+    if (!list) {
+      return [];
+    }
     const trie = dart.builder().build(
       list.map((keyword) => ({
         k: keyword.keyText,
@@ -172,6 +177,9 @@ class Mdict extends MdictBase {
    */
   associate(phrase) {
     const record = this._findList(phrase);
+    if (!record) {
+      return [];
+    }
     const sfunc = record.sfunc;
     let kbid = record.kbid;
     let list = record.list;

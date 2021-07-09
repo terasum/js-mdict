@@ -12,9 +12,13 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 ## Release
 
-## v4.0.14
-1. fix babel-runtime dependencies issue
+### v4.0.15
 
+1. fix `findList` return `undefined` will crash the `associate` and `prefix` method bug
+
+### v4.0.14
+
+1. fix babel-runtime dependencies issue
 
 ### v4.0.13
 
