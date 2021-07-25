@@ -314,10 +314,16 @@ class Mdict extends MdictBase {
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
             .decompSize
         : list[idx + 1].recordStartOffset;
+    let startoffset = list[idx].recordStartOffset
+    if (rstartofset != startoffset) {
+      // if args.rstartofset != list[idx].recordStartOffset
+      // use args.rstartofset
+      startoffset = rstartofset;
+    }
     const data = this._decodeRecordBlockByRBID(
       rid,
       list[idx].keyText,
-      list[idx].recordStartOffset,
+      startoffset,
       nextStart
     );
     return data;
