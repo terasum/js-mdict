@@ -244,4 +244,13 @@ describe('oale8.mdd', () => {
       }
     );
   });
+  it('dayinhan#DYHC_1745', () => {
+    let dictPath =
+      'mdx/testdict/dayinhanv3/dayinhanv3.mdx';
+    const mdict = new Mdict(dictPath);
+    const wordIndex0 = mdict.lookup("DYHC_1744");
+    const wordIndex = mdict.associate("DYHC_1744");
+    assert.isTrue(wordIndex0.length > 0)
+    assert.isTrue(wordIndex.length > 0)
+  });
 });
