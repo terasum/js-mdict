@@ -12,6 +12,12 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 ## Release
 
+### v4.0.17
+1. fix associate can't find special character bug
+
+### v4.0.16
+1. fix accurate record start offset parse_definition bug
+
 ### v4.0.15
 
 1. fix `findList` return `undefined` will crash the `associate` and `prefix` method bug
