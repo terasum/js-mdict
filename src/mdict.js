@@ -70,7 +70,38 @@ class Mdict extends MdictBase {
       this.searchOptions.keyCaseSensitive ||
       common.isTrue(this.header.KeyCaseSensitive)
     );
+  } 
+
+
+  _lookupRecordBlockWordList(word) {
+      const lookupInternal = (compareFn) => {
+      const sfunc = this._stripKey();
+      const kbid = this._reduceWordKeyBlock(word, sfunc, compareFn);
+      // not found
+      if (kbid < 0) {
+        return undefined;
+      }
+      const list = this._decodeKeyBlockByKBID(kbid);
+      const i = this._binarySearh(list, word, sfunc, compareFn);
+      if (i === undefined) {
+        return undefined;
+      }
+      return list;
+    };
+
+    let list;
+    if (this._isKeyCaseSensitive()) {
+      list = lookupInternal(common.normalUpperCaseWordCompare);
+    } else {
+      list = lookupInternal(common.normalUpperCaseWordCompare);
+      if (list === undefined) {
+        list = lookupInternal(common.wordCompare);
+      }
+    }
+    return list;
   }
+
+
 
   _lookupKID(word) {
     const lookupInternal = (compareFn) => {
@@ -183,10 +214,17 @@ class Mdict extends MdictBase {
     const sfunc = record.sfunc;
     let kbid = record.kbid;
     let list = record.list;
-    const matched = list.filter((item) =>
+    let matched = list.filter((item) =>
       sfunc(item.keyText).startsWith(sfunc(phrase))
     );
-    if (!matched.length) return matched;
+    if (!matched.length) {
+      matched = this.associate0(phrase);
+    }
+    // still nothing
+    if (!matched.length) {
+      return matched;
+    }
+
     // in case there are matched items in next key block
     while (
       matched[matched.length - 1].keyText === list[list.length - 1].keyText &&
@@ -202,9 +240,15 @@ class Mdict extends MdictBase {
     matched.map((item) => {
       item.rofset = item.recordStartOffset;
     });
-
     return matched;
   }
+
+  associate0(phrase) {
+    // if matched nothing, research in the record block
+    const recordList = this._lookupRecordBlockWordList(phrase);
+    return recordList || [];
+  }
+
 
   /**
    * fuzzy_search
