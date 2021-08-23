@@ -80,6 +80,11 @@ declare interface WordIndex {
   ed?: number;
 }
 
+// public KeyListItem
+declare interface KeyListItem {
+    recordStartOffset: number;
+    keyText: string;
+  }
 declare class Mdict extends mdict.MdictBase {
   constructor(path: string);
   lookup(word: string): WordDefinition;
@@ -88,6 +93,7 @@ declare class Mdict extends mdict.MdictBase {
   fuzzy_search(word: string, fuzzy_size: number, ed_gap: number): Array<WordIndex>;
   associate(word: string): Array<WordIndex>;
   parse_defination(key: string, rofset: number): string;
+  rangeKeyWords(keep?:boolean): Array<KeyListItem>
 }
 
 export { Mdict, WordDefinition, WordIndex };
