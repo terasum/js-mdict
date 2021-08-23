@@ -12,6 +12,10 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 ## Release
 
+### v4.0.18
+1. add rangeKeyBlock interface
+2. enhance performance of readKeyBlock
+
 ### v4.0.17
 1. fix associate can't find special character bug
 
@@ -228,5 +232,10 @@ mdict
     console.error(err);
   });
 ```
+
+## MDX/MDD Layout
+
+![layout](https://chainlark.oss-cn-beijing.aliyuncs.com/bkun1.svg)
+> this picture is from [@ikey4u/wikit](https://github.com/ikey4u/wikit)
 
 code by terasum with ❤️

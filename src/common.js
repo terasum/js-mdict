@@ -180,6 +180,27 @@ function readNumber(bf, numfmt) {
   // return struct.unpack(this._number_format, bf)[0];
 }
 
+// use BufferList interface to read number
+function readNumber2(bf, offset, numfmt) {
+  if (numfmt === NUMFMT_UINT32) {
+    // uint32
+    return bf.readUInt32BE(offset)
+    // return uint32BEtoNumber(value);
+  } else if (numfmt === NUMFMT_UINT64) {
+    // uint64
+    return uint64BEtoNumber(bf.slice(offset, offset + 8));
+    // return bf.readBigInt64BE(offset)
+  } else if (numfmt === NUMFMT_UINT16) {
+    // uint16
+    // return uint16BEtoNumber(value);
+    return bf.readUint16BE(offset)
+  } else if (numfmt === NUMFMT_UINT8) {
+    // uint8
+    return bf.readUInt8(offset)
+  }
+  return 0;
+}
+
 /**
  * fast_decrypt buffer
  * @param {Buffer} data data buffer
@@ -300,6 +321,7 @@ export default {
   levenshtein_distance,
   parseHeader,
   readNumber,
+  readNumber2,
   mdxDecrypt,
   appendBuffer,
   wordCompare,
