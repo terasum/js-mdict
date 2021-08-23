@@ -86,6 +86,9 @@ class MDictBase {
     this._keyBlockEndOffset = 0;
     this.keyList = [];
     // decodeKeyBlock method is very slow, avoid invoke dirctly
+    // this method will return the whole words list of the dictionaries file, this is very slow 
+    // operation, and you should do this background, or concurrently.
+    // NOTE: this method is wrapped by method medict.RangeWords();
     // this._decodeKeyBlock();
 
     // -------------------------
@@ -589,7 +592,7 @@ class MDictBase {
    * decode key block return the total keys list,
    * Note: this method runs very slow, please do not use this unless special target
    */
-  _decodeKeyBlock() {
+  _decodeKeyBlock(keep) {
     this._keyBlockStartOffset = this._keyBlockInfoEndOffset;
     const kbCompBuff = this._readBuffer(
       this._keyBlockStartOffset,
@@ -654,7 +657,11 @@ class MDictBase {
     assert(key_list.length === this.keyHeader.entriesNum);
     this._keyBlockEndOffset =
       this._keyBlockStartOffset + this.keyHeader.keyBlocksTotalSize;
-    this.keyList = key_list;
+    if (keep) {
+      this.keyList = key_list;
+    } else {
+      return key_list;
+    }
   }
 
   /**
@@ -733,17 +740,29 @@ class MDictBase {
 
     while (keyStartIndex < keyBlock.length) {
       // # the corresponding record's offset in record block
+      // 0.2656s
       const recordStartOffset = common.readNumber(
         keyBlock.slice(keyStartIndex, keyStartIndex + this._numWidth),
         this._numFmt
       );
+
+      // 0.2746s
+      // const recordStartOffset = common.readNumber2(
+      //   keyBlock, keyStartIndex, this._numFmt
+      // );
+
       // # key text ends with '\x00'
       let i = keyStartIndex + this._numWidth;
       while (i < keyBlock.length) {
-        if (
-          new BufferList(keyBlock.slice(i, i + width)).toString('hex') ==
-          delimiter
-        ) {
+        // delimiter = '0' 
+        if ((width === 1 && keyBlock.get(i) == 0) 
+        // delimiter = '00'
+        || (width === 2 && keyBlock.get(i) == 0 && keyBlock.get(i+1) == 0)){
+          //// the method below was very slow, depreate
+        // if (
+        //   new BufferList(keyBlock.slice(i, i + width)).toString('hex') ==
+        //   delimiter
+        // ) {
           keyEndIndex = i;
           break;
         }

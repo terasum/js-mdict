@@ -372,6 +372,11 @@ class Mdict extends MdictBase {
     );
     return data;
   }
+
+  rangeKeyWords() {
+     return this._decodeKeyBlock();
+  }
+
 }
 
 export default Mdict;
