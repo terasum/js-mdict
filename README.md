@@ -12,6 +12,11 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 ## Release
 
+### v4.0.20
+1. upgrade xmldom to v0.7.5
+### v4.0.19 
+1. support rangeKey API
+
 ### v4.0.18
 1. add rangeKeyBlock interface
 2. enhance performance of readKeyBlock

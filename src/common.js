@@ -1,6 +1,6 @@
 import BufferList from 'bl';
 import { TextDecoder } from 'text-encoding';
-import { DOMParser } from 'xmldom';
+import { DOMParser } from '@xmldom/xmldom';
 import ripemd128 from './ripemd128';
 
 const REGEXP_STRIPKEY = {
