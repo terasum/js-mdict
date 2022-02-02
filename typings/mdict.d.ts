@@ -74,7 +74,7 @@ declare interface WordDefinition {
   definition: string;
 }
 declare interface WordIndex {
-  keyText: string;
+  key: string;
   rofset: number;
   recordStartOffset?: number;
   ed?: number;
