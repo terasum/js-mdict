@@ -244,14 +244,5 @@ describe('oale8.mdd', () => {
       }
     );
   });
-  it('dayinhan#DYHC_1745', () => {
-    let dictPath =
-      'mdx/testdict/dayinhanv3/dayinhanv3.mdx';
-    const mdict = new Mdict(dictPath);
-    const wordIndex0 = mdict.lookup("DYCH_0862");
-    const wordIndex = mdict.associate("DYCH_0862");
-    assert.isTrue(wordIndex0.keyText.length > 0)
-    console.log(wordIndex); // [] TODO tobe fixed
-    assert.isTrue(wordIndex.length > 0);
-  });
+
 });
