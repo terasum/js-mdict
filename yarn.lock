@@ -1345,10 +1345,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@xmldom/xmldom@^0.7.5":
-  version "0.7.5"
-  resolved "https://registry.npmjs.org/@xmldom/xmldom/-/xmldom-0.7.5.tgz#09fa51e356d07d0be200642b0e4f91d8e6dd408d"
-  integrity sha512-V3BIhmY36fXZ1OtVcI9W+FxQqxVLsPKcNjWigIaa81dLC9IolJl5Mt4Cvhmr0flUnjSpTdrbMTSbXqYqV5dT6A==
+"@xmldom/xmldom@^0.8.3":
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/@xmldom/xmldom/-/xmldom-0.8.3.tgz#beaf980612532aa9a3004aff7e428943aeaa0711"
+  integrity sha512-Lv2vySXypg4nfa51LY1nU8yDAGo/5YwF+EY/rUZgIbfvwVARcd67ttCM8SMsTeJy51YhHYavEq+FS6R0hW9PFQ==
 
 abab@^2.0.3, abab@^2.0.5:
   version "2.0.6"
@@ -4525,9 +4525,10 @@ path-type@^3.0.0:
   dependencies:
     pify "^3.0.0"
 
-"path@git://github.com/component/path.git#7b4f23c38833a5232cd5e3d50ccb8cd13dbcd2f4":
+"path@git://github.com/component/path#7b4f23c38833a5232cd5e3d50ccb8cd13dbcd2f4":
   version "1.0.0"
-  resolved "git://github.com/component/path.git#7b4f23c38833a5232cd5e3d50ccb8cd13dbcd2f4"
+  uid "7b4f23c38833a5232cd5e3d50ccb8cd13dbcd2f4"
+  resolved "git://github.com/component/path#7b4f23c38833a5232cd5e3d50ccb8cd13dbcd2f4"
 
 pathval@^1.1.1:
   version "1.1.1"
