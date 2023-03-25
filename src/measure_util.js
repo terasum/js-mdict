@@ -5,10 +5,10 @@
  * @param {string} name function name (optional)
  * @returns
  */
-function measureTimeFn(_this, fn, name = "unknown") {
+function measureTimeFn(_this, fn, name = 'unknown') {
   let fname = fn.toString();
-  fname = fname.substring("function ".length);
-  fname = fname.substring(0, fname.indexOf("("));
+  fname = fname.substring('function '.length);
+  fname = fname.substring(0, fname.indexOf('('));
 
   return function () {
     console.time(fname ?? name);
@@ -44,8 +44,8 @@ function measureMemFn() {
         step: step,
         category: name,
         key: key,
-        "used(MB)": key_used,
-        "diff(MB)": Math.round((key_used - last_key_used) * 100) / 100,
+        'used(MB)': key_used,
+        'diff(MB)': Math.round((key_used - last_key_used) * 100) / 100,
       });
     }
 

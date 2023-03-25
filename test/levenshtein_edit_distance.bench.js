@@ -2,7 +2,7 @@ import { Benchmark } from "benchmark";
 import levenshtein from "levenshtein-edit-distance";
 import { expect } from "chai";
 
-import common from "../src/common";
+import common from "../src/utils";
 
 const suite = new Benchmark.Suite();
 const a = "sitting";

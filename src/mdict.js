@@ -1,14 +1,14 @@
 /// <reference path="../typings/mdict.d.ts" />
 
-import { lemmatizer } from "lemmatizer";
-import MdictBase from "./mdictbase";
-import common from "./common";
+import { lemmatizer } from 'lemmatizer';
+import MdictBase from './mdictbase';
+import common from './utils';
 
 class Mdict extends MdictBase {
   constructor(fname, options) {
     options = options || {};
     options = {
-      passcode: options.passcode ?? "",
+      passcode: options.passcode ?? '',
       debug: options.debug ?? false,
       resort: options.resort ?? true,
       isStripKey: options.isStripKey ?? true,
@@ -30,7 +30,7 @@ class Mdict extends MdictBase {
       return this._lookup_key_record(word);
     } else {
       throw new Error(
-        "depreciated, use `option.resort = true` to find out word"
+        'depreciated, use `option.resort = true` to find out word'
       );
     }
   }
@@ -167,7 +167,7 @@ class Mdict extends MdictBase {
   }
 
   suggest(phrase) {
-    throw new Error("suggest method has been deprecated");
+    throw new Error('suggest method has been deprecated');
   }
 
   _search_key_record(word) {

@@ -1,34 +1,34 @@
 /// <reference path="../typings/MdictBase.d.ts">
 
-import readChunk from "read-chunk";
-import assert from "assert";
-import BufferList from "bl";
+import readChunk from 'read-chunk';
+import assert from 'assert';
+import BufferList from 'bl';
 // use nodejs embbed zlib instead of pako, only under nodejs
 // use pako = 347ms, use zlib = 290ms
-import zlib from "zlib";
+import zlib from 'zlib';
 const pako = {};
 pako.inflate = zlib.inflateSync;
 
-import bufferToArrayBuffer from "buffer-to-arraybuffer";
-import common from "./common";
-import lzo1x from "./lzo-wrapper";
+import bufferToArrayBuffer from 'buffer-to-arraybuffer';
+import common from './utils';
+import lzo1x from './lzo-wrapper';
 
-import measure from "./measure_util";
+import measure from './measure_util';
 
-const UTF_16LE_DECODER = new TextDecoder("utf-16le");
-const UTF16 = "UTF-16";
+const UTF_16LE_DECODER = new TextDecoder('utf-16le');
+const UTF16 = 'UTF-16';
 
-const UTF_8_DECODER = new TextDecoder("utf-8");
-const UTF8 = "UTF-8";
+const UTF_8_DECODER = new TextDecoder('utf-8');
+const UTF8 = 'UTF-8';
 
-const BIG5_DECODER = new TextDecoder("big5");
-const BIG5 = "BIG5";
+const BIG5_DECODER = new TextDecoder('big5');
+const BIG5 = 'BIG5';
 
-const GB18030_DECODER = new TextDecoder("gb18030");
-const GB18030 = "GB18030";
+const GB18030_DECODER = new TextDecoder('gb18030');
+const GB18030 = 'GB18030';
 
 const BASE64ENCODER = function (arrayBuffer) {
-  return arrayBuffer.toString("base64");
+  return arrayBuffer.toString('base64');
 };
 
 /**
@@ -49,7 +49,7 @@ class MDictBase {
     // the mdict file read offset
     this._offset = 0;
     // the dictionary file extension
-    this.ext = common.getExtension(fname, "mdx");
+    this.ext = common.getExtension(fname, 'mdx');
 
     // set options
     this.options = options ?? {
@@ -115,17 +115,17 @@ class MDictBase {
     // this._decodeKeyBlock();
     if (!this.options.resort) {
       throw new Error(
-        "js-mdict version above 5.0.0, must specify `options.resort = true` "
+        'js-mdict version above 5.0.0, must specify `options.resort = true` '
       );
     }
 
     // resort mdd files
     if (this.options.debug) {
       const memTrace = measure.measureMemFn();
-      memTrace("before resort decode");
+      memTrace('before resort decode');
       measure.measureTimeFn(this, this._decodeKeyBlock)();
       measure.measureTimeFn(this, this._resortKeyList)();
-      memTrace("after resort decode");
+      memTrace('after resort decode');
     } else {
       this._decodeKeyBlock();
       this._resortKeyList();
@@ -205,9 +205,9 @@ class MDictBase {
     this.header = common.parseHeader(headerText);
 
     // set header default configuration
-    this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || "No";
+    this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || 'No';
 
-    this.header.StripKey = this.header.StripKey || "Yes";
+    this.header.StripKey = this.header.StripKey || 'Yes';
 
     // encrypted flag
     // 0x00 - no encryption
@@ -215,11 +215,11 @@ class MDictBase {
     // 0x02 - encrypt key info block
     if (
       !this.header.Encrypted ||
-      this.header.Encrypted == "" ||
-      this.header.Encrypted == "No"
+      this.header.Encrypted == '' ||
+      this.header.Encrypted == 'No'
     ) {
       this._encrypt = 0;
-    } else if (this.header.Encrypted == "Yes") {
+    } else if (this.header.Encrypted == 'Yes') {
       this._encrypt = 1;
     } else {
       this._encrypt = parseInt(this.header.Encrypted, 10);
@@ -247,22 +247,22 @@ class MDictBase {
       this._numWidth = 4;
       this._numFmt = common.NUMFMT_UINT32;
     }
-    if (!this.header.Encoding || this.header.Encoding == "") {
+    if (!this.header.Encoding || this.header.Encoding == '') {
       this._encoding = UTF8;
       this._decoder = UTF_8_DECODER;
     } else if (
-      this.header.Encoding == "GBK" ||
-      this.header.Encoding == "GB2312"
+      this.header.Encoding == 'GBK' ||
+      this.header.Encoding == 'GB2312'
     ) {
       this._encoding = GB18030;
       this._decoder = GB18030_DECODER;
-    } else if (this.header.Encoding.toLowerCase() == "big5") {
+    } else if (this.header.Encoding.toLowerCase() == 'big5') {
       this._encoding = BIG5;
       this._decoder = BIG5_DECODER;
     } else {
       this._encoding =
-        this.header.Encoding.toLowerCase() == "utf16" ||
-        this.header.Encoding.toLowerCase() == "utf-16"
+        this.header.Encoding.toLowerCase() == 'utf16' ||
+        this.header.Encoding.toLowerCase() == 'utf-16'
           ? UTF16
           : UTF8;
       if (this._encoding == UTF16) {
@@ -272,7 +272,7 @@ class MDictBase {
       }
     }
     // determine the encoding and decoder, if extension is *.mdd
-    if (this.ext === "mdd") {
+    if (this.ext === 'mdd') {
       this._encoding = UTF16;
       this._decoder = UTF_16LE_DECODER;
     }
@@ -305,16 +305,16 @@ class MDictBase {
 
     // decrypt
     if (this._encrypt & 1) {
-      if (!this._passcode || this._passcode == "") {
+      if (!this._passcode || this._passcode == '') {
         // TODO: encrypted file not support yet
-        throw Error(" user identification is needed to read encrypted file");
+        throw Error(' user identification is needed to read encrypted file');
       }
       // regcode, userid = header_info['_passcode']
-      if (this.header.RegisterBy == "Email") {
+      if (this.header.RegisterBy == 'Email') {
         // encrypted_key = _decrypt_regcode_by_email(regcode, userid);
-        throw Error("encrypted file not support yet");
+        throw Error('encrypted file not support yet');
       } else {
-        throw Error("encrypted file not support yet");
+        throw Error('encrypted file not support yet');
       }
     }
 
@@ -406,7 +406,7 @@ class MDictBase {
       this._keyBlockInfoStartOffset + this.keyHeader.keyBlockInfoCompSize;
     assert(
       this.keyHeader.keyBlocksNum === keyBlockInfoList.length,
-      "the num_key_info_list should equals to key_block_info_list"
+      'the num_key_info_list should equals to key_block_info_list'
     );
 
     this.keyBlockInfoList = keyBlockInfoList;
@@ -429,8 +429,8 @@ class MDictBase {
     if (this._version >= 2.0) {
       // zlib compression
       assert(
-        keyBlockInfoBuff.slice(0, 4).toString("hex") === "02000000",
-        "the compress type zlib should start with 0x02000000"
+        keyBlockInfoBuff.slice(0, 4).toString('hex') === '02000000',
+        'the compress type zlib should start with 0x02000000'
       );
       let kbInfoCompBuff;
       if (this._encrypt === 2) {
@@ -496,7 +496,7 @@ class MDictBase {
       let stepGap = 0;
       // term_size is for first key and last key
       // let term_size = 0;
-      if (this._encoding === UTF16 || this.ext === "mdd") {
+      if (this._encoding === UTF16 || this.ext === 'mdd') {
         stepGap = (firstKeySize + textTerm) * 2;
         termSize = textTerm * 2;
       } else {
@@ -515,7 +515,7 @@ class MDictBase {
         byteFmt
       );
       i += byteWidth;
-      if (this._encoding === UTF16 || this.ext === "mdd") {
+      if (this._encoding === UTF16 || this.ext === 'mdd') {
         stepGap = (lastKeySize + textTerm) * 2;
         // TODO: this is for last key output
         termSize = textTerm * 2;
@@ -647,7 +647,7 @@ class MDictBase {
       const start = kbStartOfset;
       assert(
         start === this.keyBlockInfoList[idx].keyBlockCompAccumulator,
-        "should be equal"
+        'should be equal'
       );
 
       const end = kbStartOfset + compSize;
@@ -658,9 +658,9 @@ class MDictBase {
       // adler32 = unpack('>I', key_block_compressed[start + 4:start + 8])[0]
 
       let key_block;
-      if (kbCompType.toString("hex") == "00000000") {
+      if (kbCompType.toString('hex') == '00000000') {
         key_block = kbCompBuff.slice(start + 8, end);
-      } else if (kbCompType.toString("hex") == "01000000") {
+      } else if (kbCompType.toString('hex') == '01000000') {
         // # decompress key block
         const header = new ArrayBuffer([0xf0, decompressed_size]);
         const keyBlock = lzo1x.decompress(
@@ -672,7 +672,7 @@ class MDictBase {
           keyBlock.byteOffset,
           keyBlock.byteOffset + keyBlock.byteLength
         );
-      } else if (kbCompType.toString("hex") === "02000000") {
+      } else if (kbCompType.toString('hex') === '02000000') {
         // decompress key block
         key_block = pako.inflate(kbCompBuff.slice(start + 8, end));
         // extract one single key block into a key list
@@ -681,7 +681,7 @@ class MDictBase {
         // assert(adler32 == zlib.adler32(key_block) & 0xffffffff)
       } else {
         throw Error(
-          `cannot determine the compress type: ${kbCompType.toString("hex")}`
+          `cannot determine the compress type: ${kbCompType.toString('hex')}`
         );
       }
       const splitedKey = this._splitKeyBlock(new BufferList(key_block), idx);
@@ -716,9 +716,9 @@ class MDictBase {
     // adler32 = unpack('>I', key_block_compressed[start + 4:start + 8])[0]
 
     let key_block;
-    if (kbCompType.toString("hex") == "00000000") {
+    if (kbCompType.toString('hex') == '00000000') {
       key_block = kbCompBuff.slice(start + 8, end);
-    } else if (kbCompType.toString("hex") == "01000000") {
+    } else if (kbCompType.toString('hex') == '01000000') {
       // # decompress key block
       const header = new ArrayBuffer([0xf0, decompSize]);
       const keyBlock = lzo1x.decompress(
@@ -730,7 +730,7 @@ class MDictBase {
         keyBlock.byteOffset,
         keyBlock.byteOffset + keyBlock.byteLength
       );
-    } else if (kbCompType.toString("hex") === "02000000") {
+    } else if (kbCompType.toString('hex') === '02000000') {
       // decompress key block
       key_block = pako.inflate(kbCompBuff.slice(start + 8, end));
       // extract one single key block into a key list
@@ -739,7 +739,7 @@ class MDictBase {
       // assert(adler32 == zlib.adler32(key_block) & 0xffffffff)
     } else {
       throw Error(
-        `cannot determine the compress type: ${kbCompType.toString("hex")}`
+        `cannot determine the compress type: ${kbCompType.toString('hex')}`
       );
     }
     const splitedKey = this._splitKeyBlock(new BufferList(key_block), kbid);
@@ -754,11 +754,11 @@ class MDictBase {
   _splitKeyBlock(keyBlock, keyBlockIdx) {
     let delimiter;
     let width;
-    if (this._encoding == "UTF-16" || this.ext == "mdd") {
-      delimiter = "0000";
+    if (this._encoding == 'UTF-16' || this.ext == 'mdd') {
+      delimiter = '0000';
       width = 2;
     } else {
-      delimiter = "00";
+      delimiter = '00';
       width = 1;
     }
     const keyList = [];
@@ -928,7 +928,7 @@ class MDictBase {
     let recordOffset = this._recordBlockStartOffset;
 
     for (let idx = 0; idx < this.recordBlockInfoList.length; idx++) {
-      let comp_type = "none";
+      let comp_type = 'none';
       const compSize = this.recordBlockInfoList[idx].compSize;
       const decompSize = this.recordBlockInfoList[idx].decompSize;
       const rbCompBuff = this._readBuffer(recordOffset, compSize);
@@ -944,7 +944,7 @@ class MDictBase {
       // Note: here ignore the checksum part
       // bytes: adler32 checksum of decompressed record block
       // adler32 = unpack('>I', record_block_compressed[4:8])[0]
-      if (rbCompType.toString("hex") === "00000000") {
+      if (rbCompType.toString('hex') === '00000000') {
         recordBlock = rbCompBuff.slice(8, rbCompBuff.length);
       } else {
         // --------------
@@ -966,8 +966,8 @@ class MDictBase {
         // --------------
         // decompress
         // --------------
-        if (rbCompType.toString("hex") === "01000000") {
-          comp_type = "lzo";
+        if (rbCompType.toString('hex') === '01000000') {
+          comp_type = 'lzo';
           // the header was need by lzo library, should append before real compressed data
           const header = new ArrayBuffer([0xf0, decompSize]);
           // Note: if use lzo, here will LZO_E_OUTPUT_RUNOVER, so ,use mini lzo js
@@ -980,8 +980,8 @@ class MDictBase {
             recordBlock.byteOffset,
             recordBlock.byteOffset + recordBlock.byteLength
           );
-        } else if (rbCompType.toString("hex") === "02000000") {
-          comp_type = "zlib";
+        } else if (rbCompType.toString('hex') === '02000000') {
+          comp_type = 'zlib';
           // zlib decompress
           recordBlock = pako.inflate(blockBufDecrypted);
         }
@@ -1095,7 +1095,7 @@ class MDictBase {
     // Note: here ignore the checksum part
     // bytes: adler32 checksum of decompressed record block
     // adler32 = unpack('>I', record_block_compressed[4:8])[0]
-    if (rbCompType.toString("hex") === "00000000") {
+    if (rbCompType.toString('hex') === '00000000') {
       recordBlock = rbCompBuff.slice(8, rbCompBuff.length);
     } else {
       // --------------
@@ -1116,7 +1116,7 @@ class MDictBase {
       // --------------
       // decompress
       // --------------
-      if (rbCompType.toString("hex") === "01000000") {
+      if (rbCompType.toString('hex') === '01000000') {
         // the header was need by lzo library, should append before real compressed data
         const header = new ArrayBuffer([0xf0, decompSize]);
         // Note: if use lzo, here will LZO_E_OUTPUT_RUNOVER, so ,use mini lzo js
@@ -1129,7 +1129,7 @@ class MDictBase {
           recordBlock.byteOffset,
           recordBlock.byteOffset + recordBlock.byteLength
         );
-      } else if (rbCompType.toString("hex") === "02000000") {
+      } else if (rbCompType.toString('hex') === '02000000') {
         // zlib decompress
         recordBlock = pako.inflate(blockBufDecrypted);
       }
@@ -1144,7 +1144,7 @@ class MDictBase {
     const recordStart = start - decompAccumulator;
     const recordEnd = nextStart - decompAccumulator;
     const data = recordBlock.slice(recordStart, recordEnd);
-    if (this.ext === "mdd") {
+    if (this.ext === 'mdd') {
       return { keyText, definition: BASE64ENCODER(data) };
     }
     return { keyText, definition: this._decoder.decode(data) };
@@ -1182,13 +1182,13 @@ class MDictBase {
     return function (key) {
       // this strip/case sensistive part will increase time cost about 100% (20ms->38ms)
       if (this._isStripKey()) {
-        key = key.replace(common.REGEXP_STRIPKEY[this.ext], "$1");
+        key = key.replace(common.REGEXP_STRIPKEY[this.ext], '$1');
       }
       if (!this._isKeyCaseSensitive()) {
         key = key.toLowerCase();
       }
-      if (this.ext == "mdd") {
-        key = key.replace(/\\/g, "/");
+      if (this.ext == 'mdd') {
+        key = key.replace(/\\/g, '/');
       }
       return key.trim();
     }.bind(this);

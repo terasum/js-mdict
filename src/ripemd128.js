@@ -20,7 +20,7 @@ function asUint32Array(arr) {
 
 // concat 2 typed array
 function concat(a, b) {
-  if (!a && !b) throw new Error("invalid Buffer a and b");
+  if (!a && !b) throw new Error('invalid Buffer a and b');
   if (!b || b.length === 0) return a;
   if (!a || a.length === 0) return b;
 
