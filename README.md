@@ -10,100 +10,14 @@ mdict (\*.mdd \*.mdx) file reader based on [jeka-kiselyov/mdict](https://github.
 
 Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](https://github.com/jeka-kiselyov/mdict).
 
-## Release
-
-## v5.0.0
-
-NOTE: This version has a lot of changes, please read the example code below carefully!
-注意： 本版本改动了多个API, 请仔细阅读下方的示例代码。
-
-BREAKING CHANGES:
-1. Refactor the key search algorithm: build the keyList first, and resort internally, then search the word
-2. The `suggest` method has been deprecated.
-3. The `parse_definition` method has been deprecated, use `fetch_definition` instead
-4. Delete `nspell` and `en-dictionary-us` dependencies
-5. Cleanup unstable compare method and key record compare, won't use `keyInfoBlock.firstKey/lastKey` to locate `recordBlock`
-6. Use built-in `TextDecoder` and `zlib`, instead of third party `TextDecoder` and `pako`.
-7. use pnpm instead of yarn to manage the dependencies.
-8. Have fun!
-
-### v4.0.20
-1. upgrade xmldom to v0.7.5
-### v4.0.19 
-1. support rangeKey API
-
-### v4.0.18
-1. add rangeKeyBlock interface
-2. enhance performance of readKeyBlock
-
-### v4.0.17
-1. fix associate can't find special character bug
-
-### v4.0.16
-1. fix accurate record start offset parse_definition bug
-
-### v4.0.15
-
-1. fix `findList` return `undefined` will crash the `associate` and `prefix` method bug
-
-### v4.0.14
-
-1. fix babel-runtime dependencies issue
-
-### v4.0.13
-
-1. fix UpperCase key sensitive options logic, details [#41](https://github.com/terasum/js-mdict/issues/41)
-2. fix 1.2 mdx keyblock read bug
-3. correct some Header properties (StripKey..)
-
-> very thanks to @songxiaocheng
-
-### v4.0.12
-
-1. fix typings declaring and reformat codebase
-
-### v4.0.11
-
-1. fix some `.mdd` file reading issues, and if you search mdd file, use `lookup` method, and it will return base64 data
-
-### v4.0.10
-
-1. rewrite `typings/mdict.d.ts`
-
-### v4.0.9
-
-1. rename `typings/Mdict.d.ts` to `typings/mdict.d.ts`
-
-### v4.0.8
-
-1. fix uppercase words comparing missed bug
-2. fix `out of index error` when cannot locate word offset
-3. if cannot find the word key block, return `undefined`
-
-### v4.0.7
-
-1. rename Mdict.js to mdict.js , rename MdictBase.js to mdict-base.js, fix import error on ubuntu.
-
-### v4.0.6
-
-1. support search words by prefix `associate` (the phrase as the words' prefix, not the phrase's prefix as search token just like `prefix` function)
-2. some security updates
-
-> very thanks to @Danjame
-
-### v4.0.x
-
-1. ES6 implemention
-2. rewrite the decode code, more readable decode api
-3. _NOT SUPPORT BROWSER CURRENTLY_
-
-### v3.1.0 (2018-08-22)
-
-1. add `fuzzy_search` method, which supports fuzzy word search
-
 ## Usage
 
-> not support browser yet
+NOTE: This version has a lot of changes, please read the example code example carefully!
+
+注意： 本版本改动了多个API, 请仔细阅读上方的示例代码。
+
+
+> not support browser
 
 ```bash
 npm install js-mdict@5.0.0
@@ -241,6 +155,100 @@ mdict
     console.error(err);
   });
 ```
+
+
+## Release
+
+## v5.0.0
+
+NOTE: This version has a lot of changes, please read the example code example carefully!
+
+注意： 本版本改动了多个API, 请仔细阅读上方的示例代码。
+
+BREAKING CHANGES:
+1. Refactor the key search algorithm: build the keyList first, and resort internally, then search the word
+2. The `suggest` method has been deprecated.
+3. The `parse_definition` method has been deprecated, use `fetch_definition` instead
+4. Delete `nspell` and `en-dictionary-us` dependencies
+5. Cleanup unstable compare method and key record compare, won't use `keyInfoBlock.firstKey/lastKey` to locate `recordBlock`
+6. Use built-in `TextDecoder` and `zlib`, instead of third party `TextDecoder` and `pako`.
+7. use pnpm instead of yarn to manage the dependencies.
+8. Have fun!
+
+### v4.0.20
+1. upgrade xmldom to v0.7.5
+### v4.0.19 
+1. support rangeKey API
+
+### v4.0.18
+1. add rangeKeyBlock interface
+2. enhance performance of readKeyBlock
+
+### v4.0.17
+1. fix associate can't find special character bug
+
+### v4.0.16
+1. fix accurate record start offset parse_definition bug
+
+### v4.0.15
+
+1. fix `findList` return `undefined` will crash the `associate` and `prefix` method bug
+
+### v4.0.14
+
+1. fix babel-runtime dependencies issue
+
+### v4.0.13
+
+1. fix UpperCase key sensitive options logic, details [#41](https://github.com/terasum/js-mdict/issues/41)
+2. fix 1.2 mdx keyblock read bug
+3. correct some Header properties (StripKey..)
+
+> very thanks to @songxiaocheng
+
+### v4.0.12
+
+1. fix typings declaring and reformat codebase
+
+### v4.0.11
+
+1. fix some `.mdd` file reading issues, and if you search mdd file, use `lookup` method, and it will return base64 data
+
+### v4.0.10
+
+1. rewrite `typings/mdict.d.ts`
+
+### v4.0.9
+
+1. rename `typings/Mdict.d.ts` to `typings/mdict.d.ts`
+
+### v4.0.8
+
+1. fix uppercase words comparing missed bug
+2. fix `out of index error` when cannot locate word offset
+3. if cannot find the word key block, return `undefined`
+
+### v4.0.7
+
+1. rename Mdict.js to mdict.js , rename MdictBase.js to mdict-base.js, fix import error on ubuntu.
+
+### v4.0.6
+
+1. support search words by prefix `associate` (the phrase as the words' prefix, not the phrase's prefix as search token just like `prefix` function)
+2. some security updates
+
+> very thanks to @Danjame
+
+### v4.0.x
+
+1. ES6 implemention
+2. rewrite the decode code, more readable decode api
+3. _NOT SUPPORT BROWSER CURRENTLY_
+
+### v3.1.0 (2018-08-22)
+
+1. add `fuzzy_search` method, which supports fuzzy word search
+
 
 ## MDX/MDD Layout
 
