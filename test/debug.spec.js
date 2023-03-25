@@ -43,7 +43,7 @@ function recorder(dictName, dictPath, func) {
   { key: 'hit for', rofset: 66713795, ed: 4 } ]
 
   */
-  console.log(mdict.parse_def_record(fws[0]));
+  console.log(mdict.fetch_defination(fws[0]));
 
   const endTime = new Date().getTime();
   const elapsedTime = endTime - startTime;
@@ -102,7 +102,7 @@ function debugStripKeyIgnoreCase(dictName, dictPath, word, callback) {
     keyCaseSensitive: false,
     stripKey: true,
   });
-  const stripfn = mdict._stripKeyOrIngoreCase();
+  const stripfn = mdict._strip_key_or_ingore_case();
   const strippedKey = stripfn(word);
   const endTime = new Date().getTime();
   console.log(
@@ -120,7 +120,7 @@ function debugNonStripKey(dictName, dictPath, word, callback) {
     stripKey: false,
     resourceKey: true,
   });
-  const stripfn = mdict._stripKeyOrIngoreCase();
+  const stripfn = mdict._strip_key_or_ingore_case();
   const strippedKey = stripfn(word);
   const endTime = new Date().getTime();
   console.log(

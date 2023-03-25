@@ -2,11 +2,6 @@ import BufferList from "bl";
 import { DOMParser } from "@xmldom/xmldom";
 import ripemd128 from "./ripemd128";
 
-// depreciated TextDecoder, use nodejs embbed library
-// before use embbed TextDecoder: decodeKeyBlock time costs: 641ms
-// after: 245ms
-// import { TextDecoder } from "text-encoding";
-
 const REGEXP_STRIPKEY = {
   mdx: /[()., '/\\@_\$]()/g,
   mdd: /([.][^.]*$)|[()., '/@]/g, // strip '.' before file extension that is keeping the last period
@@ -37,7 +32,7 @@ function triple_min(a, b, c) {
 
 // Damerau–Levenshtein distance  implemention
 // ref: https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
-function levenshtein_distance(a, b) {
+function levenshteinDistance(a, b) {
   if (!a || a == undefined) {
     return 9999;
   }
@@ -252,60 +247,6 @@ function appendBuffer(buffer1, buffer2) {
   return tmp.buffer;
 }
 
-function caseUnsensitiveCompare(word1, word2) {
-  if (!word1 || !word2) {
-    throw new Error(`invalid word comparation ${word1} and ${word2}`);
-  }
-  // if the two words are indentical, return 0 directly
-  if (word1 === word2) {
-    return 0;
-  }
-  let len = word1.length > word2.length ? word2.length : word1.length;
-  for (let i = 0; i < len; i++) {
-    let w1 = word1[i];
-    let w2 = word2[i];
-    if (w1 == w2) {
-      continue;
-      // case1: w1: `H` w2: `h` or `h` and `H`continue
-    } else if (w1.toLowerCase() == w2.toLowerCase()) {
-      continue;
-      // case3: w1: `H` w2: `k`, h < k return -1
-    } else if (w1.toLowerCase() < w2.toLowerCase()) {
-      return -1;
-      // case4: w1: `H` w2: `a`, h > a return 1
-    } else if (w1.toLowerCase() > w2.toLowerCase()) {
-      return 1;
-    }
-  }
-  // case5: `Hello` and `Hellocat`
-  return word1.length < word2.length ? -1 : 1;
-}
-
-// if this.header.KeyCaseSensitive = YES,
-// Uppercase character is placed in the start position of the directionary
-// so if `this.header.KeyCaseSensitive = YES` use normalUpperCaseWordCompare, else use wordCompare
-function caseSensitiveCompare(word1, word2) {
-  if (word1 === word2) {
-    return 0;
-  } else if (word1 > word2) {
-    return -1;
-  } else {
-    return 1;
-  }
-}
-
-// this compare function is for mdd file
-function localCompare(word1, word2) {
-  // return word1.localeCompare(word2);
-  if (word1.localeCompare(word2) === 0) {
-    return 0;
-  } else if (word1 > word2) {
-    return 1;
-  } else {
-    return -1;
-  }
-}
-
 /**
  * Test if a value of dictionary attribute is true or not.
  * ref: https://github.com/fengdh/mdict-js/blob/efc3fa368edd6e57de229375e2b73bbfe189e6ee/mdict-parser.js:235
@@ -322,15 +263,12 @@ export default {
   newUint8Array,
   REGEXP_STRIPKEY,
   UTF16,
-  levenshtein_distance,
+  levenshteinDistance,
   parseHeader,
   readNumber,
   readNumber2,
   mdxDecrypt,
   appendBuffer,
-  caseUnsensitiveCompare,
-  caseSensitiveCompare,
-  localCompare,
   isTrue,
   NUMFMT_UINT8,
   NUMFMT_UINT16,

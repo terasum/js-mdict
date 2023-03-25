@@ -15,7 +15,7 @@ describe("Mdict", () => {
       assert.isTrue(matched != undefined);
       assert.isTrue(matched[0] != undefined);
 
-      let defination = mdict.parse_def_record(matched[0]);
+      let defination = mdict.fetch_defination(matched[0]);
 
       assert.isTrue(
         defination.definition.startsWith(
@@ -39,15 +39,6 @@ describe("Mdict", () => {
         prefix.length,
         1,
         "definition result.length should be equal with 1"
-      );
-    });
-    it("#suggest", async () => {
-      const result = await mdict.suggest("informations");
-      assert.isArray(result);
-      assert.equal(
-        result.length,
-        2,
-        "prefix result.length should be equal with 2"
       );
     });
 

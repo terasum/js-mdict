@@ -3,11 +3,6 @@
 import readChunk from "read-chunk";
 import assert from "assert";
 import BufferList from "bl";
-import fs, { write } from "fs";
-
-// import util from "util";
-// import pako from "pako";
-
 // use nodejs embbed zlib instead of pako, only under nodejs
 // use pako = 347ms, use zlib = 290ms
 import zlib from "zlib";
@@ -15,12 +10,6 @@ const pako = {};
 pako.inflate = zlib.inflateSync;
 
 import bufferToArrayBuffer from "buffer-to-arraybuffer";
-
-// depreciated TextDecoder, use nodejs embbed library
-// before use embbed TextDecoder: decodeKeyBlock time costs: 641ms
-// after: 245ms
-// import { TextDecoder } from "text-encoding";
-
 import common from "./common";
 import lzo1x from "./lzo-wrapper";
 
@@ -124,41 +113,21 @@ class MDictBase {
     // operation, and you should do this background, or concurrently.
     // NOTE: this method is wrapped by method medict.RangeWords();
     // this._decodeKeyBlock();
-
-    if (this.ext === "mdx" && this.options.resort) {
-      if (this.options.debug) {
-        console.time("KEY_LIST_RESORTE");
-        console.log("file: ", this.fname);
-        const memTrace = measure.measureMemFn();
-        memTrace("before resort decode");
-        // NOTE: this method may takes 200ms
-        // NOTE: this method is wrapped by method medict.RangeWords();
-        measure.measureTimeFn(this, this._decodeKeyBlock)();
-        // measure.measureTimeFn(this, this._resortKeyBlock)();
-        measure.measureTimeFn(this, this._resortKeyList)();
-        memTrace("after resort decode");
-        console.log("key entris (number): ", this.keyHeader.entriesNum);
-        console.timeEnd("KEY_LIST_RESORTE");
-      } else {
-        this._decodeKeyBlock();
-        // this._resortKeyBlock();
-        this._resortKeyList();
-      }
-    } else {
-      if (this.options.debug) {
-        console.time("KEY_LIST_RESORTE");
-        console.log("file: ", this.fname);
-        const memTrace = measure.measureMemFn();
-        memTrace("before resort decode");
-        memTrace("after resort decode");
-        console.log("key entris (number): ", this.keyHeader.entriesNum);
-        console.timeEnd("KEY_LIST_RESORTE");
-      }
+    if (!this.options.resort) {
+      throw new Error(
+        "js-mdict version above 5.0.0, must specify `options.resort = true` "
+      );
     }
 
-    if (this.ext == "mdd" && this.options.resort) {
+    // resort mdd files
+    if (this.options.debug) {
+      const memTrace = measure.measureMemFn();
+      memTrace("before resort decode");
+      measure.measureTimeFn(this, this._decodeKeyBlock)();
+      measure.measureTimeFn(this, this._resortKeyList)();
+      memTrace("after resort decode");
+    } else {
       this._decodeKeyBlock();
-      // this._resortKeyBlock();
       this._resortKeyList();
     }
 
@@ -1084,7 +1053,7 @@ class MDictBase {
    * find record which record start locate
    * @param {number} recordStart record start offset
    */
-  _reduceRecordBlock(recordStart) {
+  _reduce_record_block(recordStart) {
     let left = 0;
     let right = this.recordBlockInfoList.length - 1;
     let mid = 0;
@@ -1106,7 +1075,7 @@ class MDictBase {
    * @param {number} start this word record start offset
    * @param {number} nextStart next word record start offset
    */
-  _decodeRecordBlockByRBID(rbid, keyText, start, nextStart) {
+  _decode_record_block_by_rb_id(rbid, keyText, start, nextStart) {
     // decode record block by record block id
     this._recordBlockStartOffset = this._recordInfoEndOffset;
     const compSize = this.recordBlockInfoList[rbid].compSize;
@@ -1209,7 +1178,7 @@ class MDictBase {
     });
   }
 
-  _stripKeyOrIngoreCase() {
+  _strip_key_or_ingore_case() {
     return function (key) {
       // this strip/case sensistive part will increase time cost about 100% (20ms->38ms)
       if (this._isStripKey()) {
