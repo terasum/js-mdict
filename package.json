@@ -5,15 +5,10 @@
   "main": "lib/mdict.js",
   "types": "typings/mdict.d.ts",
   "scripts": {
-    "debug": "npm run build && mocha --require @babel/register test/debug.spec.js",
-    "temp": "npm run build && mocha --require @babel/register test/temp-debug.spec.js",
-    "benchDecodeKeyBlock": "npm run build && mocha --require @babel/register test/decodeKeyBlock.bench.js",
-    "test": "npm run build && mocha --require @babel/register test/*.spec.js",
-    "coverage": "npm run build && nyc mocha --require @babel/register",
-    "jest": "npm run build && jest test/*.spec.js",
+    "bench": "npm run build && mocha --require @babel/register test/decode_key_block.bench.js",
+    "test": "npm run build && jest test/*.spec.js",
     "build": "babel src --out-dir lib",
-    "eslint": "eslint src",
-    "example": "babel-node example/example.js"
+    "lint": "eslint src"
   },
   "repository": "git+https://github.com/terasum/js-mdict.git",
   "keywords": [

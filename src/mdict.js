@@ -1,7 +1,7 @@
 /// <reference path="../typings/mdict.d.ts" />
 
 import { lemmatizer } from "lemmatizer";
-import MdictBase from "./mdict-base";
+import MdictBase from "./mdictbase";
 import common from "./common";
 
 class Mdict extends MdictBase {

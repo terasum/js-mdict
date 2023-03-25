@@ -13,7 +13,7 @@ import bufferToArrayBuffer from "buffer-to-arraybuffer";
 import common from "./common";
 import lzo1x from "./lzo-wrapper";
 
-import measure from "./measure-util";
+import measure from "./measure_util";
 
 const UTF_16LE_DECODER = new TextDecoder("utf-16le");
 const UTF16 = "UTF-16";
