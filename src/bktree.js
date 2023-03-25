@@ -64,13 +64,13 @@ class BKTree {
   constructor(word_num) {
     this.tree = new Array(word_num);
     for (let i = 0; i < this.tree.length; i++) {
-      this.tree[i] = new BKNode('');
+      this.tree[i] = new BKNode("");
     }
-    this.rt = new BKNode('');
+    this.rt = new BKNode("");
     this.ptr = 0;
   }
   _add(idx, curr) {
-    if (this.rt.word === '') {
+    if (this.rt.word === "") {
       this.rt.set_word(curr.word);
       this.tree[0] = this.rt;
       return;
@@ -100,7 +100,7 @@ class BKTree {
       return ret;
     }
 
-    if (this.rt.word === '') {
+    if (this.rt.word === "") {
       return ret;
     }
     const cur_rt = this.tree[idx];
@@ -127,7 +127,7 @@ class BKTree {
   }
   add(words) {
     if (!Array.isArray(words)) {
-      throw new Error('words is not array');
+      throw new Error("words is not array");
     }
     words.forEach((element) => {
       this._add(0, new BKNode(element));

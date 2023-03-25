@@ -1,15 +1,19 @@
-import BufferList from 'bl';
-import { TextDecoder } from 'text-encoding';
-import { DOMParser } from '@xmldom/xmldom';
-import ripemd128 from './ripemd128';
+import BufferList from "bl";
+import { DOMParser } from "@xmldom/xmldom";
+import ripemd128 from "./ripemd128";
+
+// depreciated TextDecoder, use nodejs embbed library
+// before use embbed TextDecoder: decodeKeyBlock time costs: 641ms
+// after: 245ms
+// import { TextDecoder } from "text-encoding";
 
 const REGEXP_STRIPKEY = {
-  mdx: /[()., '/\\@_-]()/g,
-  mdd: /([.][^.]*$)|[()., '/\\@_-]/g, // strip '.' before file extension that is keeping the last period
+  mdx: /[()., '/\\@_\$]()/g,
+  mdd: /([.][^.]*$)|[()., '/@]/g, // strip '.' before file extension that is keeping the last period
 };
 
-const UTF_16LE_DECODER = new TextDecoder('utf-16le');
-const UTF16 = 'UTF-16';
+const UTF_16LE_DECODER = new TextDecoder("utf-16le");
+const UTF16 = "UTF-16";
 
 function newUint8Array(buf, offset, len) {
   let ret = new Uint8Array(len);
@@ -78,11 +82,11 @@ function levenshtein_distance(a, b) {
  * @param {string} header_text
  */
 function parseHeader(header_text) {
-  const doc = new DOMParser().parseFromString(header_text, 'text/xml');
+  const doc = new DOMParser().parseFromString(header_text, "text/xml");
   const header_attr = {};
-  let elem = doc.getElementsByTagName('Dictionary')[0];
+  let elem = doc.getElementsByTagName("Dictionary")[0];
   if (!elem) {
-    elem = doc.getElementsByTagName('Library_Data')[0]; // eslint_disable_prefer_destructing
+    elem = doc.getElementsByTagName("Library_Data")[0]; // eslint_disable_prefer_destructing
   }
   for (let i = 0, item; i < elem.attributes.length; i++) {
     item = elem.attributes[i];
@@ -151,10 +155,10 @@ function uint64BEtoNumber(bytes) {
   return high;
 }
 
-const NUMFMT_UINT8 = Symbol('NUM_FMT_UINT8');
-const NUMFMT_UINT16 = Symbol('NUM_FMT_UINT16');
-const NUMFMT_UINT32 = Symbol('NUM_FMT_UINT32');
-const NUMFMT_UINT64 = Symbol('NUM_FMT_UINT64');
+const NUMFMT_UINT8 = Symbol("NUM_FMT_UINT8");
+const NUMFMT_UINT16 = Symbol("NUM_FMT_UINT16");
+const NUMFMT_UINT32 = Symbol("NUM_FMT_UINT32");
+const NUMFMT_UINT64 = Symbol("NUM_FMT_UINT64");
 /**
  * read number from buffer
  * @param {BufferList} bf number buffer
@@ -184,7 +188,7 @@ function readNumber(bf, numfmt) {
 function readNumber2(bf, offset, numfmt) {
   if (numfmt === NUMFMT_UINT32) {
     // uint32
-    return bf.readUInt32BE(offset)
+    return bf.readUInt32BE(offset);
     // return uint32BEtoNumber(value);
   } else if (numfmt === NUMFMT_UINT64) {
     // uint64
@@ -193,10 +197,10 @@ function readNumber2(bf, offset, numfmt) {
   } else if (numfmt === NUMFMT_UINT16) {
     // uint16
     // return uint16BEtoNumber(value);
-    return bf.readUint16BE(offset)
+    return bf.readUint16BE(offset);
   } else if (numfmt === NUMFMT_UINT8) {
     // uint8
-    return bf.readUInt8(offset)
+    return bf.readUInt8(offset);
   }
   return 0;
 }
@@ -248,7 +252,7 @@ function appendBuffer(buffer1, buffer2) {
   return tmp.buffer;
 }
 
-function wordCompare(word1, word2) {
+function caseUnsensitiveCompare(word1, word2) {
   if (!word1 || !word2) {
     throw new Error(`invalid word comparation ${word1} and ${word2}`);
   }
@@ -280,13 +284,13 @@ function wordCompare(word1, word2) {
 // if this.header.KeyCaseSensitive = YES,
 // Uppercase character is placed in the start position of the directionary
 // so if `this.header.KeyCaseSensitive = YES` use normalUpperCaseWordCompare, else use wordCompare
-function normalUpperCaseWordCompare(word1, word2) {
+function caseSensitiveCompare(word1, word2) {
   if (word1 === word2) {
     return 0;
   } else if (word1 > word2) {
-    return 1;
-  } else {
     return -1;
+  } else {
+    return 1;
   }
 }
 
@@ -309,7 +313,7 @@ function localCompare(word1, word2) {
 function isTrue(v) {
   if (!v) return false;
   v = v.toLowerCase();
-  return v === 'yes' || v === 'true';
+  return v === "yes" || v === "true";
 }
 
 export default {
@@ -324,8 +328,8 @@ export default {
   readNumber2,
   mdxDecrypt,
   appendBuffer,
-  wordCompare,
-  normalUpperCaseWordCompare,
+  caseUnsensitiveCompare,
+  caseSensitiveCompare,
   localCompare,
   isTrue,
   NUMFMT_UINT8,

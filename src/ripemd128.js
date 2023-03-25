@@ -20,10 +20,10 @@ function asUint32Array(arr) {
 
 // concat 2 typed array
 function concat(a, b) {
-  if (!a && !b)
-    throw new Error('Please specify valid arguments for parameters a and b.');
+  if (!a && !b) throw new Error("invalid Buffer a and b");
   if (!b || b.length === 0) return a;
   if (!a || a.length === 0) return b;
+
   const c = new a.constructor(a.length + b.length);
   c.set(a);
   c.set(b, a.length);
@@ -83,7 +83,7 @@ const F = [
   },
 ];
 
-exports.ripemd128 = function ripemd128(data) {
+exports.ripemd128 = function ripemd128(dataBuffer) {
   let aa;
   let bb;
   let cc;
@@ -100,17 +100,16 @@ exports.ripemd128 = function ripemd128(data) {
   let tmp;
   let x;
   const hash = new Uint32Array([
-    0x67452301,
-    0xefcdab89,
-    0x98badcfe,
-    0x10325476,
+    0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
   ]);
-  let bytes = data.length;
+
+  let bytes = dataBuffer.length;
+  const dataUint8Array = new Uint8Array(dataBuffer);
 
   const padding = new Uint8Array((bytes % 64 < 56 ? 56 : 120) - (bytes % 64));
   padding[0] = [0x80];
 
-  data = new Uint32Array(concat(data, padding).buffer);
+  let data = new Uint32Array(concat(dataUint8Array, padding).buffer);
 
   // ending with check bits (= little endian 64-bit int, 8 * data.length)
   bytes <<= 3;

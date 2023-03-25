@@ -1,29 +1,45 @@
 /// <reference path="../typings/MdictBase.d.ts">
 
-import readChunk from 'read-chunk';
-import assert from 'assert';
-import BufferList from 'bl';
-import pako from 'pako';
-import bufferToArrayBuffer from 'buffer-to-arraybuffer';
-import { TextDecoder } from 'text-encoding';
+import readChunk from "read-chunk";
+import assert from "assert";
+import BufferList from "bl";
+import fs, { write } from "fs";
 
-import common from './common';
-import lzo1x from './lzo-wrapper';
+// import util from "util";
+// import pako from "pako";
 
-const UTF_16LE_DECODER = new TextDecoder('utf-16le');
-const UTF16 = 'UTF-16';
+// use nodejs embbed zlib instead of pako, only under nodejs
+// use pako = 347ms, use zlib = 290ms
+import zlib from "zlib";
+const pako = {};
+pako.inflate = zlib.inflateSync;
 
-const UTF_8_DECODER = new TextDecoder('utf-8');
-const UTF8 = 'UTF-8';
+import bufferToArrayBuffer from "buffer-to-arraybuffer";
 
-const BIG5_DECODER = new TextDecoder('big5');
-const BIG5 = 'BIG5';
+// depreciated TextDecoder, use nodejs embbed library
+// before use embbed TextDecoder: decodeKeyBlock time costs: 641ms
+// after: 245ms
+// import { TextDecoder } from "text-encoding";
 
-const GB18030_DECODER = new TextDecoder('gb18030');
-const GB18030 = 'GB18030';
+import common from "./common";
+import lzo1x from "./lzo-wrapper";
+
+import measure from "./measure-util";
+
+const UTF_16LE_DECODER = new TextDecoder("utf-16le");
+const UTF16 = "UTF-16";
+
+const UTF_8_DECODER = new TextDecoder("utf-8");
+const UTF8 = "UTF-8";
+
+const BIG5_DECODER = new TextDecoder("big5");
+const BIG5 = "BIG5";
+
+const GB18030_DECODER = new TextDecoder("gb18030");
+const GB18030 = "GB18030";
 
 const BASE64ENCODER = function (arrayBuffer) {
-  return arrayBuffer.toString('base64');
+  return arrayBuffer.toString("base64");
 };
 
 /**
@@ -36,7 +52,7 @@ class MDictBase {
    * @param {string} fname
    * @param {string} passcode
    */
-  constructor(fname, passcode) {
+  constructor(fname, passcode, options) {
     // the mdict file name
     this.fname = fname;
     // the dictionary file decrypt pass code
@@ -44,7 +60,16 @@ class MDictBase {
     // the mdict file read offset
     this._offset = 0;
     // the dictionary file extension
-    this.ext = common.getExtension(fname, 'mdx');
+    this.ext = common.getExtension(fname, "mdx");
+
+    // set options
+    this.options = options ?? {
+      passcode: passcode,
+      debug: false,
+      resort: true,
+      isStripKey: true,
+      isCaseSensitive: false,
+    };
 
     // -------------------------
     // dict header section
@@ -84,18 +109,59 @@ class MDictBase {
     // --------------------------
     this._keyBlockStartOffset = 0;
     this._keyBlockEndOffset = 0;
-    this.keyList = [];
-    // decodeKeyBlock method is very slow, avoid invoke dirctly
-    // this method will return the whole words list of the dictionaries file, this is very slow 
-    // operation, and you should do this background, or concurrently.
-    // NOTE: this method is wrapped by method medict.RangeWords();
-    // this._decodeKeyBlock();
 
     // -------------------------
     // dict record header section
     // --------------------------
     this._recordHeaderStartOffset = 0;
     this._recordHeaderEndOffset = 0;
+
+    this.keyList = [];
+
+    // depreciated part
+    // decodeKeyBlock method is very slow, avoid invoke dirctly
+    // this method will return the whole words list of the dictionaries file, this is very slow
+    // operation, and you should do this background, or concurrently.
+    // NOTE: this method is wrapped by method medict.RangeWords();
+    // this._decodeKeyBlock();
+
+    if (this.ext === "mdx" && this.options.resort) {
+      if (this.options.debug) {
+        console.time("KEY_LIST_RESORTE");
+        console.log("file: ", this.fname);
+        const memTrace = measure.measureMemFn();
+        memTrace("before resort decode");
+        // NOTE: this method may takes 200ms
+        // NOTE: this method is wrapped by method medict.RangeWords();
+        measure.measureTimeFn(this, this._decodeKeyBlock)();
+        // measure.measureTimeFn(this, this._resortKeyBlock)();
+        measure.measureTimeFn(this, this._resortKeyList)();
+        memTrace("after resort decode");
+        console.log("key entris (number): ", this.keyHeader.entriesNum);
+        console.timeEnd("KEY_LIST_RESORTE");
+      } else {
+        this._decodeKeyBlock();
+        // this._resortKeyBlock();
+        this._resortKeyList();
+      }
+    } else {
+      if (this.options.debug) {
+        console.time("KEY_LIST_RESORTE");
+        console.log("file: ", this.fname);
+        const memTrace = measure.measureMemFn();
+        memTrace("before resort decode");
+        memTrace("after resort decode");
+        console.log("key entris (number): ", this.keyHeader.entriesNum);
+        console.timeEnd("KEY_LIST_RESORTE");
+      }
+    }
+
+    if (this.ext == "mdd" && this.options.resort) {
+      this._decodeKeyBlock();
+      // this._resortKeyBlock();
+      this._resortKeyList();
+    }
+
     this.recordHeader = {
       recordBlocksNum: 0,
       entriesNum: 0,
@@ -170,9 +236,9 @@ class MDictBase {
     this.header = common.parseHeader(headerText);
 
     // set header default configuration
-    this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || 'No';
+    this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || "No";
 
-    this.header.StripKey = this.header.StripKey || 'Yes';
+    this.header.StripKey = this.header.StripKey || "Yes";
 
     // encrypted flag
     // 0x00 - no encryption
@@ -180,11 +246,11 @@ class MDictBase {
     // 0x02 - encrypt key info block
     if (
       !this.header.Encrypted ||
-      this.header.Encrypted == '' ||
-      this.header.Encrypted == 'No'
+      this.header.Encrypted == "" ||
+      this.header.Encrypted == "No"
     ) {
       this._encrypt = 0;
-    } else if (this.header.Encrypted == 'Yes') {
+    } else if (this.header.Encrypted == "Yes") {
       this._encrypt = 1;
     } else {
       this._encrypt = parseInt(this.header.Encrypted, 10);
@@ -212,22 +278,22 @@ class MDictBase {
       this._numWidth = 4;
       this._numFmt = common.NUMFMT_UINT32;
     }
-    if (!this.header.Encoding || this.header.Encoding == '') {
+    if (!this.header.Encoding || this.header.Encoding == "") {
       this._encoding = UTF8;
       this._decoder = UTF_8_DECODER;
     } else if (
-      this.header.Encoding == 'GBK' ||
-      this.header.Encoding == 'GB2312'
+      this.header.Encoding == "GBK" ||
+      this.header.Encoding == "GB2312"
     ) {
       this._encoding = GB18030;
       this._decoder = GB18030_DECODER;
-    } else if (this.header.Encoding.toLowerCase() == 'big5') {
+    } else if (this.header.Encoding.toLowerCase() == "big5") {
       this._encoding = BIG5;
       this._decoder = BIG5_DECODER;
     } else {
       this._encoding =
-        this.header.Encoding.toLowerCase() == 'utf16' ||
-        this.header.Encoding.toLowerCase() == 'utf-16'
+        this.header.Encoding.toLowerCase() == "utf16" ||
+        this.header.Encoding.toLowerCase() == "utf-16"
           ? UTF16
           : UTF8;
       if (this._encoding == UTF16) {
@@ -237,7 +303,7 @@ class MDictBase {
       }
     }
     // determine the encoding and decoder, if extension is *.mdd
-    if (this.ext === 'mdd') {
+    if (this.ext === "mdd") {
       this._encoding = UTF16;
       this._decoder = UTF_16LE_DECODER;
     }
@@ -270,16 +336,16 @@ class MDictBase {
 
     // decrypt
     if (this._encrypt & 1) {
-      if (!this._passcode || this._passcode == '') {
+      if (!this._passcode || this._passcode == "") {
         // TODO: encrypted file not support yet
-        throw Error(' user identification is needed to read encrypted file');
+        throw Error(" user identification is needed to read encrypted file");
       }
       // regcode, userid = header_info['_passcode']
-      if (this.header.RegisterBy == 'Email') {
+      if (this.header.RegisterBy == "Email") {
         // encrypted_key = _decrypt_regcode_by_email(regcode, userid);
-        throw Error('encrypted file not support yet');
+        throw Error("encrypted file not support yet");
       } else {
-        throw Error('encrypted file not support yet');
+        throw Error("encrypted file not support yet");
       }
     }
 
@@ -350,7 +416,9 @@ class MDictBase {
     this._keyHeaderEndOffset =
       this._keyHeaderStartOffset +
       bytesNum +
-      (this._version >= 2.0 ? 4 : 0); /* 4 bytes adler32 checksum length, only for version >= 2.0 */
+      (this._version >= 2.0
+        ? 4
+        : 0); /* 4 bytes adler32 checksum length, only for version >= 2.0 */
   }
 
   /**
@@ -369,9 +437,11 @@ class MDictBase {
       this._keyBlockInfoStartOffset + this.keyHeader.keyBlockInfoCompSize;
     assert(
       this.keyHeader.keyBlocksNum === keyBlockInfoList.length,
-      'the num_key_info_list should equals to key_block_info_list'
+      "the num_key_info_list should equals to key_block_info_list"
     );
+
     this.keyBlockInfoList = keyBlockInfoList;
+
     // NOTE: must set at here, otherwise, if we haven't invoke the _decodeKeyBlockInfo method,
     // var `_recordBlockStartOffset` will not be setted.
     this._recordBlockStartOffset =
@@ -390,8 +460,8 @@ class MDictBase {
     if (this._version >= 2.0) {
       // zlib compression
       assert(
-        keyBlockInfoBuff.slice(0, 4).toString('hex') === '02000000',
-        'the compress type zlib should start with 0x02000000'
+        keyBlockInfoBuff.slice(0, 4).toString("hex") === "02000000",
+        "the compress type zlib should start with 0x02000000"
       );
       let kbInfoCompBuff;
       if (this._encrypt === 2) {
@@ -402,6 +472,7 @@ class MDictBase {
       // For version 2.0, will compress by zlib, lzo just just for 1.0
       // key_block_info_compressed[0:8] => compress_type
       kbInfoBuff = pako.inflate(kbInfoCompBuff.slice(8, kbInfoCompBuff.length));
+
       // TODO: check the alder32 checksum
       // adler32 = unpack('>I', key_block_info_compressed[4:8])[0]
       // assert(adler32 == zlib.adler32(key_block_info) & 0xffffffff)
@@ -409,7 +480,7 @@ class MDictBase {
       // this.keyHeader.keyBlockInfoDecompSize only exist when version >= 2.0
       assert(
         this.keyHeader.keyBlockInfoDecompSize == kbInfoBuff.length,
-        'key_block_info length should equal'
+        `key_block_info decompress size ${this.keyHeader.keyBlockInfoDecompSize} should equal to keyblock info buffer length ${kbInfoBuff.length}`
       );
     } else {
       kbInfoBuff = keyBlockInfoBuff;
@@ -456,7 +527,7 @@ class MDictBase {
       let stepGap = 0;
       // term_size is for first key and last key
       // let term_size = 0;
-      if (this._encoding === UTF16 || this.ext === 'mdd') {
+      if (this._encoding === UTF16 || this.ext === "mdd") {
         stepGap = (firstKeySize + textTerm) * 2;
         termSize = textTerm * 2;
       } else {
@@ -475,7 +546,7 @@ class MDictBase {
         byteFmt
       );
       i += byteWidth;
-      if (this._encoding === UTF16 || this.ext === 'mdd') {
+      if (this._encoding === UTF16 || this.ext === "mdd") {
         stepGap = (lastKeySize + textTerm) * 2;
         // TODO: this is for last key output
         termSize = textTerm * 2;
@@ -568,8 +639,7 @@ class MDictBase {
     while (left <= right) {
       mid = left + ((right - left) >> 1);
       if (
-        compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].firstKey)) >=
-          0 &&
+        compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].firstKey)) >= 0 &&
         compareFn(_s(phrase), _s(this.keyBlockInfoList[mid].lastKey)) <= 0
       ) {
         return mid;
@@ -592,7 +662,7 @@ class MDictBase {
    * decode key block return the total keys list,
    * Note: this method runs very slow, please do not use this unless special target
    */
-  _decodeKeyBlock(keep) {
+  _decodeKeyBlock() {
     this._keyBlockStartOffset = this._keyBlockInfoEndOffset;
     const kbCompBuff = this._readBuffer(
       this._keyBlockStartOffset,
@@ -608,7 +678,7 @@ class MDictBase {
       const start = kbStartOfset;
       assert(
         start === this.keyBlockInfoList[idx].keyBlockCompAccumulator,
-        'should be equal'
+        "should be equal"
       );
 
       const end = kbStartOfset + compSize;
@@ -619,9 +689,9 @@ class MDictBase {
       // adler32 = unpack('>I', key_block_compressed[start + 4:start + 8])[0]
 
       let key_block;
-      if (kbCompType.toString('hex') == '00000000') {
+      if (kbCompType.toString("hex") == "00000000") {
         key_block = kbCompBuff.slice(start + 8, end);
-      } else if (kbCompType.toString('hex') == '01000000') {
+      } else if (kbCompType.toString("hex") == "01000000") {
         // # decompress key block
         const header = new ArrayBuffer([0xf0, decompressed_size]);
         const keyBlock = lzo1x.decompress(
@@ -633,7 +703,7 @@ class MDictBase {
           keyBlock.byteOffset,
           keyBlock.byteOffset + keyBlock.byteLength
         );
-      } else if (kbCompType.toString('hex') === '02000000') {
+      } else if (kbCompType.toString("hex") === "02000000") {
         // decompress key block
         key_block = pako.inflate(kbCompBuff.slice(start + 8, end));
         // extract one single key block into a key list
@@ -642,26 +712,19 @@ class MDictBase {
         // assert(adler32 == zlib.adler32(key_block) & 0xffffffff)
       } else {
         throw Error(
-          `cannot determine the compress type: ${kbCompType.toString('hex')}`
+          `cannot determine the compress type: ${kbCompType.toString("hex")}`
         );
       }
-      const splitedKey = this._splitKeyBlock(
-        new BufferList(key_block),
-        this._numFmt,
-        this._numWidth,
-        this._encoding
-      );
+      const splitedKey = this._splitKeyBlock(new BufferList(key_block), idx);
       key_list = key_list.concat(splitedKey);
       kbStartOfset += compSize;
     }
     assert(key_list.length === this.keyHeader.entriesNum);
     this._keyBlockEndOffset =
       this._keyBlockStartOffset + this.keyHeader.keyBlocksTotalSize;
-    if (keep) {
-      this.keyList = key_list;
-    } else {
-      return key_list;
-    }
+
+    // keep keylist in memory
+    this.keyList = key_list;
   }
 
   /**
@@ -684,9 +747,9 @@ class MDictBase {
     // adler32 = unpack('>I', key_block_compressed[start + 4:start + 8])[0]
 
     let key_block;
-    if (kbCompType.toString('hex') == '00000000') {
+    if (kbCompType.toString("hex") == "00000000") {
       key_block = kbCompBuff.slice(start + 8, end);
-    } else if (kbCompType.toString('hex') == '01000000') {
+    } else if (kbCompType.toString("hex") == "01000000") {
       // # decompress key block
       const header = new ArrayBuffer([0xf0, decompSize]);
       const keyBlock = lzo1x.decompress(
@@ -698,7 +761,7 @@ class MDictBase {
         keyBlock.byteOffset,
         keyBlock.byteOffset + keyBlock.byteLength
       );
-    } else if (kbCompType.toString('hex') === '02000000') {
+    } else if (kbCompType.toString("hex") === "02000000") {
       // decompress key block
       key_block = pako.inflate(kbCompBuff.slice(start + 8, end));
       // extract one single key block into a key list
@@ -707,15 +770,10 @@ class MDictBase {
       // assert(adler32 == zlib.adler32(key_block) & 0xffffffff)
     } else {
       throw Error(
-        `cannot determine the compress type: ${kbCompType.toString('hex')}`
+        `cannot determine the compress type: ${kbCompType.toString("hex")}`
       );
     }
-    const splitedKey = this._splitKeyBlock(
-      new BufferList(key_block),
-      this._numFmt,
-      this._numWidth,
-      this._encoding
-    );
+    const splitedKey = this._splitKeyBlock(new BufferList(key_block), kbid);
     return splitedKey;
   }
 
@@ -724,14 +782,14 @@ class MDictBase {
    * split key from key block buffer
    * @param {Buffer} keyBlock key block buffer
    */
-  _splitKeyBlock(keyBlock) {
+  _splitKeyBlock(keyBlock, keyBlockIdx) {
     let delimiter;
     let width;
-    if (this._encoding == 'UTF-16' || this.ext == 'mdd') {
-      delimiter = '0000';
+    if (this._encoding == "UTF-16" || this.ext == "mdd") {
+      delimiter = "0000";
       width = 2;
     } else {
-      delimiter = '00';
+      delimiter = "00";
       width = 1;
     }
     const keyList = [];
@@ -754,15 +812,17 @@ class MDictBase {
       // # key text ends with '\x00'
       let i = keyStartIndex + this._numWidth;
       while (i < keyBlock.length) {
-        // delimiter = '0' 
-        if ((width === 1 && keyBlock.get(i) == 0) 
-        // delimiter = '00'
-        || (width === 2 && keyBlock.get(i) == 0 && keyBlock.get(i+1) == 0)){
+        // delimiter = '0'
+        if (
+          (width === 1 && keyBlock.get(i) == 0) ||
+          // delimiter = '00'
+          (width === 2 && keyBlock.get(i) == 0 && keyBlock.get(i + 1) == 0)
+        ) {
           //// the method below was very slow, depreate
-        // if (
-        //   new BufferList(keyBlock.slice(i, i + width)).toString('hex') ==
-        //   delimiter
-        // ) {
+          // if (
+          //   new BufferList(keyBlock.slice(i, i + width)).toString('hex') ==
+          //   delimiter
+          // ) {
           keyEndIndex = i;
           break;
         }
@@ -772,7 +832,7 @@ class MDictBase {
         keyBlock.slice(keyStartIndex + this._numWidth, keyEndIndex)
       );
       keyStartIndex = keyEndIndex + width;
-      keyList.push({ recordStartOffset, keyText });
+      keyList.push({ recordStartOffset, keyText, keyBlockIdx });
     }
     return keyList;
   }
@@ -899,7 +959,7 @@ class MDictBase {
     let recordOffset = this._recordBlockStartOffset;
 
     for (let idx = 0; idx < this.recordBlockInfoList.length; idx++) {
-      let comp_type = 'none';
+      let comp_type = "none";
       const compSize = this.recordBlockInfoList[idx].compSize;
       const decompSize = this.recordBlockInfoList[idx].decompSize;
       const rbCompBuff = this._readBuffer(recordOffset, compSize);
@@ -915,7 +975,7 @@ class MDictBase {
       // Note: here ignore the checksum part
       // bytes: adler32 checksum of decompressed record block
       // adler32 = unpack('>I', record_block_compressed[4:8])[0]
-      if (rbCompType.toString('hex') === '00000000') {
+      if (rbCompType.toString("hex") === "00000000") {
         recordBlock = rbCompBuff.slice(8, rbCompBuff.length);
       } else {
         // --------------
@@ -937,8 +997,8 @@ class MDictBase {
         // --------------
         // decompress
         // --------------
-        if (rbCompType.toString('hex') === '01000000') {
-          comp_type = 'lzo';
+        if (rbCompType.toString("hex") === "01000000") {
+          comp_type = "lzo";
           // the header was need by lzo library, should append before real compressed data
           const header = new ArrayBuffer([0xf0, decompSize]);
           // Note: if use lzo, here will LZO_E_OUTPUT_RUNOVER, so ,use mini lzo js
@@ -951,8 +1011,8 @@ class MDictBase {
             recordBlock.byteOffset,
             recordBlock.byteOffset + recordBlock.byteLength
           );
-        } else if (rbCompType.toString('hex') === '02000000') {
-          comp_type = 'zlib';
+        } else if (rbCompType.toString("hex") === "02000000") {
+          comp_type = "zlib";
           // zlib decompress
           recordBlock = pako.inflate(blockBufDecrypted);
         }
@@ -1066,7 +1126,7 @@ class MDictBase {
     // Note: here ignore the checksum part
     // bytes: adler32 checksum of decompressed record block
     // adler32 = unpack('>I', record_block_compressed[4:8])[0]
-    if (rbCompType.toString('hex') === '00000000') {
+    if (rbCompType.toString("hex") === "00000000") {
       recordBlock = rbCompBuff.slice(8, rbCompBuff.length);
     } else {
       // --------------
@@ -1087,7 +1147,7 @@ class MDictBase {
       // --------------
       // decompress
       // --------------
-      if (rbCompType.toString('hex') === '01000000') {
+      if (rbCompType.toString("hex") === "01000000") {
         // the header was need by lzo library, should append before real compressed data
         const header = new ArrayBuffer([0xf0, decompSize]);
         // Note: if use lzo, here will LZO_E_OUTPUT_RUNOVER, so ,use mini lzo js
@@ -1100,7 +1160,7 @@ class MDictBase {
           recordBlock.byteOffset,
           recordBlock.byteOffset + recordBlock.byteLength
         );
-      } else if (rbCompType.toString('hex') === '02000000') {
+      } else if (rbCompType.toString("hex") === "02000000") {
         // zlib decompress
         recordBlock = pako.inflate(blockBufDecrypted);
       }
@@ -1115,7 +1175,7 @@ class MDictBase {
     const recordStart = start - decompAccumulator;
     const recordEnd = nextStart - decompAccumulator;
     const data = recordBlock.slice(recordStart, recordEnd);
-    if (this.ext === 'mdd') {
+    if (this.ext === "mdd") {
       return { keyText, definition: BASE64ENCODER(data) };
     }
     return { keyText, definition: this._decoder.decode(data) };
@@ -1124,6 +1184,66 @@ class MDictBase {
   _readBuffer(start, length) {
     return readChunk.sync(this.fname, start, length);
   }
+
+  // store key to wordBuffer
+  _resortKeyList() {
+    // 排序之前记录下，每个单词的结束位置，因为排序之后顺序就乱了，buffer 里就不能再根据下一个单词判断了
+    this.keyList.map((v, i) => {
+      v.original_idx = i;
+      if (i > 0) {
+        this.keyList[i - 1].nextRecordStartOffset = v.recordStartOffset;
+      }
+    });
+
+    this.keyListRemap = {};
+
+    if (this._isKeyCaseSensitive()) {
+      this.keyList.sort(common.caseUnsensitiveCompare);
+    } else {
+      this.keyList.sort(common.caseSensitiveCompare);
+    }
+
+    // build index remap
+    this.keyList.map((v, i) => {
+      this.keyListRemap[v.original_idx] = i;
+    });
+  }
+
+  _stripKeyOrIngoreCase() {
+    return function (key) {
+      // this strip/case sensistive part will increase time cost about 100% (20ms->38ms)
+      if (this._isStripKey()) {
+        key = key.replace(common.REGEXP_STRIPKEY[this.ext], "$1");
+      }
+      if (!this._isKeyCaseSensitive()) {
+        key = key.toLowerCase();
+      }
+      if (this.ext == "mdd") {
+        key = key.replace(/\\/g, "/");
+      }
+      return key.trim();
+    }.bind(this);
+  }
+
+  _isKeyCaseSensitive() {
+    return (
+      this.options.isCaseSensitive || common.isTrue(this.header.isCaseSensitive)
+    );
+  }
+
+  _isStripKey() {
+    return this.options.isStripKey || common.isTrue(this.header.StripKey);
+  }
+
+  /**
+   * 经过一系列测试, 发现mdx格式的文件存在较大的词语排序问题，存在如下情况：
+   * 1. 大小写的问题 比如 a-zA-Z 和 aA-zZ 这种并存的情况
+   * 2. 多语言的情况，存在英文和汉字比较大小的情况一般情况下 英文应当排在汉字前面
+   * 3. 小语种的情况
+   * 上述的这些情况都有可能出现，无法通过字典头中的设置实现排序，所以无法通过内部的keyInfoList进行快速索引，
+   * 在现代计算机的性能条件下，直接遍历全部词条也可得到较好的效果，因此目前采用的策略是全部读取词条，内部排序
+   *
+   */
 }
 
 export default MDictBase;

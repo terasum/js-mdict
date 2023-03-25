@@ -1,31 +1,27 @@
 {
-  "extends": ["eslint-config-airbnb"],
+  "env": {
+    "browser": false,
+    "commonjs": true,
+    "es6": true,
+    "node": true,
+    "jest": true
+  },
+  "globals": { "vscode": "readonly" },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "extends": "airbnb-base",
+  "plugins": ["jest"],
   "rules": {
-    "eqeqeq": "off",
-    "curly": "error",
-    "quotes": ["error", "double"],
-    "no-bitwise": "off",
-    "no-underscore-dangle": "off",
-    "no-plusplus": "off",
-    "prefer-destructuring": "off",
-    "class-methods-use-this": "off",
-    "camelcase": "off",
-    "no-param-reassign": "off",
-    "no-nested-ternary": "off",
-    "no-mixed-operators": "off",
-    "no-continue": "off",
-    "indent": [2, 2],
-    "no-multi-assign": "off",
-    "spaced-comment": ["error", "always", {
-      "line": {
-        "markers": ["/"],
-        "exceptions": ["-", "+"]
-      },
-      "block": {
-        "markers": ["!"],
-        "exceptions": ["*"],
-        "balanced": true
-      }
-    }]
+    "no-const-assign": "warn",
+    "no-this-before-super": "warn",
+    "no-undef": "warn",
+    "no-unreachable": "warn",
+    "no-unused-vars": "warn",
+    "constructor-super": "warn",
+    "valid-typeof": "warn",
+    "consistent-return": "off",
+    "max-len": "warn"
   }
 }

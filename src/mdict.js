@@ -1,81 +1,163 @@
 /// <reference path="../typings/mdict.d.ts" />
 
-import { lemmatizer } from 'lemmatizer';
-import dictionary from 'dictionary-en-us';
-import nspell from 'nspell';
-import dart from 'doublearray';
+import { lemmatizer } from "lemmatizer";
+import dictionary from "dictionary-en-us";
+import nspell from "nspell";
+import dart from "doublearray";
 
-import MdictBase from './mdict-base';
-import common from './common';
+import MdictBase from "./mdict-base";
+import common from "./common";
 
 class Mdict extends MdictBase {
-  constructor(fname, searchOptions = {}) {
-    const passcode = searchOptions.passcode || undefined;
-    super(fname, passcode);
-    this.searchOptions = {};
-    searchOptions = searchOptions || {};
-    this.searchOptions.passcode = searchOptions.passcode || undefined;
-    this.searchOptions.keyCaseSensitive = searchOptions.keyCaseSensitive;
-    this.searchOptions.stripKey = searchOptions.stripKey;
+  constructor(fname, options) {
+    options = options || {};
+    options = {
+      passcode: options.passcode ?? "",
+      debug: options.debug ?? false,
+      resort: options.resort ?? true,
+      isStripKey: options.isStripKey ?? true,
+      isCaseSensitive: options.isCaseSensitive ?? true,
+    };
+
+    const passcode = options.passcode || undefined;
+    super(fname, passcode, options);
+    this.options = options;
   }
 
-  _stripKey() {
-    const stripKey =
-      this.searchOptions.stripKey || common.isTrue(this.header.StripKey);
-    const regexp = common.REGEXP_STRIPKEY[this.ext];
+  _binarySearchByResort(word) {
+    const _strip = this._stripKeyOrIngoreCase();
 
-    return stripKey
-      ? function _s(key) {
-          return key.replace(regexp, '$1');
-        }
-      : function _s(key) {
-          return key;
-        };
+    // binary search from keyList
+    let start = 0;
+    let mid = 0;
+    let end = this.keyList.length;
+    // target word
+    word = _strip(word);
+
+    let keyRecord;
+    while (start <= end) {
+      mid = start + ((end - start) >> 1);
+      let keyText = _strip(this.keyList[mid].keyText);
+
+      if (keyText > word) {
+        end = mid - 1;
+      } else if (keyText < word) {
+        start = mid + 1;
+      } else {
+        keyRecord = this.keyList[mid];
+        break;
+      }
+    }
+
+    return keyRecord;
   }
 
-  lookup(word) {
-    const record = this._lookupKID(word);
+  _prefixBinarySearchByResort(word) {
+    const _strip = this._stripKeyOrIngoreCase();
+    let end = this.keyList.length;
+    word = _strip(word);
+    for (let i = 0; i < end; i++) {
+      let keyText = _strip(this.keyList[i].keyText);
+      if (keyText.startsWith(word)) {
+        return i;
+      }
+    }
+    return -1;
+  }
 
+  _binarySearchByResort2(word) {
+    const _strip = this._stripKeyOrIngoreCase();
+    word = _strip(word);
+    for (let i = 0; i < this.keyList.length; i++) {
+      let keyText = _strip(this.keyList[i].keyText);
+      if (word == keyText) {
+        return this.keyList[i];
+      }
+    }
+    return undefined;
+  }
+
+  _lookupByResort(word) {
+    const keyRecord = this._binarySearchByResort2(word);
     // if not found the key block, return undefined
-    if (record === undefined) {
+    if (keyRecord === undefined) {
       return {
         keyText: word,
         definition: null,
       };
     }
 
-    const i = record.idx;
-    const list = record.list;
-
-    const rid = this._reduceRecordBlock(list[i].recordStartOffset);
+    const i = keyRecord.original_idx;
+    const rid = this._reduceRecordBlock(keyRecord.recordStartOffset);
     const nextStart =
-      i + 1 >= list.length
+      i + 1 >= this.keyList.length
         ? this._recordBlockStartOffset +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
             .decompAccumulator +
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
             .decompSize
-        : list[i + 1].recordStartOffset;
+        : this.keyList[this.keyListRemap[i + 1]].recordStartOffset;
     const data = this._decodeRecordBlockByRBID(
       rid,
-      list[i].keyText,
-      list[i].recordStartOffset,
+      keyRecord.keyText,
+      keyRecord.recordStartOffset,
       nextStart
     );
     return data;
   }
 
-  _isKeyCaseSensitive() {
-    return (
-      this.searchOptions.keyCaseSensitive ||
-      common.isTrue(this.header.KeyCaseSensitive)
-    );
-  } 
+  /**
+   *
+   * @param {string} word the target word
+   * @returns definition
+   */
+  lookup(word) {
+    if (this.ext == "mdx" && this.options.resort) {
+      return this._lookupByResort(word);
+    } else {
+      throw new Error(
+        "depreciated, use `locate` method to find out mdd resource"
+      );
+    }
+  }
 
+  /**
+   * locate mdd resource binary data
+   * @param {string} resourceKey resource key
+   * @returns resource binary data
+   */
+  locate(resourceKey) {
+    const keyRecord = this._binarySearchByResort2(resourceKey);
+    // if not found the key block, return undefined
+    if (keyRecord === undefined) {
+      return {
+        keyText: word,
+        definition: null,
+      };
+    }
+
+    const i = keyRecord.original_idx;
+    const rid = this._reduceRecordBlock(keyRecord.recordStartOffset);
+    const nextStart =
+      i + 1 >= this.keyList.length
+        ? this._recordBlockStartOffset +
+          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
+            .decompAccumulator +
+          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
+            .decompSize
+        : this.keyList[this.keyListRemap[i + 1]].recordStartOffset;
+    const data = this._decodeRecordBlockByRBID(
+      rid,
+      keyRecord.keyText,
+      keyRecord.recordStartOffset,
+      nextStart
+    );
+    return data;
+  }
 
   _lookupRecordBlockWordList(word) {
-      const lookupInternal = (compareFn) => {
-      const sfunc = this._stripKey();
+    const lookupInternal = (compareFn) => {
+      const sfunc = this._stripKeyOrIngoreCase();
       const kbid = this._reduceWordKeyBlock(word, sfunc, compareFn);
       // not found
       if (kbid < 0) {
@@ -91,50 +173,45 @@ class Mdict extends MdictBase {
 
     let list;
     if (this._isKeyCaseSensitive()) {
-      list = lookupInternal(common.normalUpperCaseWordCompare);
+      list = lookupInternal(common.caseSensitiveCompare);
     } else {
-      list = lookupInternal(common.normalUpperCaseWordCompare);
+      list = lookupInternal(common.caseSensitiveCompare);
       if (list === undefined) {
-        list = lookupInternal(common.wordCompare);
+        list = lookupInternal(common.caseUnSensitiveCompare);
       }
     }
     return list;
   }
 
+  _locateResource(key) {
+    const sfunc = this._stripKeyOrIngoreCase();
 
-
-  _lookupKID(word) {
-    const lookupInternal = (compareFn) => {
-      const sfunc = this._stripKey();
-      const kbid = this._reduceWordKeyBlock(word, sfunc, compareFn);
-      // not found
-      if (kbid < 0) {
-        return undefined;
-      }
-      const list = this._decodeKeyBlockByKBID(kbid);
-      const i = this._binarySearh(list, word, sfunc, compareFn);
-      if (i === undefined) {
-        return undefined;
-      }
-      return { idx: i, list };
-    };
-
-    let record;
+    let compareFn;
     if (this._isKeyCaseSensitive()) {
-      record = lookupInternal(common.normalUpperCaseWordCompare);
+      compareFn = common.caseSensitiveCompare;
     } else {
-      record = lookupInternal(common.normalUpperCaseWordCompare);
-      if (record === undefined) {
-        record = lookupInternal(common.wordCompare);
-      }
+      compareFn = common.caseUnsensitiveCompare;
     }
-    return record;
+
+    const kbid = this._reduceWordKeyBlock(key, sfunc, compareFn);
+    // not found
+    if (kbid < 0) {
+      return undefined;
+    }
+
+    const list = this._decodeKeyBlockByKBID(kbid);
+
+    const i = this._binarySearh(list, key, sfunc, compareFn);
+    if (i === undefined) {
+      return undefined;
+    }
+
+    return { idx: i, list };
   }
 
   _binarySearh(list, word, _s, compareFn) {
     if (!_s || _s == undefined) {
-      // eslint-disable-next-line
-      _s = this._stripKey();
+      _s = this._stripKeyOrIngoreCase();
     }
     let left = 0;
     let right = list.length - 1;
@@ -161,7 +238,7 @@ class Mdict extends MdictBase {
 
   _findList(word) {
     const findListInternal = (compareFn) => {
-      const sfunc = this._stripKey();
+      const sfunc = this._stripKeyOrIngoreCase();
       const kbid = this._reduceWordKeyBlock(word, sfunc, compareFn);
       // not found
       if (kbid < 0) {
@@ -172,13 +249,41 @@ class Mdict extends MdictBase {
 
     let list;
     if (this._isKeyCaseSensitive()) {
-      list = findListInternal(common.normalUpperCaseWordCompare);
+      list = findListInternal(common.caseSensitiveCompare);
     } else {
-      list = findListInternal(common.normalUpperCaseWordCompare);
+      list = findListInternal(common.caseSensitiveCompare);
       if (list === undefined) {
-        list = findListInternal(common.wordCompare);
+        list = findListInternal(common.caseUnsensitiveCompare);
       }
     }
+    return list;
+  }
+
+  _locate_prefix_list(phrase, max_len = 100, max_missed = 100) {
+    const record = this._prefixBinarySearchByResort(phrase);
+    if (record == -1) {
+      return [];
+    }
+    const fn = this._stripKeyOrIngoreCase();
+
+    let list = [];
+    let count = 0;
+    let missed = 0;
+    for (let i = record; i < this.keyList.length; i++) {
+      if (this.keyList[i].keyText.startsWith(fn(phrase))) {
+        list.push(this.keyList[i]);
+        count++;
+      } else {
+        missed++;
+      }
+      if (count > max_len) {
+        break;
+      }
+      if (missed > max_missed) {
+        break;
+      }
+    }
+
     return list;
   }
 
@@ -187,7 +292,7 @@ class Mdict extends MdictBase {
    * @param {string} phrase the word which needs to find prefix
    */
   prefix(phrase) {
-    const list = this._findList(phrase).list;
+    const list = this._locate_prefix_list(phrase);
     if (!list) {
       return [];
     }
@@ -207,48 +312,13 @@ class Mdict extends MdictBase {
    * @param {string} phrase the word which needs to be associated
    */
   associate(phrase) {
-    const record = this._findList(phrase);
-    if (!record) {
-      return [];
-    }
-    const sfunc = record.sfunc;
-    let kbid = record.kbid;
-    let list = record.list;
-    let matched = list.filter((item) =>
-      sfunc(item.keyText).startsWith(sfunc(phrase))
-    );
-    if (!matched.length) {
-      matched = this.associate0(phrase);
-    }
-    // still nothing
-    if (!matched.length) {
-      return matched;
-    }
-
-    // in case there are matched items in next key block
-    while (
-      matched[matched.length - 1].keyText === list[list.length - 1].keyText &&
-      kbid < this.keyBlockInfoList.length
-    ) {
-      kbid++;
-      list = this._decodeKeyBlockByKBID(kbid);
-      matched.concat(
-        list.filter((item) => sfunc(item.keyText).startsWith(sfunc(phrase)))
-      );
-    }
+    const matched = this._locate_prefix_list(phrase, 100);
     // to meet the typings
     matched.map((item) => {
       item.rofset = item.recordStartOffset;
     });
     return matched;
   }
-
-  associate0(phrase) {
-    // if matched nothing, research in the record block
-    const recordList = this._lookupRecordBlockWordList(phrase);
-    return recordList || [];
-  }
-
 
   /**
    * fuzzy_search
@@ -275,31 +345,27 @@ class Mdict extends MdictBase {
    */
 
   fuzzy_search(word, fuzzy_size, ed_gap) {
-    let fwords = [];
     const fuzzy_words = [];
-    fwords = fwords.concat(
-      this.prefix(word).map((kv) => ({
-        key: kv.key,
-        idx: kv.rofset,
-        ed: common.levenshtein_distance(word, kv.k),
-      }))
-    );
-    fuzzy_size =
-      fuzzy_size - fwords.length < 0 ? 0 : fuzzy_size - fwords.length;
-    fwords.map((fw) => {
-      const { idx, list } = this._lookupKID(fw.key);
-      return this._find_nabor(idx, Math.ceil(fuzzy_size / fwords.length), list)
-        .filter(
-          (item) => common.levenshtein_distance(item.keyText, word) <= ed_gap
-        )
-        .map((kitem) =>
-          fuzzy_words.push({
-            key: kitem.keyText,
-            rofset: kitem.recordStartOffset,
-            ed: common.levenshtein_distance(word, kitem.keyText),
-          })
-        );
-    });
+    let count = 0;
+    const fn = this._stripKeyOrIngoreCase();
+    for (let i = 0; i < this.keyList.length; i++) {
+      let item = this.keyList[i];
+      let key = fn(item.keyText);
+      let ed = common.levenshtein_distance(key, fn(word));
+      if (ed <= ed_gap) {
+        count++;
+        if (count > fuzzy_size) {
+          break;
+        }
+        fuzzy_words.push({
+          ...item,
+          key: item.keyText,
+          idx: item.recordStartOffset,
+          ed: ed,
+        });
+      }
+    }
+
     return fuzzy_words;
   }
 
@@ -349,7 +415,7 @@ class Mdict extends MdictBase {
    */
   parse_defination(word, rstartofset) {
     const rid = this._reduceRecordBlock(rstartofset);
-    const { idx, list } = this._lookupKID(word);
+    const { idx, list } = this._locateResource(word);
     const nextStart =
       idx + 1 >= list.length
         ? this._recordBlockStartOffset +
@@ -358,7 +424,7 @@ class Mdict extends MdictBase {
           this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
             .decompSize
         : list[idx + 1].recordStartOffset;
-    let startoffset = list[idx].recordStartOffset
+    let startoffset = list[idx].recordStartOffset;
     if (rstartofset != startoffset) {
       // if args.rstartofset != list[idx].recordStartOffset
       // use args.rstartofset
@@ -373,10 +439,20 @@ class Mdict extends MdictBase {
     return data;
   }
 
-  rangeKeyWords() {
-     return this._decodeKeyBlock();
+  parse_def_record(keyRecord) {
+    const rid = this._reduceRecordBlock(keyRecord.recordStartOffset);
+    const data = this._decodeRecordBlockByRBID(
+      rid,
+      keyRecord.keyText,
+      keyRecord.recordStartOffset,
+      keyRecord.nextRecordStartOffset
+    );
+    return data;
   }
 
+  rangeKeyWords() {
+    return this._decodeKeyBlock();
+  }
 }
 
 export default Mdict;
