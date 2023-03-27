@@ -1,102 +1,74 @@
-/// <reference types="typescript" />
-
-declare namespace mdict {
-  interface KeyHeader {
-    keyBlocksNum: number;
-    entriesNum: number;
-    keyBlockInfoDecompSize: number;
-    keyBlockInfoCompSize: number;
-    keyBlocksTotalSize: number;
-  }
-
-  interface RecordHeader {
-    recordBlocksNum: number;
-    entriesNum: number;
-    recordBlockInfoCompSize: number;
-    recordBlockCompSize: number;
-  }
-
-  interface KeyBlockInfo {
-    firstKey: string;
-    lastKey: string;
-    keyBlockCompSize: number;
-    keyBlockCompAccumulator: number;
-    keyBlockDecompSize: number;
-    keyBlockDecompAccumulator: number;
-    keyBlockEntriesNum: number;
-    keyBlockEntriesAccumulator: number;
-    keyBlockIndex: number;
-  }
-
-  interface RecordBlockInfo {
-    compSize: number;
-    compAccumulator: number;
-    decompSize: number;
-    decompAccumulator: number;
-  }
-
-  interface KeyDataItem {
-    key: string;
-    idx: number;
-    encoding: string;
-    record_idx: number;
-    record_comp_start: number;
-    record_compressed_size: number;
-    record_decompressed_size: number;
-    record_comp_type: string;
-    record_encrypted: boolean;
-    relateive_record_start: number;
-    relative_record_end: number;
-  }
-
-  interface KeyListItem {
-    recordStartOffset: number;
-    keyText: string;
-  }
-
-  class MdictBase {
-    constructor(path: string);
-    fname: string;
-    ext: string;
-    header: any;
-    keyHeader: KeyHeader;
-    recordHeader: RecordHeader;
-    keyBlockInfoList: Array<KeyBlockInfo>;
-    keyList: Array<KeyListItem>;
-    recordBlockInfoList: Array<RecordBlockInfo>;
-
-    keyData: Array<KeyDataItem>;
-  }
+export interface KeyHeader {
+  keyBlocksNum: number;
+  entriesNum: number;
+  keyBlockInfoDecompSize: number;
+  keyBlockInfoCompSize: number;
+  keyBlocksTotalSize: number;
 }
 
-declare interface WordDefinition {
+export interface RecordHeader {
+  recordBlocksNum: number;
+  entriesNum: number;
+  recordBlockInfoCompSize: number;
+  recordBlockCompSize: number;
+}
+
+export interface KeyBlockInfo {
+  firstKey: string;
+  lastKey: string;
+  keyBlockCompSize: number;
+  keyBlockCompAccumulator: number;
+  keyBlockDecompSize: number;
+  keyBlockDecompAccumulator: number;
+  keyBlockEntriesNum: number;
+  keyBlockEntriesAccumulator: number;
+  keyBlockIndex: number;
+}
+
+export interface RecordBlockInfo {
+  compSize: number;
+  compAccumulator: number;
+  decompSize: number;
+  decompAccumulator: number;
+}
+
+export interface KeyRecord {
+  recordStartOffset: number;
+  nextRecordStartOffset: number;
   keyText: string;
-  definition: string;
-}
-declare interface WordIndex {
-  key: string;
-  rofset: number;
-  recordStartOffset?: number;
+  key?: string;
+  origin_idx?: number;
   ed?: number;
+  rofset?: number;
 }
 
-// public KeyListItem
-declare interface KeyListItem {
-    recordStartOffset: number;
-    keyText: string;
-  }
-declare class Mdict extends mdict.MdictBase {
+export declare class MdictBase {
+  constructor(path: string);
+  fname: string;
+  ext: string;
+  header: any;
+  keyHeader: KeyHeader;
+  recordHeader: RecordHeader;
+  keyBlockInfoList: Array<KeyBlockInfo>;
+  keyList: Array<KeyRecord>;
+  recordBlockInfoList: Array<RecordBlockInfo>;
+}
+
+export declare interface WordDefinition {
+  keyText: string;
+  definition?: string;
+}
+
+export declare class Mdict extends MdictBase {
   constructor(path: string);
   lookup(word: string): WordDefinition;
-  prefix(word: string): Array<WordIndex>;
+  prefix(word: string): Array<KeyRecord>;
   suggest(word: string): Promise<Array<string>>;
-  fuzzy_search(word: string, fuzzy_size: number, ed_gap: number): Array<WordIndex>;
-  associate(word: string): Array<WordIndex>;
-  parse_defination(key: string, rofset: number): string;
-  rangeKeyWords(keep?:boolean): Array<KeyListItem>
+  fuzzy_search(
+    word: string,
+    fuzzy_size: number,
+    ed_gap: number
+  ): Array<KeyRecord>;
+  associate(word: string): Array<KeyRecord>;
+  fetch_defination(record: KeyRecord): WordDefinition;
 }
-
-export { Mdict, WordDefinition, WordIndex };
-
-declare function Mdict(path: string): any;
-export default Mdict;

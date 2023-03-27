@@ -1,6 +1,6 @@
 {
   "name": "js-mdict",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "mdict (*.mdx, *.mdd) file reader",
   "main": "lib/mdict.js",
   "types": "typings/mdict.d.ts",
