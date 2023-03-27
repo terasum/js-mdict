@@ -159,6 +159,10 @@ mdict
 
 ## Release
 
+## v5.0.1
+
+1. fix missing `@babel/runtime` dependency
+
 ## v5.0.0
 
 NOTE: This version has a lot of changes, please read the example code example carefully!
