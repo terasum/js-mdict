@@ -14,8 +14,7 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 NOTE: This version has a lot of changes, please read the example code example carefully!
 
-注意： 本版本改动了多个API, 请仔细阅读上方的示例代码。
-
+注意： 本版本改动了多个 API, 请仔细阅读上方的示例代码。
 
 > not support browser
 
@@ -24,17 +23,16 @@ npm install js-mdict@5.0.0
 ```
 
 ```javascript
-
 // import Mdict from "../src/mdict";
-const Mdict = require("../lib/mdict.js").default;
+const Mdict = require('../lib/mdict.js').default;
 
 // Note: *.mdd file only support lookup method.
 
 // loading dictionary
-const dict = new Mdict("mdx/testdict/oale8.mdx");
+const dict = new Mdict('mdx/testdict/oale8.mdx');
 
 // search a word
-console.log(dict.lookup("hello"));
+console.log(dict.lookup('hello'));
 /*
 
 {
@@ -44,7 +42,7 @@ console.log(dict.lookup("hello"));
 }
   */
 
-console.log(dict.prefix("hell"));
+console.log(dict.prefix('hell'));
 
 /*
 [
@@ -81,7 +79,7 @@ console.log(dict.prefix("hell"));
 
 // NOTE: the `suggest` method has been depreciated
 
-word = "hitch";
+word = 'hitch';
 const fws = dict.fuzzy_search(word, 3, 1);
 console.log(fws);
 /*
@@ -146,18 +144,22 @@ const dictPath = path.join(__dirname, '../resource/Collins.mdx');
 const mdict = new Mdict(dictPath);
 mdict
   .build()
-  .then((_mdict) => {
+  .then(_mdict => {
     console.log('hello', _mdict.lookup('hello'));
     console.log('world', _mdict.lookup('world'));
     console.log(_mdict.attr());
   })
-  .catch((err) => {
+  .catch(err => {
     console.error(err);
   });
 ```
 
-
 ## Release
+
+## 5.0.2 & 5.0.3
+
+1. fix typescript definition not same as internal declaration
+2. BREAKING: if you dependents on the typescript type, please change both the `WordIndex` and `KeyItem` to `KeyRecord`
 
 ## v5.0.1
 
@@ -167,9 +169,10 @@ mdict
 
 NOTE: This version has a lot of changes, please read the example code example carefully!
 
-注意： 本版本改动了多个API, 请仔细阅读上方的示例代码。
+注意： 本版本改动了多个 API, 请仔细阅读上方的示例代码。
 
 BREAKING CHANGES:
+
 1. Refactor the key search algorithm: build the keyList first, and resort internally, then search the word
 2. The `suggest` method has been deprecated.
 3. The `parse_definition` method has been deprecated, use `fetch_definition` instead
@@ -180,18 +183,24 @@ BREAKING CHANGES:
 8. Have fun!
 
 ### v4.0.20
+
 1. upgrade xmldom to v0.7.5
-### v4.0.19 
+
+### v4.0.19
+
 1. support rangeKey API
 
 ### v4.0.18
+
 1. add rangeKeyBlock interface
 2. enhance performance of readKeyBlock
 
 ### v4.0.17
+
 1. fix associate can't find special character bug
 
 ### v4.0.16
+
 1. fix accurate record start offset parse_definition bug
 
 ### v4.0.15
@@ -253,10 +262,10 @@ BREAKING CHANGES:
 
 1. add `fuzzy_search` method, which supports fuzzy word search
 
-
 ## MDX/MDD Layout
 
 ![layout](https://chainlark.oss-cn-beijing.aliyuncs.com/bkun1.svg)
+
 > this picture is from [@ikey4u/wikit](https://github.com/ikey4u/wikit)
 
 code by terasum with ❤️

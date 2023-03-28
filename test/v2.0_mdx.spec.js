@@ -1,11 +1,11 @@
-import { assert } from "chai";
-import Mdict from "../src/mdict";
+import { assert } from 'chai';
+import Mdict from '../src/mdict';
 
-describe("Mdict", () => {
-  describe("oale8.mdx", () => {
-    const mdict = new Mdict("mdx/testdict/oale8.mdx", { resort: true });
-    it("#associate&#parse_defination", () => {
-      const matched = mdict.associate("on");
+describe('Mdict', () => {
+  describe('oale8.mdx', () => {
+    const mdict = new Mdict('mdx/testdict/oale8.mdx', { resort: true });
+    it('#associate&#parse_defination', () => {
+      const matched = mdict.associate('on');
       assert.isTrue(matched.length > 0);
       assert.isTrue(matched != undefined);
       assert.isTrue(matched[0] != undefined);
@@ -18,32 +18,32 @@ describe("Mdict", () => {
         )
       );
     });
-    it("#lookup", () => {
-      const def = mdict.lookup("ask");
+    it('#lookup', () => {
+      const def = mdict.lookup('ask');
       assert.isNotEmpty(def.definition);
       assert.equal(
         def.keyText,
-        "ask",
-        "definition result should be equal with `ask`"
+        'ask',
+        'definition result should be equal with `ask`'
       );
     });
-    it("#prefix", () => {
-      const prefix = mdict.prefix("likewise");
+    it('#prefix', () => {
+      const prefix = mdict.prefix('likewise');
       assert.isArray(prefix);
       assert.equal(
         prefix.length,
         1,
-        "definition result.length should be equal with 2"
+        'definition result.length should be equal with 2'
       );
     });
 
-    it("#fuzzy_search", () => {
-      const result = mdict.fuzzy_search("incited", 5, 5);
+    it('#fuzzy_search', () => {
+      const result = mdict.fuzzy_search('incited', 5, 5);
       assert.isArray(result);
       assert.equal(
         result.length,
         5,
-        "fuzzy_search result.length should be equal with 6"
+        'fuzzy_search result.length should be equal with 6'
       );
     });
   });

@@ -254,3 +254,4 @@ class Mdict extends MdictBase {
 }
 
 export default Mdict;
+export { Mdict };
