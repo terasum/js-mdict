@@ -12,7 +12,7 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 ## Usage
 
-NOTE: This version has a lot of changes, please read the example code example carefully!
+NOTE: This version has a lot of changes, please read the example code carefully!
 
 注意： 本版本改动了多个API, 请仔细阅读上方的示例代码。
 
