@@ -2,11 +2,12 @@
   "name": "js-mdict",
   "version": "5.0.4",
   "description": "mdict (*.mdx, *.mdd) file reader",
-  "main": "lib/mdict.js",
+  "main": "src/mdict",
+  "type": "commonjs",
   "types": "typings/mdict.d.ts",
   "scripts": {
     "bench": "npm run build && mocha --require @babel/register test/decode_key_block.bench.js",
-    "test": "npm run build && jest test/*.spec.js",
+    "test": "jest",
     "build": "babel src --out-dir lib",
     "lint": "eslint src",
     "format": "prettier -w src/*.js"
@@ -31,8 +32,7 @@
     "bl": "^2.2.1",
     "buffer-to-arraybuffer": "0.0.6",
     "lemmatizer": "0.0.1",
-    "levenshtein-edit-distance": "^3.0.1",
-    "read-chunk": "^3.2.0"
+    "levenshtein-edit-distance": "^3.0.1"
   },
   "engines": {
     "node": ">=6.0.0"
@@ -43,14 +43,22 @@
     "@babel/plugin-transform-arrow-functions": "^7.20.7",
     "@babel/plugin-transform-runtime": "^7.21.0",
     "@babel/preset-env": "^7.20.2",
+    "@babel/preset-typescript": "^7.24.7",
     "@babel/register": "^7.21.0",
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.13",
+    "@types/node": "^22.7.3",
     "benchmark": "^2.1.4",
     "chai": "^4.2.0",
     "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "jest": "^29.5.0",
+    "jest": "^29.7.0",
+    "lzox1-rs": "link:src/lzox1-rs/pkg",
     "mocha": "^10.2.0",
-    "prettier": "^2.8.7"
+    "prettier": "^2.8.7",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
   }
 }

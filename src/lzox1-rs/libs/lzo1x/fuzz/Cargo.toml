@@ -1,0 +1,40 @@
+[package]
+name = "lzo1x-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2015"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+lzo-sys = "0.3.0"
+
+[dependencies.lzo1x]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "fuzz_1"
+path = "fuzz_targets/fuzz_1.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_999"
+path = "fuzz_targets/fuzz_999.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_1_optimize"
+path = "fuzz_targets/fuzz_1_optimize.rs"
+test = false
+doc = false

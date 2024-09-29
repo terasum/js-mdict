@@ -1,15 +1,18 @@
 {
-    "compileOnSave": true,
-    "compilerOptions": {
-        "noImplicitAny": true,
-        "noEmitOnError": true,
-        "removeComments": false,
-        "sourceMap": true,
-        "target": "es5",
-        "module": "commonjs",
-        "outDir": "build/"
-    },
-    "files": [
-        "typings/mdict.d.ts",
-    ]
+  "compileOnSave": true,
+  "compilerOptions": {
+    "target": "es6",
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
+    "removeComments": false,
+    "sourceMap": true,
+    "typeRoots": ["./typings", "./node_modules/@types"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+  },
+  "include": ["src/**/*", "test/**/*", "typings/**/*"],
+  "exclude": ["node_modules"]
 }
