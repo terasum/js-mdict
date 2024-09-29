@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/terasum/js-mdict#readme",
   "dependencies": {
+    "@babel/runtime": "^7.25.6",
     "@xmldom/xmldom": "^0.8.6",
     "bl": "^2.2.1",
     "buffer-to-arraybuffer": "0.0.6",

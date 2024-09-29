@@ -4,7 +4,7 @@ import Mdict from "../src/mdict";
 describe("Mdict", () => {
   describe("Oxford", () => {
     const mdict = new Mdict(
-      "mdx/testdict/v1.2/Oxford Advanced Learner's Dictionary 7th/Oxford Advanced Learner's Dictionary 7th.mdx",
+      "resources/oald7.mdx",
       {
         resort: true,
       }

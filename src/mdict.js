@@ -4,7 +4,7 @@ import { lemmatizer } from 'lemmatizer';
 import MdictBase from './mdictbase';
 import common from './utils';
 
-class Mdict extends MdictBase {
+export class Mdict extends MdictBase {
   constructor(fname, options) {
     options = options || {};
     options = {
