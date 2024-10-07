@@ -1,4 +1,4 @@
-src/
-test/
-resources/
-example/
+/src
+/test
+/resources
+/test/data/
