@@ -1,18 +1,24 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-    "target": "es6",
-    "module": "CommonJS",
-    "strict": true,
+    "rootDir": ".",
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": true,
-    "removeComments": false,
-    "sourceMap": true,
-    "typeRoots": ["./typings", "./node_modules/@types"],
+
+    "module": "node16",
+    "target": "es2022",
+
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    "noUnusedLocals": true,
+
+    "sourceMap": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "lib": ["DOM", "ES2022"],
+    "declaration": true
   },
-  "include": ["src/**/*", "test/**/*", "typings/**/*"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "include": ["src/*.ts"]
 }

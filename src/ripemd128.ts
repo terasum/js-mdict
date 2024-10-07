@@ -35,8 +35,8 @@ function rotl(x: number, n: number): number {
   return (x >>> (32 - n)) | (x << n);
 }
 
-const DIGEST = 128;
-const BLOCK = 64;
+// const DIGEST = 128;
+// const BLOCK = 64;
 
 const S: Uint32Array[] = [
   [11, 14, 15, 12, 5, 8, 7, 9, 11, 13, 14, 15, 6, 7, 9, 8], // round 1
@@ -101,7 +101,7 @@ export function ripemd128(dataBuffer: ArrayBuffer): Uint8Array {
   let rr: number;
   let t: number;
   let tmp: number;
-  let x: Uint32Array;
+  let x: Uint32Array = new Uint32Array();
   const hash = new Uint32Array([
     0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
   ]);
@@ -112,7 +112,7 @@ export function ripemd128(dataBuffer: ArrayBuffer): Uint8Array {
   const padding = new Uint8Array((bytes % 64 < 56 ? 56 : 120) - (bytes % 64));
   padding[0] = 0x80;
 
-  let data = new Uint32Array(concat(dataUint8Array, padding).buffer);
+  const data = new Uint32Array(concat(dataUint8Array, padding).buffer);
 
   // 以校验位结尾（= 小端64位整数，8 * data.length）
   bytes <<= 3;

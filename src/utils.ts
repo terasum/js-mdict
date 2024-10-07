@@ -1,10 +1,10 @@
 import { DOMParser } from '@xmldom/xmldom';
-import { ripemd128 } from './ripemd128';
+import { ripemd128 } from './ripemd128.ts';
 
 import { closeSync, openSync, readSync } from 'node:fs';
 
 const REGEXP_STRIPKEY: { [key: string]: RegExp } = {
-  mdx: /[()., '/\\@_\$]()/g,
+  mdx: /[()., '/\\@_$]()/g,
   mdd: /([.][^.]*$)|[()., '/@]/g,
 };
 
@@ -165,7 +165,7 @@ function uint32BEtoNumber(bytes: Uint8Array): number {
  */
 function uint64BEtoNumber(bytes: Uint8Array): number {
   if (bytes[1] >= 0x20 || bytes[0] > 0) {
-    throw new Error(`Error: uint64 larger than 2^53, JS may lost accuracy`);
+    throw new Error('Error: uint64 larger than 2^53, JS may lost accuracy');
   }
   let high = 0;
   for (let i = 0; i < 3; i++) {
@@ -259,11 +259,7 @@ function fast_decrypt(data: Buffer, k: Buffer): Buffer {
  */
 function mdxDecrypt(comp_block: Buffer): Buffer {
   const key = ripemd128(
-    
-    (
-      comp_block.slice(4, 8),
-      new Uint8Array([0x95, 0x36, 0x00, 0x00]).buffer
-    )
+    (comp_block.slice(4, 8), new Uint8Array([0x95, 0x36, 0x00, 0x00]).buffer)
   ).slice(0, 8);
   return Buffer.concat([
     comp_block.slice(0, 8),
@@ -284,12 +280,12 @@ function appendBuffer(buffer1: ArrayBuffer, buffer2: ArrayBuffer): Buffer {
   return Buffer.from(tmp.buffer);
 }
 
-function appendToArray(buffer1: ArrayBuffer, buffer2: ArrayBuffer): Uint8Array {
-  const tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
-  tmp.set(new Uint8Array(buffer1), 0);
-  tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
-  return tmp;
-}
+// function appendToArray(buffer1: ArrayBuffer, buffer2: ArrayBuffer): Uint8Array {
+//   const tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+//   tmp.set(new Uint8Array(buffer1), 0);
+//   tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
+//   return tmp;
+// }
 
 /**
  * 检查给定的字符串是否表示真值。
@@ -307,10 +303,6 @@ function caseUnsensitiveCompare(a: string, b: string): number {
 }
 
 function caseSensitiveCompare(a: string, b: string): number {
-  return a.localeCompare(b);
-}
-
-function wordCompare(a: string, b: string): number {
   return a.localeCompare(b);
 }
 
@@ -334,6 +326,60 @@ export function readChunkSync(filePath: string, start: number, length: number) {
   }
 }
 
+function wordCompare(word1: string, word2: string) {
+  if (!word1 || !word2) {
+    throw new Error(`invalid word comparation ${word1} and ${word2}`);
+  }
+  // if the two words are indentical, return 0 directly
+  if (word1 === word2) {
+    return 0;
+  }
+  let len = word1.length > word2.length ? word2.length : word1.length;
+  for (let i = 0; i < len; i++) {
+    let w1 = word1[i];
+    let w2 = word2[i];
+    if (w1 == w2) {
+      continue;
+      // case1: w1: `H` w2: `h` or `h` and `H`continue
+    } else if (w1.toLowerCase() == w2.toLowerCase()) {
+      continue;
+      // case3: w1: `H` w2: `k`, h < k return -1
+    } else if (w1.toLowerCase() < w2.toLowerCase()) {
+      return -1;
+      // case4: w1: `H` w2: `a`, h > a return 1
+    } else if (w1.toLowerCase() > w2.toLowerCase()) {
+      return 1;
+    }
+  }
+  // case5: `Hello` and `Hellocat`
+  return word1.length < word2.length ? -1 : 1;
+}
+
+// if this.header.KeyCaseSensitive = YES,
+// Uppercase character is placed in the start position of the directionary
+// so if `this.header.KeyCaseSensitive = YES` use normalUpperCaseWordCompare, else use wordCompare
+function normalUpperCaseWordCompare(word1: string, word2: string) {
+  if (word1 === word2) {
+    return 0;
+  } else if (word1 > word2) {
+    return 1;
+  } else {
+    return -1;
+  }
+}
+
+// this compare function is for mdd file
+function localCompare(word1: string, word2: string) {
+  // return word1.localeCompare(word2);
+  if (word1.localeCompare(word2) === 0) {
+    return 0;
+  } else if (word1 > word2) {
+    return 1;
+  } else {
+    return -1;
+  }
+}
+
 export default {
   getExtension,
   readUTF16,
@@ -347,6 +393,9 @@ export default {
   isTrue,
   caseUnsensitiveCompare,
   caseSensitiveCompare,
+  normalUpperCaseWordCompare,
+  wordCompare,
+  localCompare,
   readChunkSync,
   UTF16,
   REGEXP_STRIPKEY,

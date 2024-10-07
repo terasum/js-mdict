@@ -1,7 +1,6 @@
-// @ts-nocheck
-import lzo from './lzo1x.js';
+import lzo from './lzo1x.ts';
 
-function decompress(buf: Buffer, initSize: number, blockSize: numer) {
+function decompress(buf: Buffer, initSize: number, blockSize: number) {
   const result = lzo.decompress({
     inputBuffer: buf,
     initSize: 16000,
@@ -10,9 +9,8 @@ function decompress(buf: Buffer, initSize: number, blockSize: numer) {
   return result;
 }
 
-function compress(buf) {
-  console.log('-------');
-  return lzo.compress(buf);
+function compress(state : { inputBuffer: Uint8Array; outBuffer: Uint8Array; }) {
+  return lzo.compress(state);
 }
 
 export { decompress, compress };

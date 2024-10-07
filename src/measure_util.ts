@@ -5,6 +5,7 @@
  * @param {string} name function name (optional)
  * @returns {Function}
  */
+//@es-ignore
 function measureTimeFn(_this: any, fn: Function, name: string = 'unknown'): Function {
   let fname = fn.toString();
   fname = fname.substring('function '.length);
@@ -12,7 +13,7 @@ function measureTimeFn(_this: any, fn: Function, name: string = 'unknown'): Func
 
   return function (...args: any[]): any {
     console.time(fname ?? name);
-    let res = fn.bind(_this)(...args);
+    const res = fn.bind(_this)(...args);
     console.timeEnd(fname ?? name);
     return res;
   };
@@ -39,8 +40,8 @@ function measureMemFn(): Function {
     step++;
 
     memoryStack.push(used);
-    for (let key in used) {
-      let key_used = Math.round((used[key as keyof NodeJS.MemoryUsage] / 1024 / 1024) * 100) / 100;
+    for (const key in used) {
+      const key_used = Math.round((used[key as keyof NodeJS.MemoryUsage] / 1024 / 1024) * 100) / 100;
       let last_key_used = 0;
       if (step > 0) {
         last_key_used =
