@@ -1,37 +1,9 @@
-import MdictBase, { KeyRecord, KeyListItem } from './mdict-base.ts';
-import common from './utils.ts';
+import {Mdict, FuzzyWord} from "./mdict.ts";
+import {KeyListItem, KeyRecord} from "./mdict-base.ts";
+import common from "./utils.ts";
 
-interface MdictOptions {
-  passcode?: string;
-  debug?: boolean;
-  resort?: boolean;
-  isStripKey?: boolean;
-  isCaseSensitive?: boolean;
-}
 
-export interface FuzzyWord extends KeyRecord {
-  key: string;
-  idx: number;
-  ed: number;
-}
-
-export class Mdict extends MdictBase {
-  options: MdictOptions;
-
-  constructor(fname: string, options?: MdictOptions) {
-    options = options || {};
-    options = {
-      passcode: options.passcode ?? '',
-      debug: options.debug ?? false,
-      resort: options.resort ?? true,
-      isStripKey: options.isStripKey ?? true,
-      isCaseSensitive: options.isCaseSensitive ?? true,
-    };
-
-    const passcode = options.passcode || undefined;
-    super(fname, passcode, options);
-    this.options = options;
-  }
+export class MDX extends Mdict {
 
   /**
    * lookup the word
@@ -240,5 +212,3 @@ export class Mdict extends MdictBase {
     throw new Error('suggest method has been deprecated');
   }
 }
-
-export default Mdict;

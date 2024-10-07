@@ -1,14 +1,9 @@
 import assert from 'assert';
-import zlib from 'zlib';
 import common from './utils.ts';
 import lzo1x from './lzo1x-wrapper.ts';
-// import * as lzo1x from './lzox1-rs/pkg/lzox1_rs.js';
 import { NumFmt, readChunkSync } from './utils.ts';
-// import measure from './measure_util.js';
-
-const pako = {
-  inflate: zlib.inflateSync,
-};
+import * as pako from "pako";
+import zlib from "zlib";
 
 const UTF_16LE_DECODER = new TextDecoder('utf-16le');
 const UTF16 = 'UTF-16';
@@ -323,7 +318,7 @@ class MDictBase {
 
     if (this.options.debug) {
       const tempRecordBlockInfoList = this.recordBlockInfoList.slice(0, 10);
-      console.log('decodeRecordInfo finished', {
+      console.debug('decodeRecordInfo finished', {
         recordBlockInfoList_0_10: tempRecordBlockInfoList,
       });
     }
@@ -616,16 +611,17 @@ class MDictBase {
     if (this._version >= 2.0) {
       // zlib compression
       assert(
-        keyBlockInfoBuff.slice(0, 4).toString('hex') === '02000000',
+        keyBlockInfoBuff.subarray(0, 4).toString('hex') === '02000000',
         'the compress type zlib should start with 0x02000000'
       );
       let kbInfoCompBuff: Buffer = keyBlockInfoBuff;
       if (this._encrypt === 2) {
         kbInfoCompBuff = common.mdxDecrypt(keyBlockInfoBuff);
       }
+      
       // For version 2.0, will compress by zlib, lzo just just for 1.0
       // key_block_info_compressed[0:8] => compress_type
-      kbInfoBuff = pako.inflate(kbInfoCompBuff.slice(8, kbInfoCompBuff.length));
+      kbInfoBuff = Buffer.from(zlib.inflateSync(kbInfoCompBuff.subarray(8)));
 
       // TODO: check the alder32 checksum
       // adler32 = unpack('>I', key_block_info_compressed[4:8])[0]
@@ -903,7 +899,7 @@ class MDictBase {
         key_block = Buffer.from(keyBlock);
       } else if (kbCompType.toString('hex') === '02000000') {
         // decompress key block
-        key_block = pako.inflate(kbCompBuff.slice(start + 8, end));
+        key_block =  Buffer.from(pako.inflate(kbCompBuff.subarray(start + 8, end)));
         // extract one single key block into a key list
         // notice that adler32 returns signed value
         // TODO compare with privious word
@@ -950,7 +946,8 @@ class MDictBase {
       key_block = kbCompBuff.subarray(start + 8, end);
     } else if (kbCompType.toString('hex') == '01000000') {
       // # decompress key block
-      const keyBlock = lzo1x.decompress( kbCompBuff.subarray(start + 8, end),
+      const keyBlock = lzo1x.decompress(
+        kbCompBuff.subarray(start + 8, end),
         decompSize,
         1308672
       );
@@ -961,7 +958,7 @@ class MDictBase {
       );
     } else if (kbCompType.toString('hex') === '02000000') {
       // decompress key block
-      key_block = pako.inflate(kbCompBuff.slice(start + 8, end));
+      key_block =  Buffer.from(pako.inflate(kbCompBuff.slice(start + 8, end)));
       // extract one single key block into a key list
       // notice that adler32 returns signed value
       // TODO compare with privious word
@@ -1220,7 +1217,7 @@ class MDictBase {
         } else if (rbCompType.toString('hex') === '02000000') {
           comp_type = 'zlib';
           // zlib decompress
-          recordBlock = pako.inflate(blockBufDecrypted);
+          recordBlock =  Buffer.from(pako.inflate(blockBufDecrypted));
         }
       }
       recordBlock = Buffer.from(recordBlock);
@@ -1360,7 +1357,7 @@ class MDictBase {
       // --------------
       if (rbCompType.toString('hex') === '01000000') {
         // the header was need by lzo library, should append before real compressed data
-        
+
         // const header = Buffer.from([0xf0, decompSize]);
         // // Note: if use lzo, here will LZO_E_OUTPUT_RUNOVER, so ,use mini lzo js
         // recordBlock = Buffer.from(
@@ -1371,12 +1368,7 @@ class MDictBase {
         //   )
         // );
 
-        recordBlock = lzo1x.decompress(
-          blockBufDecrypted,
-          decompSize,
-          1308672
-        )
-
+        recordBlock = lzo1x.decompress(blockBufDecrypted, decompSize, 1308672);
 
         recordBlock = Buffer.from(recordBlock).subarray(
           recordBlock.byteOffset,
@@ -1384,7 +1376,7 @@ class MDictBase {
         );
       } else if (rbCompType.toString('hex') === '02000000') {
         // zlib decompress
-        recordBlock = pako.inflate(blockBufDecrypted);
+        recordBlock =  Buffer.from(pako.inflate(blockBufDecrypted));
       }
     }
     recordBlock = Buffer.from(recordBlock);
@@ -1458,7 +1450,6 @@ class MDictBase {
   _isStripKey(): boolean {
     return this.options.isStripKey || common.isTrue(this.header.StripKey);
   }
-
 
   _lookupKeyBlockId(word: string) {
     const lookupInternal = (compareFn: (a: string, b: string) => number) => {
@@ -1569,7 +1560,7 @@ class MDictBase {
       // 其他情况不可能出现
     }
 
-    return {
+    const result: KeyListItem = {
       keyText: word,
       recordStartOffset: locatedRecordBlockInfo.decompAccumulator,
       nextRecordStartOffset:
@@ -1578,10 +1569,9 @@ class MDictBase {
       original_idx: locatedIdx,
 
       keyBlockIdx: locatedIdx,
-    } as KeyListItem;
-
+    };
+    return result;
   }
-
 
   _locate_prefix(word: string): number {
     const end = this.keyList.length;

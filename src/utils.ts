@@ -240,8 +240,8 @@ function readNumber2(bf: Buffer, offset: number, numfmt: NumFmt): number {
  * @returns {Buffer} 解密后的数据。
  */
 function fast_decrypt(data: Buffer, k: Buffer): Buffer {
-  const b = new Uint8Array(data);
-  const key = new Uint8Array(k);
+  const b = Uint8Array.from(data);
+  const key = Uint8Array.from(k);
   let previous = 0x36;
   for (let i = 0; i < b.length; ++i) {
     let t = ((b[i] >> 4) | (b[i] << 4)) & 0xff;
@@ -258,13 +258,20 @@ function fast_decrypt(data: Buffer, k: Buffer): Buffer {
  * @returns {BufferList} 解密后的数据。
  */
 function mdxDecrypt(comp_block: Buffer): Buffer {
-  const key = ripemd128(
-    (comp_block.slice(4, 8), new Uint8Array([0x95, 0x36, 0x00, 0x00]).buffer)
-  ).slice(0, 8);
-  return Buffer.concat([
-    comp_block.slice(0, 8),
-    fast_decrypt(comp_block.slice(8), Buffer.from(key)),
+  const keyinBuffer = new Uint8Array(8);
+  keyinBuffer.set(comp_block.subarray(4, 8), 0);
+  keyinBuffer[4] ^= 0x95;
+  keyinBuffer[5] ^= 0x36;
+  keyinBuffer[6] ^= 0x00;
+  keyinBuffer[7] ^= 0x00;
+
+  const key = ripemd128(keyinBuffer);
+  const resultBuff = Buffer.concat([
+    comp_block.subarray(0, 8),
+    fast_decrypt(comp_block.subarray(8), Buffer.from(key)),
   ]);
+  return resultBuff;
+ 
 }
 
 /**
@@ -334,10 +341,10 @@ function wordCompare(word1: string, word2: string) {
   if (word1 === word2) {
     return 0;
   }
-  let len = word1.length > word2.length ? word2.length : word1.length;
+  const len = word1.length > word2.length ? word2.length : word1.length;
   for (let i = 0; i < len; i++) {
-    let w1 = word1[i];
-    let w2 = word2[i];
+    const w1 = word1[i];
+    const w2 = word2[i];
     if (w1 == w2) {
       continue;
       // case1: w1: `H` w2: `h` or `h` and `H`continue

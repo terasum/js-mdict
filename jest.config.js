@@ -7,5 +7,5 @@ export default {
     '^.+.tsx?$': ['ts-jest', {}],
   },
   preset: 'ts-jest',
-  testRegex: '(/tests/.*|(\\.|/)(test))\\.tsx?$',
+  testRegex: '(/tests/.*|(\\.|/)(test))\\.(j|t)sx?$',
 };

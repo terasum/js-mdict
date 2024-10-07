@@ -11,7 +11,7 @@ npm-debug.log
 /resources
 *.mdx
 *.mdd
-/test/data
+/test/data/mdx
 
 # Directory used for running tests in CommonJS mode
 /cjs-test

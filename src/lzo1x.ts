@@ -621,14 +621,14 @@ const lzo1x = function lzo1x() {
 
   return {
     compress(state: any) {
-      let result = instance.compress(state);
+      const result = instance.compress(state);
       if (result == 0) {
         return instance.state.outputBuffer;
       }
       return result;
     },
     decompress(state: any) {
-      let result = instance.decompress(state);
+      const result = instance.decompress(state);
       if (result == 0) {
         return instance.state.outputBuffer;
       }
