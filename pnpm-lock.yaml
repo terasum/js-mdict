@@ -14,12 +14,6 @@ importers:
       levenshtein-edit-distance:
         specifier: ^3.0.1
         version: 3.0.1
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
-      lzox1-rs:
-        specifier: link:src/lzox1-rs/pkg
-        version: link:src/lzox1-rs/pkg
       pako:
         specifier: ^2.1.0
         version: 2.1.0
