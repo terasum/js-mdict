@@ -45,8 +45,6 @@
   "dependencies": {
     "@xmldom/xmldom": "^0.8.6",
     "levenshtein-edit-distance": "^3.0.1",
-    "lodash": "^4.17.21",
-    "lzox1-rs": "link:src/lzox1-rs/pkg",
     "pako": "^2.1.0"
   },
   "devDependencies": {
