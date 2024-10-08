@@ -29,9 +29,7 @@ file: `demo.mjs`
 ```javascript
 import { Mdict } from "js-mdict";
 
-const mdict = new Mdict("resources/oald7.mdx", {
-  resort: true,
-});
+const mdict = new Mdict("resources/oald7.mdx");
 
 const def = mdict.lookup("ask");
 console.log(def.definition);
