@@ -12,7 +12,10 @@
     "outDir": "dist",
     "lib": ["DOM", "ES2022"],
     "declaration": true,
+    "paths": {
+      "../src/*": ["./*"]
+    }
   },
   "exclude": ["node_modules"],
-  "include": ["src/**/*", "test/**/*"]
+  "include": ["src/**/*"]
 }

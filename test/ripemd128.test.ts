@@ -1,4 +1,4 @@
-import { ripemd128 } from '../src/ripemd128';
+import { ripemd128 } from '../src/ripemd128.js';
 import { expect } from '@jest/globals';
 
 describe('ripemd128', () => {

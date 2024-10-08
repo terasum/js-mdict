@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { decompress } from '../src/lzo1x-wrapper';
+import { decompress } from '../src/lzo1x-wrapper.js';
 
 describe('test decompress', () => {
   it('decomress data', () => {

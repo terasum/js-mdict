@@ -1,5 +1,5 @@
 import { DOMParser } from '@xmldom/xmldom';
-import { ripemd128 } from './ripemd128';
+import { ripemd128 } from './ripemd128.js';
 
 import { closeSync, openSync, readSync } from 'node:fs';
 

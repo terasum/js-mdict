@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import common, { type NumFmt } from '../src/utils';
+import common, { type NumFmt } from '../src/utils.js';
 
 describe('common', () => {
   it('应该正确读取 uint32 数字', () => {

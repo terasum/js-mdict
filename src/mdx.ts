@@ -1,6 +1,6 @@
-import {Mdict, FuzzyWord} from "./mdict";
-import {KeyListItem, KeyRecord} from "./mdict-base";
-import common from "./utils";
+import {Mdict, FuzzyWord} from "./mdict.js";
+import {KeyListItem, KeyRecord} from "./mdict-base.js";
+import common from "./utils.js";
 
 
 export class MDX extends Mdict {

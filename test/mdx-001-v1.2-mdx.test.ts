@@ -1,4 +1,4 @@
-import { Mdict } from '../src/index';
+import { Mdict } from '../src/index.js';
 import { expect } from '@jest/globals';
 
 describe('test mdx file v1.2', () => {

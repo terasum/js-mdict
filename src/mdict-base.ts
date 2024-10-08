@@ -1,7 +1,6 @@
 import assert from 'assert';
-import common from './utils';
-import lzo1x from './lzo1x-wrapper';
-import { NumFmt, readChunkSync } from './utils';
+import lzo1x from './lzo1x-wrapper.js';
+import common, { NumFmt, readChunkSync } from './utils.js';
 import pako from "pako";
 import zlib from "zlib";
 
