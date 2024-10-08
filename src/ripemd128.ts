@@ -14,31 +14,31 @@
 // implementation
 
 // convert array of number to Uint32Array
-function asUint32Array(arr) {
+function asUint32Array(arr: number[]): Uint32Array {
   return new Uint32Array(arr);
 }
 
 // concat 2 typed array
-function concat(a, b) {
+function concat(a: Uint8Array | null, b: Uint8Array | null): Uint8Array {
   if (!a && !b) throw new Error('invalid Buffer a and b');
-  if (!b || b.length === 0) return a;
+  if (!b || b.length === 0) return a!;
   if (!a || a.length === 0) return b;
 
-  const c = new a.constructor(a.length + b.length);
+  const c = new (a.constructor as typeof Uint8Array)(a.length + b.length);
   c.set(a);
   c.set(b, a.length);
   return c;
 }
 
 // swap high and low bits of a 32-bit int.
-function rotl(x, n) {
+function rotl(x: number, n: number): number {
   return (x >>> (32 - n)) | (x << n);
 }
-// eslint-disable-next-line
-const DIGEST = 128;
-// eslint-disable-next-line
-const BLOCK = 64;
-const S = [
+
+// const DIGEST = 128;
+// const BLOCK = 64;
+
+const S: Uint32Array[] = [
   [11, 14, 15, 12, 5, 8, 7, 9, 11, 13, 14, 15, 6, 7, 9, 8], // round 1
   [7, 6, 8, 13, 11, 9, 7, 15, 7, 12, 15, 9, 11, 7, 13, 12], // round 2
   [11, 13, 6, 7, 14, 9, 13, 15, 14, 8, 13, 6, 5, 12, 7, 5], // round 3
@@ -48,7 +48,8 @@ const S = [
   [9, 7, 15, 11, 8, 6, 6, 14, 12, 13, 5, 14, 13, 13, 7, 5], // parallel round 3
   [15, 5, 8, 11, 14, 14, 6, 14, 6, 9, 12, 9, 12, 5, 15, 8], // parallel round 4
 ].map(asUint32Array);
-const X = [
+
+const X: Uint32Array[] = [
   [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], // round 1
   [7, 4, 13, 1, 10, 6, 15, 3, 12, 0, 9, 5, 2, 14, 11, 8], // round 2
   [3, 10, 14, 4, 9, 15, 8, 1, 2, 7, 0, 6, 13, 11, 5, 12], // round 3
@@ -58,7 +59,8 @@ const X = [
   [15, 5, 1, 3, 7, 14, 6, 9, 11, 8, 12, 2, 10, 0, 4, 13], // parallel round 3
   [8, 6, 4, 1, 3, 11, 15, 0, 5, 12, 2, 13, 9, 7, 10, 14], // parallel round 4
 ].map(asUint32Array);
-const K = asUint32Array([
+
+const K: Uint32Array = asUint32Array([
   0x00000000, // FF
   0x5a827999, // GG
   0x6ed9eba1, // HH
@@ -68,54 +70,58 @@ const K = asUint32Array([
   0x6d703ef3, // GGG
   0x00000000, // FFF
 ]);
-const F = [
-  function F1(x, y, z) {
+
+const F: ((x: number, y: number, z: number) => number)[] = [
+  function F1(x: number, y: number, z: number): number {
     return x ^ y ^ z;
   },
-  function F2(x, y, z) {
+  function F2(x: number, y: number, z: number): number {
     return (x & y) | (~x & z);
   },
-  function F3(x, y, z) {
+  function F3(x: number, y: number, z: number): number {
     return (x | ~y) ^ z;
   },
-  function F4(x, y, z) {
+  function F4(x: number, y: number, z: number): number {
     return (x & z) | (y & ~z);
   },
 ];
 
-exports.ripemd128 = function ripemd128(dataBuffer) {
-  let aa;
-  let bb;
-  let cc;
-  let dd;
-  let aaa;
-  let bbb;
-  let ccc;
-  let ddd;
-  let i;
-  let l;
-  let r;
-  let rr;
-  let t;
-  let tmp;
-  let x;
+export function ripemd128(dataBuffer: ArrayBuffer): Uint8Array {
+  let aa: number;
+  let bb: number;
+  let cc: number;
+  let dd: number;
+  let aaa: number;
+  let bbb: number;
+  let ccc: number;
+  let ddd: number;
+  let i: number;
+  let l: number;
+  let r: number;
+  let rr: number;
+  let t: number;
+  let tmp: number;
+  let x: Uint32Array = new Uint32Array();
   const hash = new Uint32Array([
     0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
   ]);
 
-  let bytes = dataBuffer.length;
+  let bytes = dataBuffer.byteLength;
   const dataUint8Array = new Uint8Array(dataBuffer);
 
   const padding = new Uint8Array((bytes % 64 < 56 ? 56 : 120) - (bytes % 64));
-  padding[0] = [0x80];
+  padding[0] = 0x80;
 
-  let data = new Uint32Array(concat(dataUint8Array, padding).buffer);
+  const data = new Uint32Array(concat(dataUint8Array, padding).buffer);
 
-  // ending with check bits (= little endian 64-bit int, 8 * data.length)
+  // 以校验位结尾（= 小端64位整数，8 * data.length）
   bytes <<= 3;
-  // eslint-disable-next-line
-  x = concat(data, [bytes, (bytes >> 31) >> 1]);
-  // update hash
+  const checkBits = new Uint8Array(8);
+  new DataView(checkBits.buffer).setUint32(0, bytes, true);
+  new DataView(checkBits.buffer).setUint32(4, bytes >>> 31, true);
+  x = new Uint32Array(concat(new Uint8Array(data.buffer), checkBits).buffer);
+
+  // 更新哈希
   for (i = 0, t = 0, l = x.length; i < l; i += 16, t = 0) {
     aa = aaa = hash[0];
     bb = bbb = hash[1];
@@ -159,4 +165,4 @@ exports.ripemd128 = function ripemd128(dataBuffer) {
   }
 
   return new Uint8Array(hash.buffer);
-};
+}

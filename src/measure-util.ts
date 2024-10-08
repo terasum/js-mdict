@@ -1,18 +1,19 @@
 /**
  * measuer the function call time cost
  * @param {any} _this the target function bind object
- * @param {function} fn the callee function
+ * @param {Function} fn the callee function
  * @param {string} name function name (optional)
- * @returns
+ * @returns {Function}
  */
-function measureTimeFn(_this, fn, name = 'unknown') {
+//@es-ignore
+function measureTimeFn(_this: any, fn: Function, name: string = 'unknown'): Function {
   let fname = fn.toString();
   fname = fname.substring('function '.length);
   fname = fname.substring(0, fname.indexOf('('));
 
-  return function () {
+  return function (...args: any[]): any {
     console.time(fname ?? name);
-    let res = fn.bind(_this)(...arguments);
+    const res = fn.bind(_this)(...args);
     console.timeEnd(fname ?? name);
     return res;
   };
@@ -20,25 +21,31 @@ function measureTimeFn(_this, fn, name = 'unknown') {
 
 /**
  * measue memory userage
- * @returns print the memeory useage step by step
+ * @returns {Function} print the memeory useage step by step
  */
-function measureMemFn() {
+function measureMemFn(): Function {
   // closure variables
-  const memoryStack = [];
+  const memoryStack: NodeJS.MemoryUsage[] = [];
   let step = -1;
 
-  return function (name) {
+  return function (name: string): void {
     const used = process.memoryUsage();
-    const memDatas = [];
+    const memDatas: {
+      step: number;
+      category: string;
+      key: string;
+      'used(MB)': number;
+      'diff(MB)': number;
+    }[] = [];
     step++;
 
     memoryStack.push(used);
-    for (let key in used) {
-      let key_used = Math.round((used[key] / 1024 / 1024) * 100) / 100;
+    for (const key in used) {
+      const key_used = Math.round((used[key as keyof NodeJS.MemoryUsage] / 1024 / 1024) * 100) / 100;
       let last_key_used = 0;
       if (step > 0) {
         last_key_used =
-          Math.round((memoryStack[step - 1][key] / 1024 / 1024) * 100) / 100;
+          Math.round((memoryStack[step - 1][key as keyof NodeJS.MemoryUsage] / 1024 / 1024) * 100) / 100;
       }
       memDatas.push({
         step: step,

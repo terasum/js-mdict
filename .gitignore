@@ -1,12 +1,30 @@
-node_modules
+/node_modules
 npm-debug.log
+.DS_Store
+.vscode
+
+# typescript output
+/dist
+/build
+
+# resources file
+/resources
 *.mdx
 *.mdd
-.DS_Store
-build
-.vscode
-/.nyc_output
+/test/data/mdx
+
+# Directory used for running tests in CommonJS mode
+/cjs-test
 /coverage
 /coverage/*
 yarn-error.log
 test/temp-debug.spec.js
+
+# vim
+.*.swp
+
+# nyc
+/.nyc_output
+
+# bun!
+/bun.lockb

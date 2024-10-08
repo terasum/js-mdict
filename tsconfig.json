@@ -1,15 +1,18 @@
 {
-    "compileOnSave": true,
-    "compilerOptions": {
-        "noImplicitAny": true,
-        "noEmitOnError": true,
-        "removeComments": false,
-        "sourceMap": true,
-        "target": "es5",
-        "module": "commonjs",
-        "outDir": "build/"
-    },
-    "files": [
-        "typings/mdict.d.ts",
-    ]
+  "compileOnSave": true,
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "target": "ES5",
+    "module": "CommonJS",
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+
+    "sourceMap": true,
+    "outDir": "dist",
+    "lib": ["DOM", "ES2022"],
+    "declaration": true,
+  },
+  "exclude": ["node_modules"],
+  "include": ["src/**/*", "test/**/*"]
 }

@@ -1,5 +1,3 @@
-"use strict";
-
 /*
  * minilzo-js
  * JavaScript port of minilzo by Alistair Braidwood
@@ -30,28 +28,35 @@
  *   http://www.oberhumer.com/opensource/lzo/
  */
 
-var lzo1x = function lzo1x() {
+const lzo1x = function lzo1x() {
   function _lzo1x() {}
+
   _lzo1x.prototype = {
     blockSize: 4096,
+
     OK: 0,
     INPUT_OVERRUN: -4,
     OUTPUT_OVERRUN: -5,
     LOOKBEHIND_OVERRUN: -6,
     EOF_FOUND: -999,
+
     buf: null,
     buf32: null,
+
     out: null,
     out32: null,
     cbl: 0,
     ip_end: 0,
     op_end: 0,
     t: 0,
+
     ip: 0,
     op: 0,
     m_pos: 0,
+
     skipToFirstLiteralFun: false,
-    ctzl: function ctzl(v) {
+
+    ctzl(v: any) {
       // this might be needed for _compressCore (it isn't in my current test files)
       /*
        * https://graphics.stanford.edu/~seander/bithacks.html#ZerosOnRightBinSearch
@@ -60,7 +65,7 @@ var lzo1x = function lzo1x() {
        * 2007 (by setting c=1 and unconditionally subtracting at the end).
        */
 
-      var c; // c will be the number of zero bits on the right,
+      let c; // c will be the number of zero bits on the right,
       // so if v is 1101000 (base 2), then c will be 3
       // NOTE: if 0 == v, then c = 31.
       if (v & 0x1) {
@@ -88,25 +93,29 @@ var lzo1x = function lzo1x() {
       }
       return c;
     },
-    extendBuffer: function extendBuffer() {
-      var newBuffer = new Uint8Array(this.cbl + this.blockSize);
+
+    extendBuffer() {
+      const newBuffer = new Uint8Array(this.cbl + this.blockSize);
       newBuffer.set(this.out);
       this.out = newBuffer;
       this.out32 = new Uint32Array(this.out.buffer);
       this.state.outputBuffer = this.out;
       this.cbl = this.out.length;
     },
-    eof_found: function eof_found() {
+
+    eof_found() {
       // *out_len = ((lzo_uint) ((op)-(out)));
       return this.ip === this.ip_end ? 0 : this.ip < this.ip_end ? -8 : -4;
     },
-    match_next: function match_next() {
+
+    match_next() {
       // if (op_end - op < t) return OUTPUT_OVERRUN;
       // if (ip_end - ip < t+3) return INPUT_OVERRUN;
 
       while (this.op + 3 > this.cbl) {
         this.extendBuffer();
       }
+
       this.out[this.op++] = this.buf[this.ip++];
       if (this.t > 1) {
         this.out[this.op++] = this.buf[this.ip++];
@@ -114,58 +123,69 @@ var lzo1x = function lzo1x() {
           this.out[this.op++] = this.buf[this.ip++];
         }
       }
+
       this.t = this.buf[this.ip++];
     },
-    match_done: function match_done() {
+
+    match_done() {
       this.t = this.buf[this.ip - 2] & 3;
       return this.t;
     },
-    copy_match: function copy_match() {
+
+    copy_match() {
       this.t += 2;
       while (this.op + this.t > this.cbl) {
         this.extendBuffer();
       }
+
       if (this.t > 4 && this.op % 4 === this.m_pos % 4) {
         while (this.op % 4 > 0) {
           this.out[this.op++] = this.out[this.m_pos++];
           this.t--;
         }
+
         while (this.t > 4) {
-          this.out32[0 | this.op / 4] = this.out32[0 | this.m_pos / 4];
+          this.out32[0 | (this.op / 4)] = this.out32[0 | (this.m_pos / 4)];
           this.op += 4;
           this.m_pos += 4;
           this.t -= 4;
         }
       }
+
       do {
         this.out[this.op++] = this.out[this.m_pos++];
       } while (--this.t > 0);
     },
-    copy_from_buf: function copy_from_buf() {
+
+    copy_from_buf() {
       while (this.op + this.t > this.cbl) {
         this.extendBuffer();
       }
+
       if (this.t > 4 && this.op % 4 === this.ip % 4) {
         while (this.op % 4 > 0) {
           this.out[this.op++] = this.buf[this.ip++];
           this.t--;
         }
+
         while (this.t > 4) {
-          this.out32[0 | this.op / 4] = this.buf32[0 | this.ip / 4];
+          this.out32[0 | (this.op / 4)] = this.buf32[0 | (this.ip / 4)];
           this.op += 4;
           this.ip += 4;
           this.t -= 4;
         }
       }
+
       do {
         this.out[this.op++] = this.buf[this.ip++];
       } while (--this.t > 0);
     },
-    match: function match() {
+
+    match() {
       for (;;) {
         if (this.t >= 64) {
           this.m_pos = this.op - 1;
-          this.m_pos -= this.t >> 2 & 7;
+          this.m_pos -= (this.t >> 2) & 7;
           this.m_pos -= this.buf[this.ip++] << 3;
           this.t = (this.t >> 5) - 1;
 
@@ -173,6 +193,7 @@ var lzo1x = function lzo1x() {
           // if (op_end - op < t+3-1) return OUTPUT_OVERRUN;
 
           this.copy_match();
+
           if (this.match_done() === 0) {
             break;
           } else {
@@ -193,10 +214,12 @@ var lzo1x = function lzo1x() {
           }
           this.m_pos = this.op - 1;
           this.m_pos -= (this.buf[this.ip] >> 2) + (this.buf[this.ip + 1] << 6);
+
           this.ip += 2;
         } else if (this.t >= 16) {
           this.m_pos = this.op;
           this.m_pos -= (this.t & 8) << 11;
+
           this.t &= 7;
           if (this.t === 0) {
             while (this.buf[this.ip] === 0) {
@@ -209,9 +232,13 @@ var lzo1x = function lzo1x() {
             // if (ip_end - ip < 2) return INPUT_OVERRUN;
           }
           this.m_pos -= (this.buf[this.ip] >> 2) + (this.buf[this.ip + 1] << 6);
+
           this.ip += 2;
           if (this.m_pos === this.op) {
-            this.state.outputBuffer = this.state.outputBuffer.subarray(0, this.op);
+            this.state.outputBuffer = this.state.outputBuffer.subarray(
+              0,
+              this.op
+            );
             return this.EOF_FOUND;
           }
           this.m_pos -= 0x4000;
@@ -227,6 +254,7 @@ var lzo1x = function lzo1x() {
           }
           this.out[this.op++] = this.out[this.m_pos++];
           this.out[this.op++] = this.out[this.m_pos];
+
           if (this.match_done() === 0) {
             break;
           } else {
@@ -239,29 +267,41 @@ var lzo1x = function lzo1x() {
         // if (op_end - op < t+3-1) return OUTPUT_OVERRUN;
 
         this.copy_match();
+
         if (this.match_done() === 0) {
           break;
         }
+
         this.match_next();
       }
+
       return this.OK;
     },
-    decompress: function decompress(state) {
+
+    decompress(state: any) {
       this.state = state;
+
       this.buf = this.state.inputBuffer;
-      var buf_4b = new Uint8Array(this.buf.length + (4 - this.buf.length % 4));
+      const buf_4b = new Uint8Array(
+        this.buf.length + (4 - (this.buf.length % 4))
+      );
       buf_4b.set(this.buf);
       this.buf32 = new Uint32Array(buf_4b.buffer);
-      this.out = new Uint8Array(this.buf.length + (this.blockSize - this.buf.length % this.blockSize));
+
+      this.out = new Uint8Array(
+        this.buf.length + (this.blockSize - (this.buf.length % this.blockSize))
+      );
       this.out32 = new Uint32Array(this.out.buffer);
       this.cbl = this.out.length;
       this.state.outputBuffer = this.out;
       this.ip_end = this.buf.length;
       this.op_end = this.out.length;
       this.t = 0;
+
       this.ip = 0;
       this.op = 0;
       this.m_pos = 0;
+
       this.skipToFirstLiteralFun = false;
 
       // if (ip_end - ip < 1) return INPUT_OVERRUN;
@@ -269,7 +309,7 @@ var lzo1x = function lzo1x() {
         this.t = this.buf[this.ip++] - 17;
         if (this.t < 4) {
           this.match_next();
-          var ret = this.match();
+          const ret = this.match();
           if (ret !== this.OK) {
             return ret === this.EOF_FOUND ? this.OK : ret;
           }
@@ -280,17 +320,20 @@ var lzo1x = function lzo1x() {
           this.skipToFirstLiteralFun = true;
         }
       }
+
       for (;;) {
         if (!this.skipToFirstLiteralFun) {
           // if (ip_end - ip < 3) return INPUT_OVERRUN;
           this.t = this.buf[this.ip++];
+
           if (this.t >= 16) {
-            var _ret = this.match();
-            if (_ret !== this.OK) {
-              return _ret === this.EOF_FOUND ? this.OK : _ret;
+            const ret = this.match();
+            if (ret !== this.OK) {
+              return ret === this.EOF_FOUND ? this.OK : ret;
             }
             continue;
           }
+
           if (this.t === 0) {
             while (this.buf[this.ip] === 0) {
               this.t += 255;
@@ -308,6 +351,7 @@ var lzo1x = function lzo1x() {
         } else {
           this.skipToFirstLiteralFun = false;
         }
+
         this.t = this.buf[this.ip++];
         if (this.t < 16) {
           this.m_pos = this.op - (1 + 0x0800);
@@ -322,32 +366,39 @@ var lzo1x = function lzo1x() {
           this.out[this.op++] = this.out[this.m_pos++];
           this.out[this.op++] = this.out[this.m_pos++];
           this.out[this.op++] = this.out[this.m_pos];
+
           if (this.match_done() === 0) {
             continue;
           } else {
             this.match_next();
           }
         }
-        var _ret2 = this.match();
-        if (_ret2 !== this.OK) {
-          return _ret2 === this.EOF_FOUND ? this.OK : _ret2;
+
+        const ret = this.match();
+        if (ret !== this.OK) {
+          return ret === this.EOF_FOUND ? this.OK : ret;
         }
       }
       // eslint-disable-next-line
       return this.OK;
     },
-    _compressCore: function _compressCore(in_len, ti) {
-      var ip_start = this.ip;
-      var ip_end = this.ip + in_len - 20;
-      var ii = this.ip;
+
+    _compressCore(in_len: any, ti: any) {
+      const ip_start = this.ip;
+      const ip_end = this.ip + in_len - 20;
+      let ii = this.ip;
+
       this.ip += ti < 4 ? 4 - ti : 0;
-      var m_pos = 0;
-      var m_off = 0;
-      var m_len = 0;
-      var dv_hi = 0;
-      var dv_lo = 0;
-      var dindex = 0;
-      this.ip += 1 + (this.ip - ii >> 5);
+
+      let m_pos = 0;
+      let m_off = 0;
+      let m_len = 0;
+      let dv_hi = 0;
+      let dv_lo = 0;
+      let dindex = 0;
+
+      this.ip += 1 + ((this.ip - ii) >> 5);
+
       for (;;) {
         if (this.ip >= ip_end) {
           break;
@@ -359,19 +410,31 @@ var lzo1x = function lzo1x() {
         // The above code doesn't work in JavaScript due to a lack of 64 bit bitwise operations
         // Instead, use (optimised two's complement integer arithmetic)
         // Optimization is based on us only needing the high 16 bits of the lower 32 bit integer.
-        dv_lo = this.buf[this.ip] | this.buf[this.ip + 1] << 8;
-        dv_hi = this.buf[this.ip + 2] | this.buf[this.ip + 3] << 8;
-        dindex = ((dv_lo * 0x429d >>> 16) + dv_hi * 0x429d + dv_lo * 0x1824 & 0xffff) >>> 2;
+        dv_lo = this.buf[this.ip] | (this.buf[this.ip + 1] << 8);
+        dv_hi = this.buf[this.ip + 2] | (this.buf[this.ip + 3] << 8);
+        dindex =
+          ((((dv_lo * 0x429d) >>> 16) + dv_hi * 0x429d + dv_lo * 0x1824) &
+            0xffff) >>>
+          2;
+
         m_pos = ip_start + this.dict[dindex];
+
         this.dict[dindex] = this.ip - ip_start;
         // eslint-disable-next-line
-        if ((dv_hi << 16) + dv_lo != (this.buf[m_pos] | this.buf[m_pos + 1] << 8 | this.buf[m_pos + 2] << 16 | this.buf[m_pos + 3] << 24)) {
-          this.ip += 1 + (this.ip - ii >> 5);
+        if (
+          (dv_hi << 16) + dv_lo !=
+          (this.buf[m_pos] |
+            (this.buf[m_pos + 1] << 8) |
+            (this.buf[m_pos + 2] << 16) |
+            (this.buf[m_pos + 3] << 24))
+        ) {
+          this.ip += 1 + ((this.ip - ii) >> 5);
           continue;
         }
         ii -= ti;
         ti = 0;
-        var t = this.ip - ii;
+        let t = this.ip - ii;
+
         if (t !== 0) {
           if (t <= 3) {
             this.out[this.op - 2] |= t;
@@ -382,7 +445,7 @@ var lzo1x = function lzo1x() {
             if (t <= 18) {
               this.out[this.op++] = t - 3;
             } else {
-              var tt = t - 18;
+              let tt = t - 18;
               this.out[this.op++] = 0;
               while (tt > 255) {
                 tt -= 255;
@@ -390,11 +453,13 @@ var lzo1x = function lzo1x() {
               }
               this.out[this.op++] = tt;
             }
+
             do {
               this.out[this.op++] = this.buf[ii++];
             } while (--t > 0);
           }
         }
+
         m_len = 4;
 
         // var skipTo_m_len_done = false;
@@ -449,12 +514,13 @@ var lzo1x = function lzo1x() {
         ii = this.ip;
         if (m_len <= 8 && m_off <= 0x0800) {
           m_off -= 1;
-          this.out[this.op++] = m_len - 1 << 5 | (m_off & 7) << 2;
+
+          this.out[this.op++] = ((m_len - 1) << 5) | ((m_off & 7) << 2);
           this.out[this.op++] = m_off >> 3;
         } else if (m_off <= 0x4000) {
           m_off -= 1;
           if (m_len <= 33) {
-            this.out[this.op++] = 32 | m_len - 2;
+            this.out[this.op++] = 32 | (m_len - 2);
           } else {
             m_len -= 33;
             this.out[this.op++] = 32;
@@ -469,10 +535,11 @@ var lzo1x = function lzo1x() {
         } else {
           m_off -= 0x4000;
           if (m_len <= 9) {
-            this.out[this.op++] = 16 | m_off >> 11 & 8 | m_len - 2;
+            this.out[this.op++] = 16 | ((m_off >> 11) & 8) | (m_len - 2);
           } else {
             m_len -= 9;
-            this.out[this.op++] = 16 | m_off >> 11 & 8;
+            this.out[this.op++] = 16 | ((m_off >> 11) & 8);
+
             while (m_len > 255) {
               m_len -= 255;
               this.out[this.op++] = 0;
@@ -485,32 +552,38 @@ var lzo1x = function lzo1x() {
       }
       return in_len - (ii - ip_start - ti);
     },
-    compress: function compress(state) {
+
+    compress(state: any) {
       this.state = state;
       this.ip = 0;
       this.buf = this.state.inputBuffer;
-      var in_len = this.buf.length;
-      var max_len = in_len + Math.ceil(in_len / 16) + 64 + 3;
+      const in_len = this.buf.length;
+      const max_len = in_len + Math.ceil(in_len / 16) + 64 + 3;
       this.state.outputBuffer = new Uint8Array(max_len);
       this.out = this.state.outputBuffer;
       this.op = 0;
       this.dict = new Uint32Array(16384);
-      var l = in_len;
-      var t = 0;
+      let l = in_len;
+      let t = 0;
+
       while (l > 20) {
-        var ll = l <= 49152 ? l : 49152;
-        if (t + ll >> 5 <= 0) {
+        const ll = l <= 49152 ? l : 49152;
+        if ((t + ll) >> 5 <= 0) {
           break;
         }
+
         this.dict = new Uint32Array(16384);
-        var prev_ip = this.ip;
+
+        const prev_ip = this.ip;
         t = this._compressCore(ll, t);
         this.ip = prev_ip + ll;
         l -= ll;
       }
       t += l;
+
       if (t > 0) {
-        var ii = in_len - t;
+        let ii = in_len - t;
+
         if (this.op === 0 && t <= 238) {
           this.out[this.op++] = 17 + t;
         } else if (t <= 3) {
@@ -518,7 +591,7 @@ var lzo1x = function lzo1x() {
         } else if (t <= 18) {
           this.out[this.op++] = t - 3;
         } else {
-          var tt = t - 18;
+          let tt = t - 18;
           this.out[this.op++] = 0;
           while (tt > 255) {
             tt -= 255;
@@ -526,25 +599,40 @@ var lzo1x = function lzo1x() {
           }
           this.out[this.op++] = tt;
         }
+
         do {
           this.out[this.op++] = this.buf[ii++];
         } while (--t > 0);
       }
+
       this.out[this.op++] = 17;
       this.out[this.op++] = 0;
       this.out[this.op++] = 0;
+
       this.state.outputBuffer = this.out.subarray(0, this.op);
       return this.OK;
-    }
-  };
-  var instance = new _lzo1x();
-  return {
-    compress: function compress(state) {
-      return instance.compress(state);
     },
-    decompress: function decompress(state) {
-      return instance.decompress(state);
-    }
+  };
+
+  // @ts-expect-error ignore error for now
+  const instance = new _lzo1x();
+
+  return {
+    compress(state: any) {
+      const result = instance.compress(state);
+      if (result == 0) {
+        return instance.state.outputBuffer;
+      }
+      return result;
+    },
+    decompress(state: any) {
+      const result = instance.decompress(state);
+      if (result == 0) {
+        return instance.state.outputBuffer;
+      }
+      return result;
+    },
   };
 };
-module.exports = lzo1x();
+
+export default lzo1x();
