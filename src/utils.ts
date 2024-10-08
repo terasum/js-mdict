@@ -1,4 +1,3 @@
-import { DOMParser } from '@xmldom/xmldom';
 import { ripemd128 } from './ripemd128.js';
 
 import { closeSync, openSync, readSync } from 'node:fs';
@@ -104,18 +103,30 @@ function levenshteinDistance(a: string, b: string): number {
  * @param {string} header_text - XML 格式的头部文本。
  * @returns {Object} 包含提取的属性的对象。
  */
-function parseHeader(header_text: string): { [key: string]: string } {
-  const doc = new DOMParser().parseFromString(header_text, 'text/xml');
-  const header_attr: { [key: string]: string } = {};
-  let elem = doc.getElementsByTagName('Dictionary')[0];
-  if (!elem) {
-    elem = doc.getElementsByTagName('Library_Data')[0];
+function parseHeader(header_text: string): {
+  [key: string]: string | { [key: string]: string[] };
+} {
+  const headerAttr: { [key: string]: string | { [key: string]: string[] } } =
+    {};
+  Array.from(header_text.matchAll(/(\w+)="((.|\r|\n)*?)"/g)).forEach((tag) => {
+    headerAttr[tag[1]] = unescapeEntities(tag[2]);
+  });
+  // stylesheet attribute if present takes form of:
+  //   style_number # 1-255
+  //   style_begin  # or ''
+  //   style_end    # or ''
+  // store stylesheet in dict in the form of
+  // {'number' : ('style_begin', 'style_end')}
+  if (headerAttr['StyleSheet'] && typeof headerAttr['StyleSheet'] == 'string') {
+    const styleSheet: { [key: string]: string[] } = {};
+    const lines = headerAttr['StyleSheet'].split(/[\r\n]+/g);
+    for (let i = 0; i < lines.length; i += 3) {
+      styleSheet[lines[i]] = [lines[i + 1], lines[i + 2]];
+    }
+
+    headerAttr['StyleSheet'] = styleSheet;
   }
-  for (let i = 0; i < elem.attributes.length; i++) {
-    const item = elem.attributes[i];
-    header_attr[item.nodeName] = item.nodeValue || '';
-  }
-  return header_attr;
+  return headerAttr;
 }
 
 /**
@@ -271,7 +282,6 @@ function mdxDecrypt(comp_block: Buffer): Buffer {
     fast_decrypt(comp_block.subarray(8), Buffer.from(key)),
   ]);
   return resultBuff;
- 
 }
 
 /**
@@ -286,13 +296,6 @@ function appendBuffer(buffer1: ArrayBuffer, buffer2: ArrayBuffer): Buffer {
   tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
   return Buffer.from(tmp.buffer);
 }
-
-// function appendToArray(buffer1: ArrayBuffer, buffer2: ArrayBuffer): Uint8Array {
-//   const tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
-//   tmp.set(new Uint8Array(buffer1), 0);
-//   tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
-//   return tmp;
-// }
 
 /**
  * 检查给定的字符串是否表示真值。
@@ -387,6 +390,29 @@ function localCompare(word1: string, word2: string) {
   }
 }
 
+function unescapeEntities(text: string) {
+  text = text.replace(/&lt;/g, '<');
+  text = text.replace(/&gt;/g, '>');
+  text = text.replace(/&quot;/g, '"');
+  text = text.replace(/&amp;/g, '&');
+
+  return text;
+}
+
+function substituteStylesheet(
+  styleSheet: { [key: string]: string[] },
+  txt: string
+) {
+  const txtTag = Array.from(txt.matchAll(/`(\d+)`/g));
+  const txtList = Array.from(txt.split(/`\d+`/g)).slice(1);
+  let styledTxt = '';
+  for (let i = 0; i < txtList.length; i++) {
+    const style = styleSheet[txtTag[i][1]];
+    styledTxt += style[0] + txtList[i] + style[1];
+  }
+  return styledTxt;
+}
+
 export default {
   getExtension,
   readUTF16,
@@ -404,6 +430,8 @@ export default {
   wordCompare,
   localCompare,
   readChunkSync,
+  unescapeEntities,
+  substituteStylesheet,
   UTF16,
   REGEXP_STRIPKEY,
   NUMFMT_UINT8,

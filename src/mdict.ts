@@ -73,6 +73,15 @@ export class Mdict extends MdictBase {
       nextStart
     );
 
+    if (this.header['StyleSheet']) {
+      return {
+        ...data,
+        definition: common.substituteStylesheet(
+          this.header['StyleSheet'] as { [key: string]: string[] },
+          data.definition
+        ),
+      };
+    }
     return data;
   }
 

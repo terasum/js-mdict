@@ -43,9 +43,7 @@
     "bench": "npm run build && mocha --require @babel/register test/decode_key_block.bench.js"
   },
   "dependencies": {
-    "@xmldom/xmldom": "^0.8.6",
-    "levenshtein-edit-distance": "^3.0.1",
-    "pako": "^2.1.0"
+    "levenshtein-edit-distance": "^3.0.1"
   },
   "devDependencies": {
     "@types/pako": "^2.0.3",

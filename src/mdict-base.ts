@@ -1,8 +1,11 @@
 import assert from 'assert';
 import lzo1x from './lzo1x-wrapper.js';
 import common, { NumFmt, readChunkSync } from './utils.js';
-import pako from "pako";
-import zlib from "zlib";
+import zlib from 'zlib';
+
+const pako = {
+  inflate: zlib.inflateSync
+}
 
 const UTF_16LE_DECODER = new TextDecoder('utf-16le');
 const UTF16 = 'UTF-16';
@@ -29,7 +32,7 @@ export interface MDictOptions {
 }
 
 export interface MDictHeader {
-  [key: string]: string;
+  [key: string]: string | { [key: string]: string[] };
 }
 
 export interface KeyHeader {
@@ -403,7 +406,7 @@ class MDictBase {
     } else if (this.header.Encrypted == 'Yes') {
       this._encrypt = 1;
     } else {
-      this._encrypt = parseInt(this.header.Encrypted, 10);
+      this._encrypt = parseInt(this.header["Encrypted"] as string, 10);
     }
 
     // stylesheet attribute if present takes from of:
@@ -420,7 +423,7 @@ class MDictBase {
 
     // before version 2.0, number is 4 bytes integer alias, int32
     // version 2.0 and above use 8 bytes, alias int64
-    this._version = parseFloat(this.header.GeneratedByEngineVersion);
+    this._version = parseFloat(this.header["GeneratedByEngineVersion"] as string);
     if (this._version >= 2.0) {
       this._numWidth = 8;
       this._numFmt = common.NUMFMT_UINT64 as NumFmt;
@@ -437,13 +440,13 @@ class MDictBase {
     ) {
       this._encoding = GB18030;
       this._decoder = GB18030_DECODER;
-    } else if (this.header.Encoding.toLowerCase() == 'big5') {
+    } else if ((this.header['Encoding']as string).toLowerCase() == 'big5') {
       this._encoding = BIG5;
       this._decoder = BIG5_DECODER;
     } else {
       this._encoding =
-        this.header.Encoding.toLowerCase() == 'utf16' ||
-        this.header.Encoding.toLowerCase() == 'utf-16'
+      (this.header['Encoding']as string).toLowerCase() == 'utf16' ||
+      (this.header['Encoding']as string).toLowerCase() == 'utf-16'
           ? UTF16
           : UTF8;
       if (this._encoding == UTF16) {
@@ -617,7 +620,7 @@ class MDictBase {
       if (this._encrypt === 2) {
         kbInfoCompBuff = common.mdxDecrypt(keyBlockInfoBuff);
       }
-      
+
       // For version 2.0, will compress by zlib, lzo just just for 1.0
       // key_block_info_compressed[0:8] => compress_type
       kbInfoBuff = Buffer.from(zlib.inflateSync(kbInfoCompBuff.subarray(8)));
@@ -898,7 +901,9 @@ class MDictBase {
         key_block = Buffer.from(keyBlock);
       } else if (kbCompType.toString('hex') === '02000000') {
         // decompress key block
-        key_block =  Buffer.from(pako.inflate(kbCompBuff.subarray(start + 8, end)));
+        key_block = Buffer.from(
+          pako.inflate(kbCompBuff.subarray(start + 8, end))
+        );
         // extract one single key block into a key list
         // notice that adler32 returns signed value
         // TODO compare with privious word
@@ -957,7 +962,7 @@ class MDictBase {
       );
     } else if (kbCompType.toString('hex') === '02000000') {
       // decompress key block
-      key_block =  Buffer.from(pako.inflate(kbCompBuff.slice(start + 8, end)));
+      key_block = Buffer.from(pako.inflate(kbCompBuff.slice(start + 8, end)));
       // extract one single key block into a key list
       // notice that adler32 returns signed value
       // TODO compare with privious word
@@ -1216,7 +1221,7 @@ class MDictBase {
         } else if (rbCompType.toString('hex') === '02000000') {
           comp_type = 'zlib';
           // zlib decompress
-          recordBlock =  Buffer.from(pako.inflate(blockBufDecrypted));
+          recordBlock = Buffer.from(pako.inflate(blockBufDecrypted));
         }
       }
       recordBlock = Buffer.from(recordBlock);
@@ -1375,7 +1380,7 @@ class MDictBase {
         );
       } else if (rbCompType.toString('hex') === '02000000') {
         // zlib decompress
-        recordBlock =  Buffer.from(pako.inflate(blockBufDecrypted));
+        recordBlock = Buffer.from(pako.inflate(blockBufDecrypted));
       }
     }
     recordBlock = Buffer.from(recordBlock);
@@ -1442,12 +1447,12 @@ class MDictBase {
 
   _isKeyCaseSensitive(): boolean {
     return (
-      this.options.isCaseSensitive || common.isTrue(this.header.isCaseSensitive)
+      this.options.isCaseSensitive || common.isTrue(this.header["isCaseSensitive"] as string)
     );
   }
 
   _isStripKey(): boolean {
-    return this.options.isStripKey || common.isTrue(this.header.StripKey);
+    return this.options.isStripKey || common.isTrue(this.header["StripKey"]as string);
   }
 
   _lookupKeyBlockId(word: string) {
