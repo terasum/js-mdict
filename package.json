@@ -1,6 +1,6 @@
 {
   "name": "js-mdict",
-  "version": "6.0.0-alpha-1",
+  "version": "6.0.0-alpha-2",
   "description": "mdict (*.mdx, *.mdd) file reader",
   "author": "terasum <terasum@163.com>",
   "repository": "git+https://github.com/terasum/js-mdict.git",
