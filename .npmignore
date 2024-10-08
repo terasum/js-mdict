@@ -3,3 +3,5 @@
 /resources
 /test/data
 /node_modules
+/.nyc_output
+/.vs_code
