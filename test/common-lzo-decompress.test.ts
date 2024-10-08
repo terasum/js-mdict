@@ -5,9 +5,7 @@ import { decompress } from '../src/lzo1x-wrapper.js';
 describe('test decompress', () => {
   it('decomress data', () => {
     const infile = fs.readFileSync('./test/data/compressed.data');
-    console.log(infile);
-
     const data = decompress(infile, 0, 0);
-    console.log(data);
+    expect(data.length).toEqual(16341);
   });
 });

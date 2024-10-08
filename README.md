@@ -73,6 +73,19 @@ console.log(def.definition);
   */
 ```
 
+## Benchmark
+
+use oale8.mdx as an example:
+
+```
+Mdict#loading time: 0 sec
+Mdict#lookup x 1,967 ops/sec ±0.95% (97 runs sampled)
+Mdict#prefix x 1,800 ops/sec ±0.70% (96 runs sampled)
+Mdict#fuzzy_search x 285 ops/sec ±14.03% (77 runs sampled)
+Mdict#associate x 2,059 ops/sec ±4.53% (89 runs sampled)
+Fastest is Mdict#associate
+```
+
 **depreciate** if you use js-mdict @2.0.3, you can use api shown below:
 
 > Note: 2.0.3 not supports mdd file, and record info encrypted file

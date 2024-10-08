@@ -5,7 +5,6 @@ describe('test mdx file v1.2', () => {
   describe('oald7.mdx', () => {
     const mdict = new Mdict('./test/data/oald7.mdx', {
       resort: true,
-      debug: true,
     });
     it('#lookup', () => {
       const def = mdict.lookup('ask');
