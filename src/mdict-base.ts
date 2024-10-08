@@ -1,8 +1,8 @@
 import assert from 'assert';
-import common from './utils.ts';
-import lzo1x from './lzo1x-wrapper.ts';
-import { NumFmt, readChunkSync } from './utils.ts';
-import * as pako from "pako";
+import common from './utils.js';
+import lzo1x from './lzo1x-wrapper.js';
+import { NumFmt, readChunkSync } from './utils.js';
+import pako from "pako";
 import zlib from "zlib";
 
 const UTF_16LE_DECODER = new TextDecoder('utf-16le');

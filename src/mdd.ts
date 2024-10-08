@@ -1,4 +1,4 @@
-import { Mdict } from './mdict.ts';
+import { Mdict } from './mdict.js';
 
 export class MDD extends Mdict {
   /**

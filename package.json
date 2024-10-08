@@ -18,9 +18,12 @@
   },
   "homepage": "https://github.com/terasum/js-mdict#readme",
   "type": "module",
-  "exports": "./dist/index.js",
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import":  "./dist/esm/index.js"
+  },
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/cjs/index.d.ts",
   "engines": {
     "node": ">=10.20.0"
   },
@@ -29,7 +32,9 @@
     "prepublishOnly": "npm run prepareBuild && tsc",
     "clean": "shx rm -rf dist/*",
     "test": "jest",
-    "build": "tsc",
+    "build-cjs": "tsc --module commonjs --outDir dist/cjs/ && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
+    "build-esm": "tsc  --module nodenext --moduleResolution nodenext --outDir dist/esm/ && echo '{\"type\": \"module\"}' > dist/cjs/package.json",
+    "build": "npm run build-cjs && npm run build-esm",
     "watch": "tsc --watch",
     "testall": "mocha --ui qunit dist/test",
     "lint": "eslint --quiet 'src/**/*.ts' 'test/**/*.ts'",

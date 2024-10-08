@@ -1,5 +1,5 @@
-import MdictBase, { KeyRecord, KeyListItem } from './mdict-base.ts';
-import common from './utils.ts';
+import MdictBase, { KeyRecord, KeyListItem } from './mdict-base.js';
+import common from './utils.js';
 
 interface MdictOptions {
   passcode?: string;

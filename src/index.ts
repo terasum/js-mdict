@@ -8,9 +8,9 @@ export type {
   KeyListItem,
   KeyRecord,
 } from './mdict-base.ts';
-export type { FuzzyWord } from './mdict.ts';
+export type { FuzzyWord } from './mdict.js';
 
-export { Mdict } from './mdict.ts';
+export { Mdict } from './mdict.js';
 
-export { MDX } from './mdx.ts';
-export { MDD } from './mdd.ts';
+export { MDX } from './mdx.js';
+export { MDD } from './mdd.js';

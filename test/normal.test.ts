@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 
-import Mdict from '../src/mdict';
+import Mdict from '../src/mdict.ts';
 
 describe('Mdict', () => {
   describe('#lookup', () => {

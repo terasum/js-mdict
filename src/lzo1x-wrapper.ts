@@ -1,4 +1,4 @@
-import lzo from './lzo1x.ts';
+import lzo from './lzo1x.js';
 
 function decompress(buf: Buffer, initSize: number, blockSize: number) {
   const result = lzo.decompress({

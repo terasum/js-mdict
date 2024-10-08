@@ -1,4 +1,5 @@
 /src
 /test
 /resources
-/test/data/
+/test/data
+/node_modules
