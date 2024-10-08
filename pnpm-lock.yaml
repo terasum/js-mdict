@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@types/pako':
-        specifier: ^2.0.3
-        version: 2.0.3
       '@xmldom/xmldom':
         specifier: ^0.8.6
         version: 0.8.10
@@ -48,6 +45,9 @@ importers:
       '@types/node':
         specifier: ^22.7.3
         version: 22.7.4
+      '@types/pako':
+        specifier: ^2.0.3
+        version: 2.0.3
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
