@@ -73,7 +73,7 @@ export class Mdict extends MdictBase {
       nextStart
     );
 
-    if (this.header['StyleSheet']) {
+    if (this.header['StyleSheet'] && data.definition) {
       return {
         ...data,
         definition: common.substituteStylesheet(

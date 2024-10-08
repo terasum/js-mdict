@@ -1,10 +1,7 @@
-import {Mdict, FuzzyWord} from "./mdict.js";
-import {KeyListItem, KeyRecord} from "./mdict-base.js";
-import common from "./utils.js";
-
+import { Mdict, FuzzyWord } from './mdict.js';
+import { KeyListItem, KeyRecord } from './mdict-base.js';
 
 export class MDX extends Mdict {
-
   /**
    * lookup the word
    * @test ok
@@ -12,40 +9,7 @@ export class MDX extends Mdict {
    * @returns word definition
    */
   lookup(word: string): { keyText: string; definition: string | null } {
-    const record = this._lookupKeyBlockId(word);
-
-    // if not found the key block, return undefined
-    if (record === undefined) {
-      return {
-        keyText: word,
-        definition: null,
-      };
-    }
-
-    const i = record.idx;
-    const list = record.list;
-
-    const recordBlockInfoId = this._reduceRecordBlockInfo(
-      list[i].recordStartOffset
-    );
-
-    const nextStart =
-      i + 1 >= list.length
-        ? this._recordBlockStartOffset +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompAccumulator +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompSize
-        : list[i + 1].recordStartOffset;
-
-    const data = this._decodeRecordBlockDataByRecordBlockInfoId(
-      recordBlockInfoId,
-      list[i].keyText,
-      list[i].recordStartOffset,
-      nextStart
-    );
-
-    return data;
+    return super.lookup(word);
   }
 
   /**
@@ -55,41 +19,7 @@ export class MDX extends Mdict {
    * @returns the keyText and definition
    */
   locate(resourceKey: string): { keyText: string; definition: string | null } {
-    const record = this._lookupKeyBlockId(resourceKey);
-
-    // if not found the key block, return undefined
-    if (record === undefined) {
-      return {
-        keyText: resourceKey,
-        definition: null,
-      };
-    }
-
-    const i = record.idx;
-    const list = record.list;
-
-    const recordBlockInfoId = this._reduceRecordBlockInfo(
-      list[i].recordStartOffset
-    );
-
-    const nextStart =
-      i + 1 >= list.length
-        ? this._recordBlockStartOffset +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompAccumulator +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompSize
-        : list[i + 1].recordStartOffset;
-
-    // TODO should return UInt8Array
-    const data = this._decodeRecordBlockDataByRecordBlockInfoId(
-      recordBlockInfoId,
-      list[i].keyText,
-      list[i].recordStartOffset,
-      nextStart
-    );
-
-    return data;
+    return super.locate(resourceKey);
   }
 
   /**
@@ -101,14 +31,7 @@ export class MDX extends Mdict {
     keyText: string;
     definition: string | null;
   } {
-    const rid = this._reduceRecordBlockInfo(keyRecord.recordStartOffset);
-    const data = this._decodeRecordBlockDataByRecordBlockInfoId(
-      rid,
-      keyRecord.keyText,
-      keyRecord.recordStartOffset,
-      keyRecord.nextRecordStartOffset ?? 0
-    );
-    return data;
+    return super.fetch_defination(keyRecord);
   }
 
   /**
@@ -137,18 +60,7 @@ export class MDX extends Mdict {
     nextRecordStartOffset?: number;
     original_idx?: number;
   }[] {
-    const record = this._lookupKeyBlockId(phrase);
-    const list = record?.list;
-    if (!list) {
-      return [];
-    }
-    return list.map((item) => {
-      return {
-        ...item,
-        key: item.keyText,
-        recordOffset: item.recordStartOffset,
-      };
-    });
+    return super.prefix(phrase);
   }
 
   /**
@@ -158,9 +70,7 @@ export class MDX extends Mdict {
    * @returns matched list
    */
   associate(phrase: string): KeyListItem[] | undefined {
-    const record = this._lookupKeyBlockId(phrase);
-    const matched = record?.list;
-    return matched;
+    return super.associate(phrase);
   }
 
   /**
@@ -172,35 +82,7 @@ export class MDX extends Mdict {
    * @returns fuzzy word list
    */
   fuzzy_search(word: string, fuzzy_size: number, ed_gap: number): FuzzyWord[] {
-    const fuzzy_words: FuzzyWord[] = [];
-    let count = 0;
-
-    const record = this._lookupKeyBlockId(word);
-    const keyList = record?.list;
-    if (!keyList) {
-      return [];
-    }
-
-    const fn = this._stripKeyOrIngoreCase.bind(this);
-    for (let i = 0; i < keyList.length; i++) {
-      const item = keyList[i];
-      const key = fn(item.keyText);
-      const ed = common.levenshteinDistance(key, fn(word));
-      if (ed <= ed_gap) {
-        count++;
-        if (count > fuzzy_size) {
-          break;
-        }
-        fuzzy_words.push({
-          ...item,
-          key: item.keyText,
-          idx: item.recordStartOffset,
-          ed: ed,
-        });
-      }
-    }
-
-    return fuzzy_words;
+    return super.fuzzy_search(word, fuzzy_size, ed_gap);
   }
 
   /**
