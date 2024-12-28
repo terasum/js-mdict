@@ -1,13 +1,7 @@
-import MdictBase, { KeyRecord, KeyListItem } from './mdict-base.js';
+import MdictBase, { KeyRecord, KeyListItem, MDictOptions } from './mdict-base.js';
 import common from './utils.js';
 
-interface MdictOptions {
-  passcode?: string;
-  debug?: boolean;
-  resort?: boolean;
-  isStripKey?: boolean;
-  isCaseSensitive?: boolean;
-}
+interface MdictOptions extends MDictOptions {}
 
 export interface FuzzyWord extends KeyRecord {
   key: string;
@@ -16,21 +10,21 @@ export interface FuzzyWord extends KeyRecord {
 }
 
 export class Mdict extends MdictBase {
-  options: MdictOptions;
 
-  constructor(fname: string, options?: MdictOptions) {
+  constructor(fname: string, options?: Partial<MdictOptions>) {
     options = options || {};
+    // default options
     options = {
       passcode: options.passcode ?? '',
       debug: options.debug ?? false,
       resort: options.resort ?? true,
       isStripKey: options.isStripKey ?? true,
       isCaseSensitive: options.isCaseSensitive ?? true,
+      encryptType: options.encryptType ?? -1,
     };
 
     const passcode = options.passcode || undefined;
     super(fname, passcode, options);
-    this.options = options;
   }
 
   /**
@@ -53,17 +47,13 @@ export class Mdict extends MdictBase {
     const i = record.idx;
     const list = record.list;
 
-    const recordBlockInfoId = this._reduceRecordBlockInfo(
-      list[i].recordStartOffset
-    );
+    const recordBlockInfoId = this._reduceRecordBlockInfo(list[i].recordStartOffset);
 
     const nextStart =
       i + 1 >= list.length
         ? this._recordBlockStartOffset +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompAccumulator +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompSize
+          this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompAccumulator +
+          this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompSize
         : list[i + 1].recordStartOffset;
 
     const data = this._decodeRecordBlockDataByRecordBlockInfoId(
@@ -105,17 +95,13 @@ export class Mdict extends MdictBase {
     const i = record.idx;
     const list = record.list;
 
-    const recordBlockInfoId = this._reduceRecordBlockInfo(
-      list[i].recordStartOffset
-    );
+    const recordBlockInfoId = this._reduceRecordBlockInfo(list[i].recordStartOffset);
 
     const nextStart =
       i + 1 >= list.length
         ? this._recordBlockStartOffset +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompAccumulator +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompSize
+          this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompAccumulator +
+          this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompSize
         : list[i + 1].recordStartOffset;
 
     // TODO should return UInt8Array

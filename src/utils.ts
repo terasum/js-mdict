@@ -251,6 +251,7 @@ function readNumber2(bf: Buffer, offset: number, numfmt: NumFmt): number {
  * @returns {Buffer} 解密后的数据。
  */
 function fast_decrypt(data: Buffer, k: Buffer): Buffer {
+ // XOR decryption
   const b = Uint8Array.from(data);
   const key = Uint8Array.from(k);
   let previous = 0x36;
@@ -262,6 +263,15 @@ function fast_decrypt(data: Buffer, k: Buffer): Buffer {
   }
   return Buffer.from(b);
 }
+
+function salsa_decrypt(data: Buffer, k: Buffer): Buffer {
+  // salsa20 (8 rounds) decryption
+  // TODO
+  // s20 = Salsa20(key=encrypt_key, IV=b"\x00"*8, rounds=8)
+  // return s20.encryptBytes(ciphertext)
+  return data;
+}
+
 
 /**
  * 解密 MDX 格式的压缩块。
@@ -422,6 +432,9 @@ export default {
   readNumber,
   readNumber2,
   mdxDecrypt,
+  ripemd128,
+  fast_decrypt,
+  salsa_decrypt,
   appendBuffer,
   isTrue,
   caseUnsensitiveCompare,

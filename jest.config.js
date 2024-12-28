@@ -3,6 +3,7 @@ export default {
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   testEnvironment: 'node',
+  testRegex: '(/tests/.*|(\\.|/)(test|spec))\\.tsx?$',
   transform: {
     '^.+.tsx?$': ['ts-jest', {}],
   },
@@ -22,5 +23,5 @@ export default {
 
   },
   preset: 'ts-jest',
-  testRegex: '/test/.*\\.test\\.tsx?$',
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
 };
