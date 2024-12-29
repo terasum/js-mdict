@@ -1,6 +1,6 @@
 import { closeSync, openSync, readSync } from 'node:fs';
 
-class FileScanner {
+export class FileScanner {
     offset: number;
     filepath: string;
     fd: number;
@@ -10,12 +10,12 @@ class FileScanner {
         this.fd = openSync(filepath, 'r');
     }
     close() {
-        if (this.fd == 0) {
+    if (this.fd == 0) {
             return;
         }
         closeSync(this.fd);
     }
-    readBuffer(offset: number, length: number): Uint8Array {
+    readBuffer(offset: number| bigint, length: number): Uint8Array {
         let buffer = new Uint8Array(length);
         let readedLen = readSync(this.fd, buffer, {
             offset: 0, // here offset means the data will write into buffer's offset

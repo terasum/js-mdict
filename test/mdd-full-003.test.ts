@@ -2,12 +2,12 @@ import { MDD } from '../src/index';
 import fs from 'node:fs';
 
 describe('mdd-full-001', () => {
-  const mdd = new MDD('./test/data/tahdel.mdd');
+  const mdd = new MDD('./test/data/tahdel.mdd',{debug:true});
   const output = './test/data/output/tahdel.mdd.keylist.txt';
   const file = fs.openSync(output, 'w');
   if (fs.statSync(output).size == 0) {
     console.log('Writing keylist to file: ' + output + '\n');
-    mdd._decodeKeyBlock();
+    mdd._readKeyBlock();
     mdd.keyList.forEach((element) => {
       fs.writeSync(file, element.keyText + '\n');
     });

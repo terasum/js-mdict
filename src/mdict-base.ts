@@ -1,6 +1,7 @@
 import assert from 'assert';
 import lzo1x from './lzo1x-wrapper.js';
-import common, { NumFmt, readChunkSync } from './utils.js';
+import common, { NumFmt } from './utils.js';
+import { FileScanner } from './scanner.js';
 import zlib from 'zlib';
 
 const pako = {
@@ -19,7 +20,7 @@ const BIG5 = 'BIG5';
 const GB18030_DECODER = new TextDecoder('gb18030');
 const GB18030 = 'GB18030';
 
-const BASE64ENCODER = function (arrayBuffer: ArrayBuffer): string {
+const BASE64ENCODER = function (arrayBuffer: Uint8Array): string {
   return Buffer.from(arrayBuffer).toString('base64');
 };
 
@@ -33,6 +34,10 @@ export interface MDictOptions {
 }
 
 export interface MDictHeader {
+  [key: string]: string | { [key: string]: string[] };
+}
+
+interface MdictDebugInfo {
   [key: string]: string | { [key: string]: string[] };
 }
 
@@ -87,6 +92,29 @@ export interface KeyRecord {
   original_idx?: number;
 }
 
+export class MdictMeta {
+  fname: string = "";
+  // mdx 密码
+  passcode?: string = "";
+  // ext 文件后缀
+  ext: string = "mdx";
+  // mdx version
+  version: number = 2.0;
+  // num width
+  numWidth: number = 4;
+  // num format
+  numFmt: NumFmt = common.NUMFMT_UINT32 as NumFmt;
+  // encoding 编码
+  encoding: string = "";
+  // decoder 解码器
+  decoder: TextDecoder = new TextDecoder();
+  // 是否加密
+  encrypt: number = 0
+  // encrypt key
+  encrypt_key?: Uint8Array;
+
+}
+
 /**
  * @class MdictBase, the basic mdict diction parser class
  * @brif
@@ -109,22 +137,32 @@ export interface KeyRecord {
  * @return {MDict}
  */
 class MDictBase {
-  // mdx/mdd 文件名
-  fname: string;
-  // mdx 密码
-  _passcode: string | undefined;
-  // 当前文件读取偏移指针
-  _offset: number;
-  // ext 文件后缀
-  ext: string;
+  // 文件扫描
+  scanner: FileScanner;
+
+  // mdx meta
+  meta: MdictMeta = new MdictMeta();
+
+  // debug info
+  debugInfo: MdictDebugInfo = {};
+
   // options 读取选项
   options: MDictOptions;
+
+  // -------------------------
+  // PART1: header
+  // -------------------------
+
   // header 开始偏移
   _headerStartOffset: number;
   // header 结束偏移
   _headerEndOffset: number;
   // header 数据
   header: MDictHeader;
+
+  // ------------------------
+  // PART2: keyHeader
+  // ------------------------
 
   // keyHeader 开始偏移
   _keyHeaderStartOffset: number;
@@ -133,12 +171,19 @@ class MDictBase {
   // keyHeader 数据
   keyHeader: KeyHeader;
 
+  // ------------------------
+  // PART2: keyBlockInfo
+  // ------------------------
   // keyBlockInfo 开始偏移
   _keyBlockInfoStartOffset: number;
   // keyBlockInfo 结束偏移
   _keyBlockInfoEndOffset: number;
   // keyBlockInfo 数据 (Key Block Info list)
   keyBlockInfoList: KeyBlockInfo[];
+
+  // ------------------------
+  // PART2: keyBlock
+  // ------------------------
 
   // keyBlock 开始偏移
   _keyBlockStartOffset: number;
@@ -147,6 +192,11 @@ class MDictBase {
   // keyList 数据(词条列表)
   keyList: KeyListItem[];
 
+
+  // ------------------------
+  // PART2: recordHeader
+  // ------------------------
+
   // recordHeader 开始偏移
   _recordHeaderStartOffset: number;
   // recordHeader 结束偏移
@@ -154,6 +204,9 @@ class MDictBase {
   // recordHeader 数据
   recordHeader: RecordHeader;
 
+  // ------------------------
+  // PART2: recordBlockInfo
+  // ------------------------
   // recordInfo 开始偏移
   _recordBlockInfoStartOffset: number;
   // recordInfo 结束偏移
@@ -161,30 +214,15 @@ class MDictBase {
   // recordBlockInfo 数据
   recordBlockInfoList: RecordBlockInfo[];
 
+  // ------------------------
+  // PART2: recordBlock
+  // ------------------------
   // recordBlock 开始偏移
   _recordBlockStartOffset: number;
   // recordBlock 结束偏移
   _recordBlockEndOffset: number;
   // keyData 数据
   recordBlockDataList: any[];
-
-  // mdx version
-  _version: number = 0;
-  // num width
-  _numWidth: number = 0;
-  // num format
-  _numFmt: NumFmt = common.NUMFMT_UINT32 as NumFmt;
-  // encoding 编码
-  _encoding: string = '';
-  // decoder 解码器
-  _decoder: TextDecoder = new TextDecoder();
-  // 是否加密
-  _encrypt: number = 0;
-  // encrypt key
-  _encrypt_key?: Uint8Array;
-
-  // keyListRemap 重定位map
-  keyListRemap: { [key: number]: number } = {};
 
   /**
    * mdict constructor
@@ -193,13 +231,13 @@ class MDictBase {
    */
   constructor(fname: string, passcode?: string, options?: Partial<MDictOptions>) {
     // the mdict file name
-    this.fname = fname;
+    this.meta.fname = fname;
     // the dictionary file decrypt pass code
-    this._passcode = passcode;
-    // the mdict file read offset
-    this._offset = 0;
+    this.meta.passcode = passcode;
     // the dictionary file extension
-    this.ext = common.getExtension(fname, 'mdx');
+    this.meta.ext = common.getExtension(fname, 'mdx');
+    // the file scanner
+    this.scanner = new FileScanner(fname);
 
     // set options
     this.options = options ?? {
@@ -212,12 +250,13 @@ class MDictBase {
     };
 
     // # decrypt regcode to get the encrypted key
+    // TODO implements passcode decrypt part
     if (passcode) {
       // const {regcode, userid} = passcode
       // if isinstance(userid, unicode):
       //     userid = userid.encode('utf8')
       // self._encrypted_key = _decrypt_regcode_by_userid(regcode, userid)
-    } else if (this._version >= 3.0) {
+    } else if (this.meta.version >= 3.0) {
       // uuid = self.header.get(b'UUID')
       // if uuid:
       //     if xxhash is None:
@@ -233,11 +272,6 @@ class MDictBase {
     this._headerStartOffset = 0;
     this._headerEndOffset = 0;
     this.header = {};
-    this._readHeader();
-
-    if (this.options.debug) {
-      console.log('readHeader finished', { keyHeader: this.header });
-    }
 
     // -------------------------
     // dict key header section
@@ -251,12 +285,6 @@ class MDictBase {
       keyBlockInfoCompSize: 0,
       keyBlocksTotalSize: 0,
     };
-    // read key header
-    this._readKeyHeader();
-
-    if (this.options.debug) {
-      console.log('readKeyHeader finished', { keyHeader: this.keyHeader });
-    }
 
     // -------------------------
     // dict key info section
@@ -265,14 +293,6 @@ class MDictBase {
     this._keyBlockInfoEndOffset = 0;
     // key block info list
     this.keyBlockInfoList = [];
-    this._readKeyBlockInfo();
-
-    if (this.options.debug) {
-      const tempKeyBlockInfoList = this.keyBlockInfoList.slice(0, 10);
-      console.log('readKeyBlockInfo finished', {
-        keyBlockInfoList_0_10: tempKeyBlockInfoList,
-      });
-    }
 
     // -------------------------
     // dict key block section
@@ -280,30 +300,6 @@ class MDictBase {
     this._keyBlockStartOffset = 0;
     this._keyBlockEndOffset = 0;
     this.keyList = [];
-
-    // @depreciated
-    // decodeKeyBlock method is very slow, avoid invoke dirctly
-    // this method will return the whole words list of the dictionaries file, this is very slow
-    // operation, and you should do this background, or concurrently.
-    // NOTE: this method is wrapped by method medict.RangeWords();
-    // NOTE: 本方法非常缓慢，也有可能导致内存溢出，请不要直接调用
-    // this._decodeKeyBlock();
-
-    // @depreciated
-    // 因为mdx的索引存在排序问题，很多词条无法通过key-info检索到，原本计划将词条全部读取出来再重排序
-    // because the MDX's index has order issue, lots of words cannot be found by key-info
-    // so we have to read all words and resort them. However, it often causes memory overflow and
-    // very slow, so we have to avoid it.
-    // this._decodeKeyBlock();
-    // this._resortKeyList();
-    //
-    // 因为上述原因，resort选项也被弃用
-    // because of above reason, resort option also has been aborted
-    // if (!this.options.resort) {
-    //   throw new Error(
-    //     'js-mdict version above 5.0.0, must specify `options.resort = true` '
-    //   );
-    // }
 
     // -------------------------
     // dict record header section
@@ -317,28 +313,12 @@ class MDictBase {
       recordBlockCompSize: 0,
     };
 
-    this._decodeRecordHeader();
-
-    if (this.options.debug) {
-      console.log('decodeRecordHeader finished', {
-        recordHeader: this.recordHeader,
-      });
-    }
-
     // -------------------------
     // dict record info section
     // --------------------------
     this._recordBlockInfoStartOffset = 0;
     this._recordBlockInfoEndOffset = 0;
     this.recordBlockInfoList = [];
-    this._decodeRecordInfo();
-
-    if (this.options.debug) {
-      const tempRecordBlockInfoList = this.recordBlockInfoList.slice(0, 10);
-      console.debug('decodeRecordInfo finished', {
-        recordBlockInfoList_0_10: tempRecordBlockInfoList,
-      });
-    }
 
     // -------------------------
     // dict record block section
@@ -347,15 +327,81 @@ class MDictBase {
     this._recordBlockEndOffset = 0;
     this.recordBlockDataList = [];
 
+    this._readDict();
+  }
+
+  _readDict() {
+    let startTime = new Date().getTime();
+    this._readHeader();
+    if (this.options.debug) {
+      console.log('readHeader finished', { header: this.header, timeCost: new Date().getTime() - startTime });
+    }
+
+    startTime = new Date().getTime();
+    this._readKeyHeader();
+    if (this.options.debug) {
+      console.log('readKeyHeader finished', { keyHeader: this.keyHeader, timeCost: new Date().getTime() - startTime });
+    }
+
+    startTime = new Date().getTime();
+    this._readKeyBlockInfo();
+    if (this.options.debug) {
+      const tempKeyBlockInfoList = this.keyBlockInfoList.slice(0, 10);
+      console.log('readKeyBlockInfo finished', {
+        keyBlockInfoList_0_10: tempKeyBlockInfoList,
+        timeCost: new Date().getTime() - startTime,
+      });
+    }
+
+    startTime = new Date().getTime();
+    // @depreciated
+    // _readKeyBlock method is very slow, avoid invoke dirctly
+    // this method will return the whole words list of the dictionaries file, this is very slow
+    // NOTE: 本方法非常缓慢，也有可能导致内存溢出，请不要直接调用
+    this._readKeyBlock();
+
+    if (this.options.debug) {
+      console.log('_readKeyBlock finished', {
+        keyListTop10: this.keyList.slice(0, 10),
+        timeCost: new Date().getTime() - startTime,
+      });
+    }
+
+    // @depreciated
+    // 因为mdx的索引存在排序问题，很多词条无法通过key-info检索到，原本计划将词条全部读取出来再重排序
+    // because the MDX's index has order issue, lots of words cannot be found by key-info
+    // so we have to read all words and resort them. However, it often causes memory overflow and
+    // very slow, so we have to avoid it.
+    // this._decodeKeyBlock();
+    // this._resortKeyList();
+
+    startTime = new Date().getTime();
+    this._readRecordHeader();
+    if (this.options.debug) {
+      console.log('_readRecordHeader finished', {
+        timeCost: new Date().getTime() - startTime,
+      });
+    }
+
+    startTime = new Date().getTime();
+    this._readRecordInfo();
+    if (this.options.debug) {
+      console.log('_readRecordInfo finished', {
+        timeCost: new Date().getTime() - startTime,
+      });
+    }
+
     // decodeRecordBlock method is very slow, avoid invoke dirctly
     // this method will return the whole words list of the dictionaries file, this is very slow
     // operation, and you should do this background, or concurrently.
     // decodeRecordBlock() 非常缓慢，不要直接调用
-    // this._decodeRecordBlock();
-
-    // ---------------------------------
-    // DICTIONARY CONSTRUCTION FINISHED
-    // ---------------------------------
+    startTime = new Date().getTime();
+    this._readRecordBlock();
+    if (this.options.debug) {
+      console.debug('_readRecordBlock finished', {
+        timeCost: new Date().getTime() - startTime,
+      });
+    }
   }
 
   /**
@@ -368,39 +414,37 @@ class MDictBase {
    * assert(zlib.adler32(header_bytes) & 0xffffffff, adler32)
    *
    */
-_readHeader() {
+  _readHeader() {
     // [0:4], 4 bytes header length (header_byte_size), big-endian, 4 bytes, 16 bits
-    const header_size_buffer = this._readBuffer(0, 4);
-    const headerByteSize = common.readNumber(header_size_buffer, common.NUMFMT_UINT32 as NumFmt);
-
+    const headerByteSizeDv = this.scanner.readNumber(0, 4);
+    const headerByteSize = headerByteSizeDv.getUint32(0);
     // [4:header_byte_size + 4] header_bytes
-    const headerBuffer = Buffer.from(readChunkSync(this.fname, 4, headerByteSize));
+    const headerBuffer = this.scanner.readBuffer(4, headerByteSize);
+
+    if (this.options.debug) {
+      this.debugInfo.headerSize = `|size(4B)|meta($sizeB)|alder32(4B)|\n|${headerByteSize}|${headerBuffer.length}|4|`;
+    }
+
 
     // TODO: SKIP 4 bytes alder32 checksum
     // header_b_cksum should skip for now, because cannot get alder32 sum by js
-    // const header_b_cksum = readChunk.sync(this.fname, header_byte_size + 4, 4);
-
-    // console.log(hash("alder32", header_b_buffer));
-    // console.log(header_b_cksum);
+    // const header_b_cksum = readChunk.sync(this.meta.fname, header_byte_size + 4, 4);
     // assert(header_b_cksum), "header_bytes checksum failed");
 
     // 4 bytes header size + header_bytes_size + 4bytes alder checksum
     this._headerEndOffset = headerByteSize + 4 + 4;
-
     this._keyHeaderStartOffset = headerByteSize + 4 + 4;
 
-    // set file read offset
-    this._offset = this._headerEndOffset;
 
     // header text in utf-16 encoding ending with `\x00\x00`, so minus 2
-    const headerText = common.readUTF16(headerBuffer, 0, headerByteSize - 2);
+    // const headerText = common.readUTF16(headerBuffer, 0, headerByteSize - 2);
+    const headerText = UTF_16LE_DECODER.decode(headerBuffer);
 
     // parse header info
-    this.header = common.parseHeader(headerText);
+    Object.assign(this.header, common.parseHeader(headerText));
 
     // set header default configuration
     this.header.KeyCaseSensitive = this.header.KeyCaseSensitive || 'No';
-
     this.header.StripKey = this.header.StripKey || 'Yes';
 
     // encrypted flag
@@ -408,15 +452,15 @@ _readHeader() {
     // 0x01 - encrypt record block
     // 0x02 - encrypt key info block
     if (!this.header.Encrypted || this.header.Encrypted == '' || this.header.Encrypted == 'No') {
-      this._encrypt = 0;
+      this.meta.encrypt = 0;
     } else if (this.header.Encrypted == 'Yes') {
-      this._encrypt = 1;
+      this.meta.encrypt = 1;
     } else {
-      this._encrypt = parseInt(this.header['Encrypted'] as string, 10);
+      this.meta.encrypt = parseInt(this.header['Encrypted'] as string, 10);
     }
 
     if (this.options.encryptType && this.options.encryptType != -1) {
-      this._encrypt = this.options.encryptType;
+      this.meta.encrypt = this.options.encryptType;
     }
 
     // stylesheet attribute if present takes from of:
@@ -433,39 +477,39 @@ _readHeader() {
 
     // before version 2.0, number is 4 bytes integer alias, int32
     // version 2.0 and above use 8 bytes, alias int64
-    this._version = parseFloat(this.header['GeneratedByEngineVersion'] as string);
-    if (this._version >= 2.0) {
-      this._numWidth = 8;
-      this._numFmt = common.NUMFMT_UINT64 as NumFmt;
+    this.meta.version = parseFloat(this.header['GeneratedByEngineVersion'] as string);
+    if (this.meta.version >= 2.0) {
+      this.meta.numWidth = 8;
+      this.meta.numFmt = common.NUMFMT_UINT64 as NumFmt;
     } else {
-      this._numWidth = 4;
-      this._numFmt = common.NUMFMT_UINT32 as NumFmt;
+      this.meta.numWidth = 4;
+      this.meta.numFmt = common.NUMFMT_UINT32 as NumFmt;
     }
     if (!this.header.Encoding || this.header.Encoding == '') {
-      this._encoding = UTF8;
-      this._decoder = UTF_8_DECODER;
+      this.meta.encoding = UTF8;
+      this.meta.decoder = UTF_8_DECODER;
     } else if (this.header.Encoding == 'GBK' || this.header.Encoding == 'GB2312') {
-      this._encoding = GB18030;
-      this._decoder = GB18030_DECODER;
+      this.meta.encoding = GB18030;
+      this.meta.decoder = GB18030_DECODER;
     } else if ((this.header['Encoding'] as string).toLowerCase() == 'big5') {
-      this._encoding = BIG5;
-      this._decoder = BIG5_DECODER;
+      this.meta.encoding = BIG5;
+      this.meta.decoder = BIG5_DECODER;
     } else {
-      this._encoding =
+      this.meta.encoding =
         (this.header['Encoding'] as string).toLowerCase() == 'utf16' ||
-        (this.header['Encoding'] as string).toLowerCase() == 'utf-16'
+          (this.header['Encoding'] as string).toLowerCase() == 'utf-16'
           ? UTF16
           : UTF8;
-      if (this._encoding == UTF16) {
-        this._decoder = UTF_16LE_DECODER;
+      if (this.meta.encoding == UTF16) {
+        this.meta.decoder = UTF_16LE_DECODER;
       } else {
-        this._decoder = UTF_8_DECODER;
+        this.meta.decoder = UTF_8_DECODER;
       }
     }
     // determine the encoding and decoder, if extension is *.mdd
-    if (this.ext === 'mdd') {
-      this._encoding = UTF16;
-      this._decoder = UTF_16LE_DECODER;
+    if (this.meta.ext === 'mdd') {
+      this.meta.encoding = UTF16;
+      this.meta.decoder = UTF_16LE_DECODER;
     }
   }
 
@@ -488,12 +532,13 @@ _readHeader() {
     this._keyHeaderStartOffset = this._headerEndOffset;
 
     // version >= 2.0, key_header bytes number is 5 * 8, otherwise, 4 * 4
-    const bytesNum = this._version >= 2.0 ? 8 * 5 : 4 * 4;
-    const keyHeaderBuff = this._readBuffer(this._keyHeaderStartOffset, bytesNum);
+    const bytesNum = this.meta.version >= 2.0 ? 8 * 5 : 4 * 4;
+    // const keyHeaderBuff = this._readBuffer(this._keyHeaderStartOffset, bytesNum);
+    const keyHeaderBuff = this.scanner.readBuffer(this._keyHeaderStartOffset, bytesNum);
 
     // decrypt
-    if (this._encrypt & 1) {
-      if (!this._passcode || this._passcode == '') {
+    if (this.meta.encrypt & 1) {
+      if (!this.meta.passcode || this.meta.passcode == '') {
         // TODO: encrypted file not support yet
         throw Error(' user identification is needed to read encrypted file');
       }
@@ -502,57 +547,49 @@ _readHeader() {
         // encrypted_key = _decrypt_regcode_by_email(regcode, userid);
         throw Error('encrypted file not support yet');
       } else {
-        // throw Error('encrypted file not support yet');
+        throw Error('encrypted file not support yet');
       }
     }
 
     let offset = 0;
     // [0:8]   - number of key blocks
-    const keyBlockNumBuff = keyHeaderBuff.slice(offset, offset + this._numWidth);
-    this.keyHeader.keyBlocksNum = common.readNumber(keyBlockNumBuff, this._numFmt);
-    offset += this._numWidth;
-    // console.log("num_key_blocks", num_key_blocks.toString());
+    const keyBlockNumBuff = keyHeaderBuff.slice(offset, offset + this.meta.numWidth);
+    this.keyHeader.keyBlocksNum = this._readNumber(keyBlockNumBuff);
+    offset += this.meta.numWidth;
 
     // [8:16]  - number of entries
-    const entriesNumBuff = keyHeaderBuff.slice(offset, offset + this._numWidth);
-    this.keyHeader.entriesNum = common.readNumber(entriesNumBuff, this._numFmt);
-    offset += this._numWidth;
-    // console.log("num_entries", num_entries.toString());
+    const entriesNumBuff = keyHeaderBuff.slice(offset, offset + this.meta.numWidth);
+    this.keyHeader.entriesNum = this._readNumber(entriesNumBuff);
+    offset += this.meta.numWidth;
 
     // [16:24] - number of key block info decompress size
-    if (this._version >= 2.0) {
+    if (this.meta.version >= 2.0) {
       // only for version > 2.0
-      const keyBlockInfoDecompBuff = keyHeaderBuff.slice(offset, offset + this._numWidth);
-      const keyBlockInfoDecompSize = common.readNumber(keyBlockInfoDecompBuff, this._numFmt);
-      offset += this._numWidth;
+      const keyBlockInfoDecompBuff = keyHeaderBuff.slice(offset, offset + this.meta.numWidth);
+      const keyBlockInfoDecompSize = this._readNumber(keyBlockInfoDecompBuff) as number;
+      offset += this.meta.numWidth;
       // console.log(key_block_info_decomp_size.toString());
       this.keyHeader.keyBlockInfoDecompSize = keyBlockInfoDecompSize;
     }
 
     // [24:32] - number of key block info compress size
-    const keyBlockInfoSizeBuff = keyHeaderBuff.slice(offset, offset + this._numWidth);
-    const keyBlockInfoSize = common.readNumber(keyBlockInfoSizeBuff, this._numFmt);
-    offset += this._numWidth;
+    const keyBlockInfoSizeBuff = keyHeaderBuff.slice(offset, offset + this.meta.numWidth);
+    const keyBlockInfoSize = this._readNumber(keyBlockInfoSizeBuff) as number;
+    offset += this.meta.numWidth;
     // console.log("key_block_info_size", key_block_info_size.toString());
     this.keyHeader.keyBlockInfoCompSize = keyBlockInfoSize;
 
     // [32:40] - number of key blocks total size, note, key blocks total size, not key block info
-    const keyBlocksTotalSizeBuff = keyHeaderBuff.slice(offset, offset + this._numWidth);
-    const keyBlocksTotalSize = common.readNumber(keyBlocksTotalSizeBuff, this._numFmt);
-    offset += this._numWidth;
+    const keyBlocksTotalSizeBuff = keyHeaderBuff.slice(offset, offset + this.meta.numWidth);
+    const keyBlocksTotalSize = this._readNumber(keyBlocksTotalSizeBuff) as number;
+    offset += this.meta.numWidth;
     // console.log(key_blocks_total_size.toString());
     this.keyHeader.keyBlocksTotalSize = keyBlocksTotalSize;
 
-    // 4 bytes alder32 checksum, after key info block
-    // TODO: skip for now, not support yet
-    if (this._version >= 2.0) {
-      // this.__skip_bytes(4);
-    }
+    // 4 bytes alder32 checksum, after key info block (only >= v2.0)
     // set end offset
-    this._keyHeaderEndOffset =
-      this._keyHeaderStartOffset +
-      bytesNum +
-      (this._version >= 2.0 ? 4 : 0); /* 4 bytes adler32 checksum length, only for version >= 2.0 */
+    this._keyHeaderEndOffset = this._keyHeaderStartOffset +
+      bytesNum + (this.meta.version >= 2.0 ? 4 : 0); /* 4 bytes adler32 checksum length, only for version >= 2.0 */
   }
 
   /**
@@ -562,8 +599,13 @@ _readHeader() {
    */
   _readKeyBlockInfo() {
     this._keyBlockInfoStartOffset = this._keyHeaderEndOffset;
-    const keyBlockInfoBuff = this._readBuffer(this._keyBlockInfoStartOffset, this.keyHeader.keyBlockInfoCompSize);
+    const keyBlockInfoBuff = this.scanner.readBuffer(this._keyBlockInfoStartOffset, this.keyHeader.keyBlockInfoCompSize);
+    if (this.options.debug) {
+      this.debugInfo.keyBlockInfoBuffLen = keyBlockInfoBuff.length + "";
+    }
+
     const keyBlockInfoList = this._decodeKeyBlockInfo(keyBlockInfoBuff);
+
     this._keyBlockInfoEndOffset = this._keyBlockInfoStartOffset + this.keyHeader.keyBlockInfoCompSize;
     assert(
       this.keyHeader.keyBlocksNum === keyBlockInfoList.length,
@@ -582,24 +624,26 @@ _readHeader() {
    * and decode the first key and last key infomation, etc.
    * @param {Buffer} keyBlockInfoBuff key block info buffer
    */
-  _decodeKeyBlockInfo(keyBlockInfoBuff: Buffer): KeyBlockInfo[] {
+  _decodeKeyBlockInfo(keyBlockInfoBuff: Uint8Array): KeyBlockInfo[] {
     const keyBlockNum = this.keyHeader.keyBlocksNum;
-    const num_entries = this.keyHeader.entriesNum;
-    let kbInfoBuff: Buffer;
-    if (this._version >= 2.0) {
+    const numEntries = this.keyHeader.entriesNum;
+    let kbInfoBuff: Uint8Array;
+    if (this.meta.version >= 2.0) {
+      const compressType = keyBlockInfoBuff.subarray(0, 4).join("");
       // zlib compression
       assert(
-        keyBlockInfoBuff.subarray(0, 4).toString('hex') === '02000000',
+        compressType === "2000",
         'the compress type zlib should start with 0x02000000'
       );
-      let kbInfoCompBuff: Buffer = keyBlockInfoBuff;
-      if (this._encrypt === 2) {
+      let kbInfoCompBuff: Uint8Array = keyBlockInfoBuff;
+      if (this.meta.encrypt === 2) {
         kbInfoCompBuff = common.mdxDecrypt(keyBlockInfoBuff);
       }
 
       // For version 2.0, will compress by zlib, lzo just just for 1.0
       // key_block_info_compressed[0:8] => compress_type
-      kbInfoBuff = Buffer.from(zlib.inflateSync(kbInfoCompBuff.subarray(8)));
+      const rawData = zlib.inflateSync(kbInfoCompBuff.slice(8));
+      kbInfoBuff = new Uint8Array(rawData);
 
       // TODO: check the alder32 checksum
       // adler32 = unpack('>I', key_block_info_compressed[4:8])[0]
@@ -614,117 +658,96 @@ _readHeader() {
       kbInfoBuff = keyBlockInfoBuff;
     }
 
-    const key_block_info_list: KeyBlockInfo[] = [];
+    const keyBlockInfoList: KeyBlockInfo[] = [];
 
     // init tmp variables
     let countEntriesNum = 0;
-    let byteFmt = common.NUMFMT_UINT16 as NumFmt;
-    let byteWidth = 2;
-    let textTerm = 1;
-    if (this._version >= 2.0) {
-      byteFmt = common.NUMFMT_UINT16 as NumFmt;
-      byteWidth = 2;
-      textTerm = 1;
-    } else {
-      byteFmt = common.NUMFMT_UINT8 as NumFmt;
-      byteWidth = 1;
-      textTerm = 0;
-    }
-    let termSize = textTerm;
 
     let kbCount = 0;
-    let i = 0;
+    let indexOffset = 0;
 
     let kbCompSizeAccu = 0;
     let kbDeCompSizeAccu = 0;
     while (kbCount < keyBlockNum) {
-      // number of entries in current key block
-      const currKBEntriesCount = common.readNumber(kbInfoBuff.slice(i, i + this._numWidth), this._numFmt);
-      i += this._numWidth;
+      let blockWordCount = 0;
+      let firstWordBuffer: Uint8Array;
+      let lastWordBuffer: Uint8Array;
+      let packSize = 0;
+      let unpackSize = 0;
+      let firstWordSize = 0;
+      let lastWordSize = 0;
+      let firstKey = "";
+      let lastKey = "";
 
-      const firstKeySize = common.readNumber(kbInfoBuff.slice(i, i + byteWidth), byteFmt as NumFmt);
-      i += byteWidth;
+      if (this.meta.version >= 2.0) {
 
-      // step gap
-      let stepGap = 0;
-      // term_size is for first key and last key
-      // let term_size = 0;
-      if (this._encoding === UTF16 || this.ext === 'mdd') {
-        stepGap = (firstKeySize + textTerm) * 2;
-        termSize = textTerm * 2;
-      } else {
-        stepGap = firstKeySize + textTerm;
+
+        blockWordCount = this._readNumber(kbInfoBuff.slice(indexOffset, indexOffset + 8), false, common.NUMFMT_UINT64 as NumFmt) as number;
+
+        firstWordSize = this._readNumber(kbInfoBuff.slice(indexOffset + 8, indexOffset + 10), false, common.NUMFMT_UINT16 as NumFmt) as number;
+        if (this.meta.encoding === UTF16 || this.meta.ext === 'mdd') {
+          firstWordSize = (firstWordSize + 1) * 2
+        }
+        firstWordBuffer = kbInfoBuff.slice(indexOffset + 10, indexOffset + 10 + firstWordSize);
+        indexOffset += 10 + firstWordSize;
+
+        lastWordSize = this._readNumber(kbInfoBuff.slice(indexOffset, indexOffset + 2), false, common.NUMFMT_UINT16 as NumFmt) as number;
+        lastWordSize = (lastWordSize + 1) * 2
+        lastWordBuffer = kbInfoBuff.slice(indexOffset + 2, indexOffset + 2 + lastWordSize);
+        indexOffset += 2 + lastWordSize;
+
+        packSize = this._readNumber(kbInfoBuff.slice(indexOffset, indexOffset + 8), false, common.NUMFMT_UINT64 as NumFmt) as number;
+        unpackSize = this._readNumber(kbInfoBuff.slice(indexOffset + 8, indexOffset + 16), false, common.NUMFMT_UINT64 as NumFmt) as number;
+        indexOffset += 16;
+        firstKey = this.meta.decoder.decode(firstWordBuffer);
+        lastKey = this.meta.decoder.decode(lastWordBuffer);
+        // console.log(firstKey, lastKey)
+      } else if (this.meta.version == 1.2) {
+
+        blockWordCount = this._readNumber(kbInfoBuff.slice(indexOffset, indexOffset + 4), false, common.NUMFMT_UINT32 as NumFmt) as number;
+
+        firstWordSize = this._readNumber(kbInfoBuff.slice(indexOffset + 4, indexOffset + 5), false, common.NUMFMT_UINT8 as NumFmt) as number;
+        firstWordSize = firstWordSize + 1
+
+        firstWordBuffer = kbInfoBuff.slice(indexOffset + 5, indexOffset + 5 + firstWordSize);
+        indexOffset += 5 + firstWordSize;
+
+        lastWordSize = this._readNumber(kbInfoBuff.slice(indexOffset, indexOffset + 1), false, common.NUMFMT_UINT8 as NumFmt) as number;
+        lastWordSize = lastWordSize + 1
+
+        lastWordBuffer = kbInfoBuff.slice(indexOffset + 1, indexOffset + 1 + lastWordSize);
+        indexOffset += 1 + lastWordSize;
+
+        packSize = this._readNumber(kbInfoBuff.slice(indexOffset, indexOffset + 4), false, common.NUMFMT_UINT32 as NumFmt) as number;
+        unpackSize = this._readNumber(kbInfoBuff.slice(indexOffset + 4, indexOffset + 8), false, common.NUMFMT_UINT32 as NumFmt) as number;
+        indexOffset += 8;
+        firstKey = this.meta.decoder.decode(firstWordBuffer);
+        lastKey = this.meta.decoder.decode(lastWordBuffer);
       }
-      // Note: key_block_first_key and last key not need to decode now
-      const firstKeyBuf = kbInfoBuff.slice(i, i + stepGap);
-      const firstKey = this._decoder.decode(firstKeyBuf.slice(0, firstKeyBuf.length - termSize));
-      i += stepGap;
 
-      // text tail
-      const lastKeySize = common.readNumber(kbInfoBuff.slice(i, i + byteWidth), byteFmt);
-      i += byteWidth;
-      if (this._encoding === UTF16 || this.ext === 'mdd') {
-        stepGap = (lastKeySize + textTerm) * 2;
-        // TODO: this is for last key output
-        termSize = textTerm * 2;
-      } else {
-        stepGap = lastKeySize + textTerm;
-      }
-
-      // lastKey
-      const lastKeyBuf = kbInfoBuff.slice(i, i + stepGap);
-      const lastKey = this._decoder.decode(lastKeyBuf.slice(0, lastKeyBuf.length - termSize));
-      i += stepGap;
-
-      // key block compressed size
-      const kbCompSize = common.readNumber(kbInfoBuff.slice(i, i + this._numWidth), this._numFmt);
-
-      i += this._numWidth;
-
-      // key block decompressed size
-      const kbDecompSize = common.readNumber(kbInfoBuff.slice(i, i + this._numWidth), this._numFmt);
-      i += this._numWidth;
-
-      /**
-       *  PUSH key info item
-       * definition of key info item:
-       * {
-       *    firstKey: string,
-       *    lastKey: string,
-       *    keyBlockCompSize: number,
-       *    keyBlockCompAccumulator: number,
-       *    keyBlockDecompSize: number,
-       *    keyBlockDecompAccumulator: number,
-      //  *    keyBlockStartOffset: number,
-       *    keyBlockEntriesNum: number,
-       *    keyBlockEntriesAccumulator: number,
-       *    keyBlockIndex: count,
-       * }
-       */
-      key_block_info_list.push({
+      keyBlockInfoList.push({
         firstKey,
         lastKey,
-        keyBlockCompSize: kbCompSize,
+        keyBlockCompSize: packSize,
         keyBlockCompAccumulator: kbCompSizeAccu,
-        keyBlockDecompSize: kbDecompSize,
+        keyBlockDecompSize: unpackSize,
         keyBlockDecompAccumulator: kbDeCompSizeAccu,
-        // keyBlockStartOffset: number,
-        keyBlockEntriesNum: currKBEntriesCount,
+        keyBlockEntriesNum: blockWordCount,
         keyBlockEntriesAccumulator: countEntriesNum,
         keyBlockIndex: kbCount,
       });
 
       kbCount += 1; // key block number
-      countEntriesNum += currKBEntriesCount;
-      kbCompSizeAccu += kbCompSize;
-      kbDeCompSizeAccu += kbDecompSize;
+      countEntriesNum += blockWordCount;
+      kbCompSizeAccu += packSize;
+      kbDeCompSizeAccu += unpackSize;
     }
     assert(
-      countEntriesNum === num_entries,
-      `the number_entries ${num_entries} should equal the count_num_entries ${countEntriesNum}`
+      countEntriesNum === numEntries,
+      `the number_entries ${numEntries} should equal the count_num_entries ${countEntriesNum}`
     );
     assert(kbCompSizeAccu === this.keyHeader.keyBlocksTotalSize);
-    return key_block_info_list;
+    return keyBlockInfoList;
   }
 
   /**
@@ -779,59 +802,52 @@ _readHeader() {
    * decode key block return the total keys list,
    * Note: this method runs very slow, please do not use this unless special target
    */
-  _decodeKeyBlock() {
-    if (this.options.debug) {
-      console.log('_decodeKeyBlock', 'before read buffer', {
-        keyBlockInfoEndOffset: this._keyBlockInfoEndOffset,
-        keyBlocksTotalSize: this.keyHeader.keyBlocksTotalSize,
-      });
-    }
+  _readKeyBlock() {
 
     this._keyBlockStartOffset = this._keyBlockInfoEndOffset;
+    // const kbCompBuff = this.scanner.readBuffer(this._keyBlockStartOffset, this.keyHeader.keyBlocksTotalSize);
 
-    const kbCompBuff = this._readBuffer(this._keyBlockStartOffset, this.keyHeader.keyBlocksTotalSize);
 
-    if (this.options.debug) {
-      console.log('_decodeKeyBlock', 'read buffer sample', {
-        kbCompBuff: kbCompBuff.subarray(0, 100),
-      });
-    }
-    let key_list: KeyListItem[] = [];
-    let kbStartOfset = 0;
-    if (this.options.debug) {
-      console.log('_decodeKeyBlock', 'start decode key block', {
-        keyBlocksTotalSize: this.keyHeader.keyBlocksTotalSize,
-        kbCompBuff: kbCompBuff.subarray(0, 100),
-        keyBlockInfoListLength: this.keyBlockInfoList.length,
-      });
-    }
+    let keyList: KeyListItem[] = [];
+    let kbStartOffset = this._keyBlockStartOffset;
+    // if (this.options.debug) {
+    //   console.log('_decodeKeyBlock', 'start decode key block', {
+    //     keyBlocksTotalSize: this.keyHeader.keyBlocksTotalSize,
+    //     kbCompBuff: kbCompBuff.subarray(0, 100),
+    //     keyBlockInfoListLength: this.keyBlockInfoList.length,
+    //   });
+    // }
+
 
     // harvest keyblocks
     for (let idx = 0; idx < this.keyBlockInfoList.length; idx++) {
       const compSize = this.keyBlockInfoList[idx].keyBlockCompSize;
       const decompressedSize = this.keyBlockInfoList[idx].keyBlockDecompSize;
 
-      const start = kbStartOfset;
-      assert(start === this.keyBlockInfoList[idx].keyBlockCompAccumulator, 'should be equal');
-      const end = kbStartOfset + compSize;
+      const start = kbStartOffset;
+      assert(start === this.keyBlockInfoList[idx].keyBlockCompAccumulator + this._keyBlockStartOffset, 'should be equal');
 
-      const key_block = this._decodeAndDecompressBlock(kbCompBuff.subarray(start, end), decompressedSize);
+      // const end = kbStartOffset + compSize;
+      const kbCompBuff = this.scanner.readBuffer(start, compSize);
 
-      const splitedKey = this._splitKeyBlock(Buffer.from(key_block), idx);
-      key_list = key_list.concat(splitedKey);
-      kbStartOfset += compSize;
+      const keyBlock = this._decodeAndDecompressBlock(kbCompBuff, decompressedSize);
+
+      const splitedKey = this._splitKeyBlock(Buffer.from(keyBlock), idx);
+      keyList = keyList.concat(splitedKey);
+      kbStartOffset += compSize;
     }
     assert(
-      key_list.length === this.keyHeader.entriesNum,
-      `key list length: ${key_list.length} should equal to key entries num: ${this.keyHeader.entriesNum}`
+      keyList.length === this.keyHeader.entriesNum,
+      `key list length: ${keyList.length} should equal to key entries num: ${this.keyHeader.entriesNum}`
     );
     this._keyBlockEndOffset = this._keyBlockStartOffset + this.keyHeader.keyBlocksTotalSize;
 
     // keep keylist in memory
-    this.keyList = key_list;
+    this.keyList = keyList;
+
   }
 
-  _decodeAndDecompressBlock(kbCompBuff: Buffer, decompressedSize: number) {
+  _decodeAndDecompressBlock(kbCompBuff: Uint8Array, decompressedSize: number) {
     //  4 bytes : compression type
     const kbCompType = Buffer.from(kbCompBuff.subarray(0, 4));
 
@@ -839,14 +855,15 @@ _readHeader() {
     // # 4 bytes : adler checksum of decompressed key block
     // adler32 = unpack('>I', key_block_compressed[start + 4:start + 8])[0]
 
-    let key_block: Buffer;
+    let key_block: Uint8Array;
     if (kbCompType.toString('hex') == '00000000') {
       key_block = kbCompBuff.subarray(8);
     } else if (kbCompType.toString('hex') == '01000000') {
       // # 解压缩键块
-      const header = new Uint8Array([0xf0, decompressedSize]);
-
-      const combinedKbCompressedBuff = common.appendBuffer(header, kbCompBuff.subarray(8));
+      // TODO: test for v2.0 dictionary
+      // const header = new Uint8Array([0xf0, decompressedSize]);
+      // const combinedKbCompressedBuff = common.appendBuffer(header, kbCompBuff.subarray(8));
+      const combinedKbCompressedBuff = kbCompBuff.subarray(8);
 
       const keyBlock = lzo1x.decompress(
         combinedKbCompressedBuff,
@@ -871,7 +888,7 @@ _readHeader() {
     // //  adler checksum of the block data used as the encryption key if none given
     // // const  adler32 = unpack('>I', block[4:8])[0]
 
-    // let encrypted_key = this._encrypt_key;
+    // let encrypted_key = this.meta.encrypt_key;
     // if (!encrypted_key) {
     //   encrypted_key = common.ripemd128(blockData.subarray(4, 8));
     // }
@@ -907,7 +924,7 @@ _readHeader() {
     const compSize = this.keyBlockInfoList[kbid].keyBlockCompSize;
     const decompSize = this.keyBlockInfoList[kbid].keyBlockDecompSize;
     const startOffset = this.keyBlockInfoList[kbid].keyBlockCompAccumulator + this._keyBlockStartOffset;
-    const kbCompBuff = this._readBuffer(startOffset, compSize);
+    const kbCompBuff = this.scanner.readBuffer(startOffset, compSize);
     const start = 0;
     const end = compSize;
     // const kbCompType = Buffer.from(kbCompBuff.subarray(start, start + 4));
@@ -946,18 +963,18 @@ _readHeader() {
    * @param {Buffer} keyBlock key block buffer
    */
   _splitKeyBlock(keyBlock: Buffer, keyBlockIdx: number): KeyListItem[] {
-    let width: number = this._encoding == 'UTF-16' || this.ext == 'mdd' ? 2 : 1;
+    let width: number = this.meta.encoding == 'UTF-16' || this.meta.ext == 'mdd' ? 2 : 1;
     const keyList: KeyListItem[] = [];
 
     // because 0-7 is the leading number, we starts at keyblock[7]
     let keyStartIndex = 0;
     while (keyStartIndex < keyBlock.length) {
-
-      const keyId = common.readNumber(keyBlock.subarray(keyStartIndex, keyStartIndex + this._numWidth), this._numFmt);
+      const meaningOffset = this._readNumber(keyBlock.subarray(keyStartIndex, keyStartIndex + this.meta.numWidth), false, common.NUMFMT_UINT64 as NumFmt) as number;
+      // const keyId = common.readNumber(keyBlock.subarray(keyStartIndex, keyStartIndex + this.meta.numWidth), this.meta.numFmt);
 
       let keyEndIndex = -1;
 
-      let i = keyStartIndex + this._numWidth;
+      let i = keyStartIndex + 8;
       while (i < keyBlock.length) {
         if ((width === 1 && keyBlock[i] == 0) || (width === 2 && keyBlock[i] == 0 && keyBlock[i + 1] == 0)) {
           keyEndIndex = i;
@@ -969,11 +986,11 @@ _readHeader() {
       if (keyEndIndex == -1) {
         break;
       }
-      const keyTextBuffer = keyBlock.subarray(keyStartIndex + this._numWidth, keyEndIndex);
-      const keyText = this._decoder.decode(keyTextBuffer);
-      const keyTextUTF8 = UTF_8_DECODER.decode(keyTextBuffer);
-      console.log(keyTextUTF8);
-      keyList.push({ recordStartOffset: keyId, keyText, keyBlockIdx });
+      const keyTextBuffer = keyBlock.subarray(keyStartIndex + this.meta.numWidth, keyEndIndex);
+      const keyText = this.meta.decoder.decode(keyTextBuffer);
+      // const keyTextUTF8 = UTF_8_DECODER.decode(keyTextBuffer);
+      // console.log(keyTextUTF8);
+      keyList.push({ recordStartOffset: meaningOffset, keyText, keyBlockIdx });
       keyStartIndex = keyEndIndex + width;
     }
     return keyList;
@@ -988,24 +1005,26 @@ _readHeader() {
    * [16:24/8:12] - record block info size
    * [24:32/12:16] - record block size
    */
-  _decodeRecordHeader(): void {
+  _readRecordHeader(): void {
     this._recordHeaderStartOffset = this._keyBlockInfoEndOffset + this.keyHeader.keyBlocksTotalSize;
-    const rhlen = this._version >= 2.0 ? 4 * 8 : 4 * 4;
-    this._recordHeaderEndOffset = this._recordHeaderStartOffset + rhlen;
-    const rhBuff = this._readBuffer(this._recordHeaderStartOffset, rhlen);
+
+    const recordHeaderLen = this.meta.version >= 2.0 ? 4 * 8 : 4 * 4;
+    this._recordHeaderEndOffset = this._recordHeaderStartOffset + recordHeaderLen;
+
+    const recordHeaderBuffer = this.scanner.readBuffer(this._recordHeaderStartOffset, recordHeaderLen);
 
     let ofset = 0;
-    const recordBlocksNum = common.readNumber(rhBuff.slice(ofset, ofset + this._numWidth), this._numFmt);
+    const recordBlocksNum = this._readNumber(recordHeaderBuffer.slice(ofset, ofset + this.meta.numWidth)) as number;
 
-    ofset += this._numWidth;
-    const entriesNum = common.readNumber(rhBuff.slice(ofset, ofset + this._numWidth), this._numFmt);
+    ofset += this.meta.numWidth;
+    const entriesNum = this._readNumber(recordHeaderBuffer.slice(ofset, ofset + this.meta.numWidth)) as number;
     assert(entriesNum === this.keyHeader.entriesNum);
 
-    ofset += this._numWidth;
-    const recordBlockInfoCompSize = common.readNumber(rhBuff.slice(ofset, ofset + this._numWidth), this._numFmt);
+    ofset += this.meta.numWidth;
+    const recordBlockInfoCompSize = this._readNumber(recordHeaderBuffer.slice(ofset, ofset + this.meta.numWidth)) as number;
 
-    ofset += this._numWidth;
-    const recordBlockCompSize = common.readNumber(rhBuff.slice(ofset, ofset + this._numWidth), this._numFmt);
+    ofset += this.meta.numWidth;
+    const recordBlockCompSize = this._readNumber(recordHeaderBuffer.slice(ofset, ofset + this.meta.numWidth)) as number;
 
     this.recordHeader = {
       recordBlocksNum,
@@ -1025,9 +1044,10 @@ _readHeader() {
    * decomAccu
    * }]
    */
-  _decodeRecordInfo(): void {
+  _readRecordInfo(): void {
     this._recordBlockInfoStartOffset = this._recordHeaderEndOffset;
-    const riBuff = this._readBuffer(this._recordBlockInfoStartOffset, this.recordHeader.recordBlockInfoCompSize);
+
+    const recordInfoBuff = this.scanner.readBuffer(this._recordBlockInfoStartOffset, this.recordHeader.recordBlockInfoCompSize);
     /**
      * record_block_info_list:
      * [{
@@ -1039,27 +1059,31 @@ _readHeader() {
      * Note: every record block will contrains a lot of entries
      */
     const recordBlockInfoList: RecordBlockInfo[] = [];
-    let ofset = 0;
-    let compAccu = 0;
-    let decompAccu = 0;
+    let offset = 0;
+    let compressedAdder = 0;
+    let decompressionAdder = 0;
     for (let i = 0; i < this.recordHeader.recordBlocksNum; i++) {
-      const compSize = common.readNumber(riBuff.slice(ofset, ofset + this._numWidth), this._numFmt);
-      ofset += this._numWidth;
-      const decompSize = common.readNumber(riBuff.slice(ofset, ofset + this._numWidth), this._numFmt);
-      ofset += this._numWidth;
+      const compSize = this._readNumber(recordInfoBuff.slice(offset, offset + this.meta.numWidth)) as number;
+      offset += this.meta.numWidth;
+      const decompSize = this._readNumber(recordInfoBuff.slice(offset, offset + this.meta.numWidth)) as number;
+      offset += this.meta.numWidth;
 
       recordBlockInfoList.push({
         compSize,
-        compAccumulator: compAccu,
+        compAccumulator: compressedAdder,
         decompSize,
-        decompAccumulator: decompAccu,
+        decompAccumulator: decompressionAdder,
       });
-      compAccu += compSize;
-      decompAccu += decompSize;
+      compressedAdder += compSize;
+      decompressionAdder += decompSize;
     }
-    assert(ofset === this.recordHeader.recordBlockInfoCompSize);
-    assert(compAccu === this.recordHeader.recordBlockCompSize);
+
+    assert(offset === this.recordHeader.recordBlockInfoCompSize);
+
+    assert(compressedAdder === this.recordHeader.recordBlockCompSize);
+
     this.recordBlockInfoList = recordBlockInfoList;
+
     this._recordBlockInfoEndOffset = this._recordBlockInfoStartOffset + this.recordHeader.recordBlockInfoCompSize;
     // avoid user not invoke the _decodeRecordBlock method
     this._recordBlockStartOffset = this._recordBlockInfoEndOffset;
@@ -1070,7 +1094,7 @@ _readHeader() {
    * decode all records block,
    * this is a slowly method, do not use!
    */
-  _decodeRecordBlock(): void {
+  _readRecordBlock(): void {
     this._recordBlockStartOffset = this._recordBlockInfoEndOffset;
     const keyData: any[] = [];
 
@@ -1086,14 +1110,14 @@ _readHeader() {
       let comp_type = 'none';
       const compSize = this.recordBlockInfoList[idx].compSize;
       const decompSize = this.recordBlockInfoList[idx].decompSize;
-      const rbCompBuff = this._readBuffer(recordOffset, compSize);
+      const rbCompBuff = this.scanner.readBuffer(recordOffset, compSize);
       recordOffset += compSize;
 
       // 4 bytes: compression type
       const rbCompType = Buffer.from(rbCompBuff.slice(0, 4));
 
       // record_block stores the final record data
-      let recordBlock: Buffer = Buffer.from([]);
+      let recordBlock: Uint8Array = new Uint8Array(rbCompBuff.length);
 
       // TODO: igore adler32 offset
       // Note: here ignore the checksum part
@@ -1105,9 +1129,9 @@ _readHeader() {
         // --------------
         // decrypt
         // --------------
-        let blockBufDecrypted: Buffer | null = null;
+        let blockBufDecrypted: Uint8Array | null = null;
         // if encrypt type == 1, the record block was encrypted
-        if (this._encrypt === 1 /* || (this.ext == "mdd" && this._encrypt === 2 ) */) {
+        if (this.meta.encrypt === 1 /* || (this.meta.ext == "mdd" && this.meta.encrypt === 2 ) */) {
           // const passkey = new Uint8Array(8);
           // record_block_compressed.copy(passkey, 0, 4, 8);
           // passkey.set([0x95, 0x36, 0x00, 0x00], 4); // key part 2: fixed data
@@ -1174,7 +1198,7 @@ _readHeader() {
           key: keyText,
           idx: item_counter,
           // data,
-          encoding: this._encoding,
+          encoding: this.meta.encoding,
           // record_start,
           // record_end,
           record_idx: idx,
@@ -1182,7 +1206,7 @@ _readHeader() {
           record_compressed_size: compSize,
           record_decompressed_size: decompSize,
           record_comp_type: comp_type,
-          record_encrypted: this._encrypt === 1,
+          record_encrypted: this.meta.encrypt === 1,
           relateive_record_start: recordStart - offset,
           relative_record_end: recordEnd - offset,
         });
@@ -1238,13 +1262,13 @@ _readHeader() {
     const compAccumulator = this.recordBlockInfoList[rbid].compAccumulator;
     const decompAccumulator = this.recordBlockInfoList[rbid].decompAccumulator;
     const startOffset = compAccumulator + this._recordBlockStartOffset;
-    const rbCompBuff = this._readBuffer(startOffset, compSize);
+    const rbCompBuff = this.scanner.readBuffer(startOffset, compSize);
 
     // 4 bytes: compression type
     const rbCompType = Buffer.from(rbCompBuff.subarray(0, 4));
 
     // record_block stores the final record data
-    let recordBlock: Buffer = Buffer.from([]);
+    let recordBlock: Uint8Array = new Uint8Array(rbCompBuff.length);
 
     // TODO: igore adler32 offset
     // Note: here ignore the checksum part
@@ -1256,9 +1280,9 @@ _readHeader() {
       // --------------
       // decrypt
       // --------------
-      let blockBufDecrypted: Buffer | null = null;
+      let blockBufDecrypted: Uint8Array | null = null;
       // if encrypt type == 1, the record block was encrypted
-      if (this._encrypt === 1 /* || (this.ext == "mdd" && this._encrypt === 2 ) */) {
+      if (this.meta.encrypt === 1 /* || (this.meta.ext == "mdd" && this.meta.encrypt === 2 ) */) {
         // const passkey = new Uint8Array(8);
         // record_block_compressed.copy(passkey, 0, 4, 8);
         // passkey.set([0x95, 0x36, 0x00, 0x00], 4); // key part 2: fixed data
@@ -1302,50 +1326,26 @@ _readHeader() {
 
     const recordStart = start - decompAccumulator;
     const recordEnd = nextStart - decompAccumulator;
-    const data = recordBlock.subarray(recordStart, recordEnd);
-    if (this.ext === 'mdd') {
+    const data = recordBlock.slice(recordStart, recordEnd);
+    if (this.meta.ext === 'mdd') {
       return { keyText, definition: BASE64ENCODER(data) };
     }
-    return { keyText, definition: this._decoder.decode(data) };
+    return { keyText, definition: this.meta.decoder.decode(data) };
   }
 
-  _readBuffer(start: number, length: number): Buffer {
-    return Buffer.from(readChunkSync(this.fname, start, length));
-  }
-
-  // store key to wordBuffer
-  _resortKeyList(): void {
-    // 排序之前记录下，每个单词的结束位置，因为排序之后顺序就乱了，buffer 里就不能再根据下一个单词判断了
-    this.keyList.map((v, i) => {
-      v.original_idx = i;
-      if (i > 0) {
-        this.keyList[i - 1].nextRecordStartOffset = v.recordStartOffset;
-      }
-    });
-
-    this.keyListRemap = {};
-
-    if (this._isKeyCaseSensitive()) {
-      this.keyList.sort((a, b) => common.caseUnsensitiveCompare(a.keyText, b.keyText));
-    } else {
-      this.keyList.sort((a, b) => common.caseSensitiveCompare(a.keyText, b.keyText));
-    }
-
-    // build index remap
-    this.keyList.forEach((v, i) => {
-      this.keyListRemap[v.original_idx!] = i;
-    });
-  }
+  // _readBuffer(start: number, length: number): Buffer {
+  //   return Buffer.from(readChunkSync(this.meta.fname, start, length));
+  // }
 
   _stripKeyOrIngoreCase(key: string): string {
     // this strip/case sensistive part will increase time cost about 100% (20ms->38ms)
     if (this._isStripKey()) {
-      key = key.replace(common.REGEXP_STRIPKEY[this.ext], '$1');
+      key = key.replace(common.REGEXP_STRIPKEY[this.meta.ext], '$1');
     }
     if (!this._isKeyCaseSensitive()) {
       key = key.toLowerCase();
     }
-    if (this.ext == 'mdd') {
+    if (this.meta.ext == 'mdd') {
       key = key.replace(/\\/g, '/');
     }
     return key.trim();
@@ -1527,6 +1527,23 @@ _readHeader() {
    * 在现代计算机的性能条件下，直接遍历全部词条也可得到较好的效果，因此目前采用的策略是全部读取词条，内部排序
    *
    */
+  _readNumber(data: Uint8Array, isLittleEndian: boolean = false, numfmt: NumFmt | null = null): number {
+    const dataView = new DataView(data.buffer);
+
+    if (numfmt == null) {
+      numfmt = this.meta.numFmt;
+    }
+
+    if (numfmt == common.NUMFMT_UINT16) {
+      return dataView.getUint16(0, isLittleEndian);
+    } else if (numfmt == common.NUMFMT_UINT32) {
+      return dataView.getUint32(0, isLittleEndian);
+    } else if (numfmt == common.NUMFMT_UINT64) {
+      return common.readNumber(Buffer.from(data), common.NUMFMT_UINT64 as NumFmt);
+    } else {
+      return dataView.getUint8(0);
+    }
+  }
 }
 
 export default MDictBase;

@@ -1,7 +1,7 @@
 import MdictBase, { KeyRecord, KeyListItem, MDictOptions } from './mdict-base.js';
 import common from './utils.js';
 
-interface MdictOptions extends MDictOptions {}
+interface MdictOptions extends MDictOptions { }
 
 export interface FuzzyWord extends KeyRecord {
   key: string;
@@ -52,8 +52,8 @@ export class Mdict extends MdictBase {
     const nextStart =
       i + 1 >= list.length
         ? this._recordBlockStartOffset +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompAccumulator +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompSize
+        this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompAccumulator +
+        this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompSize
         : list[i + 1].recordStartOffset;
 
     const data = this._decodeRecordBlockDataByRecordBlockInfoId(
@@ -100,8 +100,8 @@ export class Mdict extends MdictBase {
     const nextStart =
       i + 1 >= list.length
         ? this._recordBlockStartOffset +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompAccumulator +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompSize
+        this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompAccumulator +
+        this.recordBlockInfoList[this.recordBlockInfoList.length - 1].decompSize
         : list[i + 1].recordStartOffset;
 
     // TODO should return UInt8Array
