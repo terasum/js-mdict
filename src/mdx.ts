@@ -1,6 +1,14 @@
-import { Mdict, FuzzyWord } from './mdict.js';
-import { KeyListItem, KeyRecord } from './mdict-base.js';
+import { Mdict } from './mdict.js';
+import { KeyWordItem } from '../src/mdict-base';
 
+
+import  common  from './utils';
+
+export interface FuzzyWord extends KeyWordItem {
+  key: string;
+  idx: number;
+  ed: number;
+}
 export class MDX extends Mdict {
   /**
    * lookup the word
@@ -9,58 +17,38 @@ export class MDX extends Mdict {
    * @returns word definition
    */
   lookup(word: string): { keyText: string; definition: string | null } {
-    return super.lookup(word);
-  }
+    const keyWordItem = this.lookupKeyBlockByWord(word);
+    if (!keyWordItem) {
+      return {
+        keyText: word,
+        definition: null
+      };
+    }
+    const def = this.lookupRecordByKeyBlock(keyWordItem);
+    if (!def) {
+      return {
+        keyText: word,
+        definition: null
+      };
+    }
 
-  /**
-   * locate the resource key
-   * @test no
-   * @param resourceKey resource key
-   * @returns the keyText and definition
-   */
-  locate(resourceKey: string): { keyText: string; definition: string | null } {
-    return super.locate(resourceKey);
-  }
-
-  /**
-   * fetch definition by key record
-   * @param keyRecord fetch word record
-   * @returns the keyText and definition
-   */
-  fetch_defination(keyRecord: KeyRecord): {
-    keyText: string;
-    definition: string | null;
-  } {
-    return super.fetch_defination(keyRecord);
-  }
-
-  /**
-   * parse defination from record block
-   * @test no
-   * @param _word word list
-   * @param _rstartofset record start offset
-   * @returns the defination
-   */
-  parse_defination(_word: string, _rstartofset?: number): any {
-    throw new Error('parse_defination method has been deprecated');
-  }
+    return {
+      keyText: word,
+      definition: this.meta.decoder.decode(def)
+    };
+  };
 
   /**
    * search the prefix like the phrase in the dictionary
    * @test ok
-   * @param phrase prefix search phrase
+   * @param prefix prefix search phrase
    * @returns the prefix related list
    */
-  prefix(phrase: string): {
-    key: string;
-    recordOffset: number;
-    keyText: string;
-    recordStartOffset: number;
-    rofset?: number;
-    nextRecordStartOffset?: number;
-    original_idx?: number;
-  }[] {
-    return super.prefix(phrase);
+  prefix(prefix: string): KeyWordItem[] {
+    const keywordList =  this.associate(prefix);
+    return keywordList.filter(item => {
+      return item.keyText.startsWith(prefix);
+    });
   }
 
   /**
@@ -69,8 +57,29 @@ export class MDX extends Mdict {
    * @param phrase associate search likely workds
    * @returns matched list
    */
-  associate(phrase: string): KeyListItem[] | undefined {
-    return super.associate(phrase);
+  associate(phrase: string): KeyWordItem[] {
+    const keyBlockItem = this.lookupKeyBlockByWord(phrase);
+    if (!keyBlockItem) {
+      return [];
+    }
+    return this.keywordList.filter((keyword) => {
+      return keyword.keyBlockIdx == keyBlockItem.keyBlockIdx;
+    });
+  }
+
+  fetch_definition(keywordItem : KeyWordItem): { keyText: string; definition: string | null } {
+    const def = this.lookupRecordByKeyBlock(keywordItem);
+    if (!def) {
+      return {
+        keyText: keywordItem.keyText,
+        definition: null
+      };
+    }
+
+    return {
+      keyText: keywordItem.keyText,
+      definition: this.meta.decoder.decode(def)
+    };
   }
 
   /**
@@ -82,15 +91,28 @@ export class MDX extends Mdict {
    * @returns fuzzy word list
    */
   fuzzy_search(word: string, fuzzy_size: number, ed_gap: number): FuzzyWord[] {
-    return super.fuzzy_search(word, fuzzy_size, ed_gap);
-  }
+    const fuzzy_words: FuzzyWord[] = [];
+    let count = 0;
 
-  /**
-   * search words by suggestion
-   * @test no
-   * @param _phrase suggest some words by phrase
-   */
-  suggest(_phrase: string): never {
-    throw new Error('suggest method has been deprecated');
+
+    const keywordList =  this.associate(word);
+    keywordList.forEach(item => {
+      const key = this.strip(item.keyText);
+      const ed = common.levenshteinDistance(key, this.strip(word));
+      if (ed <= ed_gap) {
+        count++;
+        if (count > fuzzy_size) {
+          return;
+        }
+        fuzzy_words.push({
+          ...item,
+          key: item.keyText,
+          idx: item.recordStartOffset,
+          ed: ed,
+        });
+      }}
+    );
+
+    return fuzzy_words;
   }
 }

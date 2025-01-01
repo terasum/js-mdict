@@ -231,7 +231,7 @@ function readNumber(bf: Buffer, numfmt: NumFmt): number {
  * @param {Symbol} numfmt - 数字格式(NUMFMT_UINT8, NUMFMT_UINT16, NUMFMT_UINT32, NUMFMT_UINT64)。
  * @returns {number} 读取的数字。
  */
-function readNumber2(bf: Buffer, offset: number, numfmt: NumFmt): number {
+function readNumber2(bf: Buffer, offset: number, numfmt: symbol): number {
   if (numfmt === NUMFMT_UINT32) {
     return bf.readUInt32BE(offset);
   } else if (numfmt === NUMFMT_UINT64) {
@@ -243,16 +243,39 @@ function readNumber2(bf: Buffer, offset: number, numfmt: NumFmt): number {
   }
   return 0;
 }
+function b2n8(data: Uint8Array): number {
+  return b2n(data, NUMFMT_UINT8);
+}
+function b2n16(data: Uint8Array): number {
+  return b2n(data, NUMFMT_UINT16);
+}
+function b2n32(data: Uint8Array): number {
+  return b2n(data, NUMFMT_UINT32);
+}
+function b2n64(data: Uint8Array): number {
+  return b2n(data, NUMFMT_UINT64);
+}
+
+function b2n(data: Uint8Array, numfmt: NumFmt): number {
+  if (numfmt == NUMFMT_UINT16) {
+    return readNumber(Buffer.from(data), NUMFMT_UINT16);
+  } else if (numfmt == NUMFMT_UINT32) {
+    return readNumber(Buffer.from(data), NUMFMT_UINT32);
+  } else if (numfmt == NUMFMT_UINT64) {
+    return readNumber(Buffer.from(data), NUMFMT_UINT64);
+  } else {
+    return 0;
+  }
+}
 
 /**
  * 使用简单的加密算法快速解密数据。
- * @param {Buffer} data - 要解密的数据。
- * @param {Buffer} k - 解密密钥。
- * @returns {Buffer} 解密后的数据。
+ * @param {Uint8Array} b - 要解密的数据。
+ * @param {Uint8Array} key - 解密密钥。
+ * @returns {Uint8Array} 解密后的数据。
  */
-function fast_decrypt(data: Buffer, k: Buffer): Buffer {
-  const b = Uint8Array.from(data);
-  const key = Uint8Array.from(k);
+function fast_decrypt(b: Uint8Array, key: Uint8Array): Uint8Array {
+  // XOR decryption
   let previous = 0x36;
   for (let i = 0; i < b.length; ++i) {
     let t = ((b[i] >> 4) | (b[i] << 4)) & 0xff;
@@ -260,17 +283,26 @@ function fast_decrypt(data: Buffer, k: Buffer): Buffer {
     previous = b[i];
     b[i] = t;
   }
-  return Buffer.from(b);
+  return b;
 }
+
+function salsa_decrypt(data: Buffer, k: Buffer): Buffer {
+  // salsa20 (8 rounds) decryption
+  // TODO
+  // s20 = Salsa20(key=encrypt_key, IV=b"\x00"*8, rounds=8)
+  // return s20.encryptBytes(ciphertext)
+  return data;
+}
+
 
 /**
  * 解密 MDX 格式的压缩块。
  * @param {Buffer} comp_block - 压缩的 MDX 块。
  * @returns {BufferList} 解密后的数据。
  */
-function mdxDecrypt(comp_block: Buffer): Buffer {
+function mdxDecrypt(comp_block: Uint8Array): Uint8Array {
   const keyinBuffer = new Uint8Array(8);
-  keyinBuffer.set(comp_block.subarray(4, 8), 0);
+  keyinBuffer.set(comp_block.slice(4, 8), 0);
   keyinBuffer[4] ^= 0x95;
   keyinBuffer[5] ^= 0x36;
   keyinBuffer[6] ^= 0x00;
@@ -279,7 +311,7 @@ function mdxDecrypt(comp_block: Buffer): Buffer {
   const key = ripemd128(keyinBuffer);
   const resultBuff = Buffer.concat([
     comp_block.subarray(0, 8),
-    fast_decrypt(comp_block.subarray(8), Buffer.from(key)),
+    fast_decrypt(comp_block.slice(8), Uint8Array.from(key)),
   ]);
   return resultBuff;
 }
@@ -421,7 +453,15 @@ export default {
   parseHeader,
   readNumber,
   readNumber2,
+  b2n,
+  b2n8,
+  b2n16,
+  b2n32,
+  b2n64,
   mdxDecrypt,
+  ripemd128,
+  fast_decrypt,
+  salsa_decrypt,
   appendBuffer,
   isTrue,
   caseUnsensitiveCompare,

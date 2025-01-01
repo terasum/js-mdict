@@ -20,7 +20,7 @@
   "type": "module",
   "exports": {
     "require": "./dist/cjs/index.js",
-    "import":  "./dist/esm/index.js"
+    "import": "./dist/esm/index.js"
   },
   "main": "./dist/cjs/index.js",
   "types": "./dist/cjs/index.d.ts",
@@ -46,7 +46,6 @@
     "levenshtein-edit-distance": "^3.0.1"
   },
   "devDependencies": {
-    "@types/pako": "^2.0.3",
     "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "^9.12.0",
     "@jest/globals": "^29.7.0",
@@ -54,6 +53,7 @@
     "@types/jest": "^29.5.13",
     "@types/lodash": "^4.17.10",
     "@types/node": "^22.7.3",
+    "@types/pako": "^2.0.3",
     "@types/sinon": "^17.0.3",
     "@typescript-eslint/eslint-plugin": "^8.8.0",
     "@typescript-eslint/parser": "^8.8.0",
@@ -66,7 +66,7 @@
     "shx": "^0.3.4",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.2"
   },
   "files": [
     "package.json",

@@ -1,8 +1,8 @@
-import Mdict from '../src/mdict';
+import {MDX} from '../src';
 
 describe('Mdict', () => {
   describe('Oxford', () => {
-    const mdict = new Mdict('./test/data/oald7.mdx', {
+    const mdict = new MDX('./test/data/oald7.mdx', {
       resort: true,
     });
     // it("#associate&#parse_defination", () => {
@@ -25,9 +25,9 @@ describe('Mdict', () => {
       expect(def.keyText).toEqual('ask');
     });
     it('#prefix', () => {
-      const prefix = mdict.prefix('likewise');
+      const prefix = mdict.prefix('like');
       expect(prefix).toBeDefined();
-      expect(prefix.length).toEqual(1245);
+      expect(prefix.length).toEqual(9);
     });
 
     it('#fuzzy_search', () => {

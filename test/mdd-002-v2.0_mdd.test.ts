@@ -1,9 +1,9 @@
-import Mdict from '../src/mdict';
+import {MDD} from '../src';
 import { expect } from '@jest/globals';
 
 describe('Mdict', () => {
   describe('oale8.mdd', () => {
-    const mdict = new Mdict('./test/data/oale8.mdd', { resort: true });
+    const mdict = new MDD('./test/data/oale8.mdd', { resort: true });
 
     it('#lookup>\\uk_pron.png', () => {
       const def = mdict.locate('\\uk_pron.png');

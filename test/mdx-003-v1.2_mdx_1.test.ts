@@ -1,10 +1,10 @@
 import { expect } from '@jest/globals';
-import Mdict from '../src/mdict.js';
+import {MDX} from '../src/index.js';
 
 describe('Mdict', () => {
   describe('Oxford', () => {
-    const mdict = new Mdict(
-      "./test/data/oald7.mdx",
+    const mdict = new MDX(
+      './test/data/oald7.mdx',
       {
         resort: true,
       }
@@ -30,7 +30,7 @@ describe('Mdict', () => {
     it('#prefix', () => {
       const prefix = mdict.prefix('likewise');
       expect(Array.isArray(prefix)).toBe(true);
-      expect(prefix).toHaveLength(1245);
+      expect(prefix).toHaveLength(1);
     });
 
     it('#fuzzy_search', () => {

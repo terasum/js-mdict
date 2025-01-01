@@ -3,6 +3,7 @@ export default {
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   testEnvironment: 'node',
+  testRegex: '(/tests/.*|(\\.|/)(test|spec))\\.tsx?$',
   transform: {
     '^.+.tsx?$': ['ts-jest', {}],
   },
@@ -19,8 +20,9 @@ export default {
     '^./index.js$': '<rootDir>/src/index.ts',
     '^./mdx.js$': '<rootDir>/src/mdx.ts',
     '^./mdd.js$': '<rootDir>/src/mdd.ts',
+    '^./scanner.js$': '<rootDir>/src/scanner.ts',
 
   },
   preset: 'ts-jest',
-  testRegex: '/test/.*\\.test\\.tsx?$',
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
 };

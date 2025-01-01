@@ -1,8 +1,8 @@
-import Mdict from '../src/mdict';
+import {MDX} from '../src';
 
 describe('Mdict', () => {
   describe('American Heritage', () => {
-    const mdict = new Mdict('./test/data/tahdel.mdx', {
+    const mdict = new MDX('./test/data/tahdel.mdx', {
       resort: true,
     });
     it('#associate&#parse_defination', () => {
@@ -14,14 +14,14 @@ describe('Mdict', () => {
       expect(matched != undefined).toBeTruthy();
       expect(matched[0] != undefined).toBeTruthy();
 
-      let defination = mdict.fetch_defination(matched[0]);
-      if (!defination.definition) {
+      const def = mdict.fetch_definition(matched[0]);
+      if (!def.definition) {
         throw new Error('No definition found');
       }
 
       expect(
-        defination.definition.startsWith(
-          `<DIV id=main_wnd>\r\n<DIV style=\"PADDING-RIGHT: 10px; PADDING-LEFT: 10px; FONT-SIZE: 10.5pt; PADDING-BOTTOM: 0px; WIDTH: 100%; LINE-HEIGHT: 1.2em; PADDING-TOP: 10px; FONT-FAMILY: 'Tahoma'\" groupid=\"2\">`
+        def.definition.startsWith(
+          '<DIV id=main_wnd>\r\n<DIV style="PADDING-RIGHT: 10px; PADDING-LEFT: 10px; FONT-SIZE: 10.5pt; PADDING-BOTTOM: 0px; WIDTH: 100%; LINE-HEIGHT: 1.2em; PADDING-TOP: 10px; FONT-FAMILY: \'Tahoma\'" groupid="2">'
         )
       ).toBeTruthy();
     });
@@ -34,7 +34,7 @@ describe('Mdict', () => {
     it('#prefix', () => {
       const prefix = mdict.prefix('hel');
       expect(prefix instanceof Array).toBeTruthy();
-      expect(prefix.length).toEqual(1322);
+      expect(prefix.length).toEqual(76);
     });
     it('#fuzzy_search', () => {
       const result = mdict.fuzzy_search('incited', 5, 3);

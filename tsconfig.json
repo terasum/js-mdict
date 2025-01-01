@@ -2,12 +2,14 @@
   "compileOnSave": true,
   "compilerOptions": {
     "esModuleInterop": true,
-    "target": "ES5",
+    "target": "ES6",
     "module": "CommonJS",
     "strict": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
 
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
     "outDir": "dist",
     "lib": ["DOM", "ES2022"],
@@ -17,5 +19,5 @@
     }
   },
   "exclude": ["node_modules"],
-  "include": ["src/**/*"]
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
 }

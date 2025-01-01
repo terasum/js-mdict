@@ -2,15 +2,12 @@ export type {
   MDictOptions,
   MDictHeader,
   KeyHeader,
-  KeyBlockInfo,
+  KeyInfoItem,
   RecordHeader,
-  RecordBlockInfo,
-  KeyListItem,
-  KeyRecord,
+  RecordInfo,
+  KeyWordItem,
 } from './mdict-base.ts';
-export type { FuzzyWord } from './mdict.js';
 
 export { Mdict } from './mdict.js';
-
-export { MDX } from './mdx.js';
+export { MDX, FuzzyWord } from './mdx.js';
 export { MDD } from './mdd.js';

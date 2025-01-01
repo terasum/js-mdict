@@ -1,253 +1,241 @@
-import MdictBase, { KeyRecord, KeyListItem } from './mdict-base.js';
+import MdictBase, { KeyWordItem, KeyInfoItem, MDictOptions } from './mdict-base.js';
 import common from './utils.js';
+import lzo1x from './lzo1x-wrapper';
+import zlib from 'zlib';
 
-interface MdictOptions {
-  passcode?: string;
-  debug?: boolean;
-  resort?: boolean;
-  isStripKey?: boolean;
-  isCaseSensitive?: boolean;
-}
-
-export interface FuzzyWord extends KeyRecord {
-  key: string;
-  idx: number;
-  ed: number;
-}
+const pako = {
+  inflate: zlib.inflateSync
+};
 
 export class Mdict extends MdictBase {
-  options: MdictOptions;
 
-  constructor(fname: string, options?: MdictOptions) {
+  constructor(fname: string, options?: Partial<MDictOptions>) {
     options = options || {};
+    // default options
     options = {
       passcode: options.passcode ?? '',
       debug: options.debug ?? false,
       resort: options.resort ?? true,
       isStripKey: options.isStripKey ?? true,
       isCaseSensitive: options.isCaseSensitive ?? true,
+      encryptType: options.encryptType ?? -1,
     };
 
     const passcode = options.passcode || undefined;
     super(fname, passcode, options);
-    this.options = options;
+  }
+
+
+  strip(key: string): string {
+    if (this._isStripKey()) {
+      key = key.replace(common.REGEXP_STRIPKEY[this.meta.ext], '$1');
+    }
+    if (!this._isKeyCaseSensitive()) {
+      key = key.toLowerCase();
+    }
+    if (this.meta.ext == 'mdd') {
+      key = key.replace(/\\/g, '/');
+    }
+    return key.trim();
+  }
+
+  comp(word1: string, word2: string): number {
+    // if case-sensitive, the uppercase word is smaller than lowercase word
+    // for example: `Holanda` is smaller than `abacaxi`
+    // so when comparing with the words, we should use the dictionary order,
+    // however, if we change the word to lowercase, the binary search algorithm will be confused
+    // so, we use the enhanced compare function `common.wordCompare`
+    word1 = this.strip(word1);
+    word2 = this.strip(word2);
+    return word1.localeCompare(word2);
   }
 
   /**
-   * lookup the word
-   * @test ok
-   * @param word search word
-   * @returns word definition
+   * lookupKeyInfoItem lookup the `keyInfoItem`
+   * the `keyInfoItem` contains key-word record block location: recordStartOffset
+   * the `recordStartOffset` should indicate the unpacked record data relative offset
+   * @param word the target word phrase
    */
-  lookup(word: string): { keyText: string; definition: string | null } {
-    const record = this._lookupKeyBlockId(word);
-
-    // if not found the key block, return undefined
-    if (record === undefined) {
-      return {
-        keyText: word,
-        definition: null,
-      };
+  lookupKeyBlockByWord(word: string) : KeyWordItem | undefined {
+    const keyBlockInfoId = this.lookupKeyInfoByWord(word);
+    if (keyBlockInfoId < 0) {
+      return undefined;
     }
 
-    const i = record.idx;
-    const list = record.list;
+    // TODO: if the this.list length parse too slow, can decode by below code
+    // const list = this.lookupPartialKeyBlockListByKeyInfoId(keyInfoId);
+    const list = this.keywordList;
+    // binary search
+    let left = 0;
+    let right = list.length - 1;
+    let mid = 0;
 
-    const recordBlockInfoId = this._reduceRecordBlockInfo(
-      list[i].recordStartOffset
-    );
+    while (left <= right) {
+      mid = left + ((right - left) >> 1);
 
-    const nextStart =
-      i + 1 >= list.length
-        ? this._recordBlockStartOffset +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompAccumulator +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompSize
-        : list[i + 1].recordStartOffset;
-
-    const data = this._decodeRecordBlockDataByRecordBlockInfoId(
-      recordBlockInfoId,
-      list[i].keyText,
-      list[i].recordStartOffset,
-      nextStart
-    );
-
-    if (this.header['StyleSheet'] && data.definition) {
-      return {
-        ...data,
-        definition: common.substituteStylesheet(
-          this.header['StyleSheet'] as { [key: string]: string[] },
-          data.definition
-        ),
-      };
-    }
-    return data;
-  }
-
-  /**
-   * locate the resource key
-   * @test no
-   * @param resourceKey resource key
-   * @returns the keyText and definition
-   */
-  locate(resourceKey: string): { keyText: string; definition: string | null } {
-    const record = this._lookupKeyBlockId(resourceKey);
-
-    // if not found the key block, return undefined
-    if (record === undefined) {
-      return {
-        keyText: resourceKey,
-        definition: null,
-      };
-    }
-
-    const i = record.idx;
-    const list = record.list;
-
-    const recordBlockInfoId = this._reduceRecordBlockInfo(
-      list[i].recordStartOffset
-    );
-
-    const nextStart =
-      i + 1 >= list.length
-        ? this._recordBlockStartOffset +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompAccumulator +
-          this.recordBlockInfoList[this.recordBlockInfoList.length - 1]
-            .decompSize
-        : list[i + 1].recordStartOffset;
-
-    // TODO should return UInt8Array
-    const data = this._decodeRecordBlockDataByRecordBlockInfoId(
-      recordBlockInfoId,
-      list[i].keyText,
-      list[i].recordStartOffset,
-      nextStart
-    );
-
-    return data;
-  }
-
-  /**
-   * fetch definition by key record
-   * @param keyRecord fetch word record
-   * @returns the keyText and definition
-   */
-  fetch_defination(keyRecord: KeyRecord): {
-    keyText: string;
-    definition: string | null;
-  } {
-    const rid = this._reduceRecordBlockInfo(keyRecord.recordStartOffset);
-    const data = this._decodeRecordBlockDataByRecordBlockInfoId(
-      rid,
-      keyRecord.keyText,
-      keyRecord.recordStartOffset,
-      keyRecord.nextRecordStartOffset ?? 0
-    );
-    return data;
-  }
-
-  /**
-   * parse defination from record block
-   * @test no
-   * @param _word word list
-   * @param _rstartofset record start offset
-   * @returns the defination
-   */
-  parse_defination(_word: string, _rstartofset?: number): any {
-    throw new Error('parse_defination method has been deprecated');
-  }
-
-  /**
-   * search the prefix like the phrase in the dictionary
-   * @test ok
-   * @param phrase prefix search phrase
-   * @returns the prefix related list
-   */
-  prefix(phrase: string): {
-    key: string;
-    recordOffset: number;
-    keyText: string;
-    recordStartOffset: number;
-    rofset?: number;
-    nextRecordStartOffset?: number;
-    original_idx?: number;
-  }[] {
-    const record = this._lookupKeyBlockId(phrase);
-    const list = record?.list;
-    if (!list) {
-      return [];
-    }
-    return list.map((item) => {
-      return {
-        ...item,
-        key: item.keyText,
-        recordOffset: item.recordStartOffset,
-      };
-    });
-  }
-
-  /**
-   * search matched list of associate words
-   * @test ok
-   * @param phrase associate search likely workds
-   * @returns matched list
-   */
-  associate(phrase: string): KeyListItem[] | undefined {
-    const record = this._lookupKeyBlockId(phrase);
-    const matched = record?.list;
-    return matched;
-  }
-
-  /**
-   * fuzzy search words list
-   * @test ok
-   * @param word search word
-   * @param fuzzy_size the fuzzy workd size
-   * @param ed_gap edit distance
-   * @returns fuzzy word list
-   */
-  fuzzy_search(word: string, fuzzy_size: number, ed_gap: number): FuzzyWord[] {
-    const fuzzy_words: FuzzyWord[] = [];
-    let count = 0;
-
-    const record = this._lookupKeyBlockId(word);
-    const keyList = record?.list;
-    if (!keyList) {
-      return [];
-    }
-
-    const fn = this._stripKeyOrIngoreCase.bind(this);
-    for (let i = 0; i < keyList.length; i++) {
-      const item = keyList[i];
-      const key = fn(item.keyText);
-      const ed = common.levenshteinDistance(key, fn(word));
-      if (ed <= ed_gap) {
-        count++;
-        if (count > fuzzy_size) {
-          break;
-        }
-        fuzzy_words.push({
-          ...item,
-          key: item.keyText,
-          idx: item.recordStartOffset,
-          ed: ed,
-        });
+      const compRes = this.comp(word, list[mid].keyText);
+      if (compRes > 0) {
+        left = mid + 1;
+      } else if (compRes == 0) {
+        break;
+      } else {
+        right = mid - 1;
       }
     }
 
-    return fuzzy_words;
+    if (mid == -1) {
+      return undefined;
+    }
+
+    return list[mid];
   }
 
   /**
-   * search words by suggestion
-   * @test no
-   * @param _phrase suggest some words by phrase
+   * locate the record meaning buffer by `keyListItem`
+   * the `KeyBlockItem.recordStartOffset` should indicate the record block info location
+   * use the record block info, we can get the `recordBuffer`, then we need decrypt and decompress
+   * use decompressed `recordBuffer` we can get the total block which contains meanings
+   * then, use:
+   *  const start = item.recordStartOffset - recordBlockInfo.unpackAccumulatorOffset;
+   *  const end = item.recordEndOffset - recordBlockInfo.unpackAccumulatorOffset;
+   *  the finally meaning's buffer is `unpackRecordBlockBuff[start, end]`
+   * @param item
    */
-  suggest(_phrase: string): never {
-    throw new Error('suggest method has been deprecated');
+  lookupRecordByKeyBlock(item: KeyWordItem) {
+    const recordBlockIndex = this.reduceRecordBlockInfo(item.recordStartOffset);
+    const recordBlockInfo = this.recordInfoList[recordBlockIndex];
+    const recordBuffer = this.scanner.readBuffer(this._recordBlockStartOffset + recordBlockInfo.packAccumulateOffset, recordBlockInfo.packSize);
+    const unpackRecordBlockBuff = this.decompressBuff(recordBuffer, recordBlockInfo.unpackSize);
+
+    const start = item.recordStartOffset - recordBlockInfo.unpackAccumulatorOffset;
+    const end = item.recordEndOffset - recordBlockInfo.unpackAccumulatorOffset;
+    return unpackRecordBlockBuff.subarray(start, end);
   }
+
+  /**
+   * lookupPartialKeyInfoListById
+   * decode key block by key block id, and we can get the partial key list
+   * the key list just contains the partial key list
+   * @param {number} keyInfoId key block id
+   * @return {KeyWordItem[]}
+   */
+  lookupPartialKeyBlockListByKeyInfoId(keyInfoId: number): KeyWordItem[] {
+    const packSize = this.keyInfoList[keyInfoId].keyBlockPackSize;
+    const unpackSize = this.keyInfoList[keyInfoId].keyBlockUnpackSize;
+    const startOffset = this.keyInfoList[keyInfoId].keyBlockPackAccumulator + this._keyBlockStartOffset;
+    const keyBlockPackedBuff = this.scanner.readBuffer(startOffset, packSize);
+    const keyBlock = this.unpackKeyBlock(keyBlockPackedBuff, unpackSize);
+    return this.splitKeyBlock(keyBlock, keyInfoId);
+  }
+
+
+  /**
+   * lookupInfoBlock reduce word find the nearest key block
+   * @param {string} word searching phrase
+   * @param keyInfoList
+   */
+  lookupKeyInfoByWord(word: string, keyInfoList?: KeyInfoItem[]): number {
+    const list = keyInfoList ? keyInfoList : this.keyInfoList;
+
+    let left = 0;
+    let right = list.length - 1;
+    let mid = 0;
+
+    // when compare the word, the uppercase words are less than lowercase words
+    // so we compare with the greater symbol is wrong, we need to use the `common.wordCompare` function
+    while (left <= right) {
+      mid = left + ((right - left) >> 1);
+      if (this.comp(word, list[mid].firstKey) >= 0 &&
+        this.comp(word, list[mid].lastKey) <= 0) {
+        return mid;
+      } else if (this.comp(word, list[mid].lastKey) >= 0) {
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+    return -1;
+  }
+
+  private _isKeyCaseSensitive(): boolean {
+    return this.options.isCaseSensitive || common.isTrue(this.header['isCaseSensitive'] as string);
+  }
+
+  private _isStripKey(): boolean {
+    return this.options.isStripKey || common.isTrue(this.header['StripKey'] as string);
+  }
+
+  private decompressBuff(recordBuffer: Uint8Array, unpackSize: number) {
+    // decompress
+    // 4 bytes: compression type
+    const rbCompType = Buffer.from(recordBuffer.subarray(0, 4));
+    // record_block stores the final record data
+    let unpackRecordBlockBuff: Uint8Array = new Uint8Array(recordBuffer.length);
+
+    // TODO: igore adler32 offset
+    // Note: here ignore the checksum part
+    // bytes: adler32 checksum of decompressed record block
+    // adler32 = unpack('>I', record_block_compressed[4:8])[0]
+    if (rbCompType.toString('hex') === '00000000') {
+      unpackRecordBlockBuff = recordBuffer.slice(8);
+    } else {
+      // decrypt
+      let blockBufDecrypted: Uint8Array | null = null;
+      // if encrypt type == 1, the record block was encrypted
+      if (this.meta.encrypt === 1 /* || (this.meta.ext == "mdd" && this.meta.encrypt === 2 ) */) {
+        // const passkey = new Uint8Array(8);
+        // record_block_compressed.copy(passkey, 0, 4, 8);
+        // passkey.set([0x95, 0x36, 0x00, 0x00], 4); // key part 2: fixed data
+        blockBufDecrypted = common.mdxDecrypt(recordBuffer);
+      } else {
+        blockBufDecrypted = recordBuffer.subarray(8, recordBuffer.length);
+      }
+
+      // decompress
+      if (rbCompType.toString('hex') === '01000000') {
+        unpackRecordBlockBuff = lzo1x.decompress(blockBufDecrypted, unpackSize, 1308672);
+        unpackRecordBlockBuff = Buffer.from(unpackRecordBlockBuff).subarray(
+          unpackRecordBlockBuff.byteOffset,
+          unpackRecordBlockBuff.byteOffset + unpackRecordBlockBuff.byteLength
+        );
+      } else if (rbCompType.toString('hex') === '02000000') {
+        // zlib decompress
+        unpackRecordBlockBuff = Buffer.from(pako.inflate(blockBufDecrypted));
+      }
+    }
+    return unpackRecordBlockBuff;
+  }
+
+
+  /**
+   * find record which record start locate
+   * @param {number} recordStart record start offset
+   */
+  private reduceRecordBlockInfo(recordStart: number): number {
+    let left = 0;
+    let right = this.recordInfoList.length - 1;
+    let mid = 0;
+    while (left <= right) {
+      mid = left + ((right - left) >> 1);
+      if (recordStart >= this.recordInfoList[mid].unpackAccumulatorOffset) {
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+    return left - 1;
+  }
+
+
 }
 
+/**
+ * 经过一系列测试, 发现mdx格式的文件存在较大的词语排序问题，存在如下情况：
+ * 1. 大小写的问题 比如 a-zA-Z 和 aA-zZ 这种并存的情况
+ * 2. 多语言的情况，存在英文和汉字比较大小的情况一般情况下 英文应当排在汉字前面
+ * 3. 小语种的情况
+ * 上述的这些情况都有可能出现，无法通过字典头中的设置实现排序，所以无法通过内部的keyInfoList进行快速索引，
+ * 在现代计算机的性能条件下，直接遍历全部词条也可得到较好的效果，因此目前采用的策略是全部读取词条，内部排序
+ *
+ */
 export default Mdict;

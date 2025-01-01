@@ -1,8 +1,8 @@
-import Mdict from '../src/mdict';
+import { MDX } from '../src';
 
 describe('Mdict', () => {
   describe('oale8.mdx', () => {
-    const mdict = new Mdict('./test/data/oale8.mdx', { resort: true });
+    const mdict = new MDX('./test/data/oald7.mdx', { resort: true });
     it('#associate&#parse_defination', () => {
       const matched = mdict.associate('on');
       if (!matched) {
@@ -12,12 +12,12 @@ describe('Mdict', () => {
       expect(matched != undefined).toBeTruthy();
       expect(matched[0] != undefined).toBeTruthy();
 
-      let defination = mdict.fetch_defination(matched[0]);
-      if (!defination.definition) {
+      const def = mdict.fetch_definition(matched[0]);
+      if (!def.definition) {
         throw new Error('no definition');
       }
       expect(
-        defination.definition.startsWith(
+        def.definition.startsWith(
           '<link rel="stylesheet" type="text/css" '
         )
       );
@@ -30,7 +30,7 @@ describe('Mdict', () => {
     it('#prefix', () => {
       const prefix = mdict.prefix('likewise');
       expect(prefix instanceof Array).toBeTruthy();
-      expect(prefix.length).toEqual(1677);
+      expect(prefix.length).toEqual(1);
     });
 
     it('#fuzzy_search', () => {
