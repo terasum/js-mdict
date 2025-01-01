@@ -19,6 +19,7 @@ npm-debug.log
 /coverage/*
 yarn-error.log
 test/temp-debug.spec.js
+test/data/output/*.txt
 
 # vim
 .*.swp

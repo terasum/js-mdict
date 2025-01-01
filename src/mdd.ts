@@ -11,8 +11,6 @@ export class MDD extends Mdict {
    * @returns the keyText and definition
    */
   locate(resourceKey: string): { keyText: string; definition: string | null } {
-    // return super.locate(resourceKey);
-
     const item = this.lookupKeyBlockByWord(resourceKey);
     if (!item) {
       return {

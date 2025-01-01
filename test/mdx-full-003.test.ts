@@ -1,9 +1,9 @@
 import { MDD } from '../src/index';
 import fs from 'node:fs';
 
-describe('mdd-full-003', () => {
-  const mdd = new MDD('./test/data/Collins.mdx');
-  const output = './test/data/output/Collins.mdx.keylist.txt';
+describe('mdx-full-001', () => {
+  const mdd = new MDD('./test/data/tahdel.mdd',{debug:true});
+  const output = './test/data/output/tahdel.mdd.keylist.txt';
   const file = fs.openSync(output, 'w');
   if (fs.statSync(output).size == 0) {
     console.log('Writing keylist to file: ' + output + '\n');
@@ -15,8 +15,7 @@ describe('mdd-full-003', () => {
   it('mdd-full-003', () => {
     const fileContent = fs.readFileSync(output, 'utf8');
     for (const line of fileContent.split('\n')) {
-      if (line.trim() !== '') {
-        console.log(`search resource line : ${line}`);
+      if (line.trim() !== '' && line.trim() !== '\\.DS_Store') {
         const resource = mdd.locate(line);
         expect(resource.definition).toBeDefined();
         expect(resource.definition?.length).toBeDefined();

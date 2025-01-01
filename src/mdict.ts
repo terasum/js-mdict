@@ -26,29 +26,7 @@ export class Mdict extends MdictBase {
   }
 
 
-  strip(key: string): string {
-    if (this._isStripKey()) {
-      key = key.replace(common.REGEXP_STRIPKEY[this.meta.ext], '$1');
-    }
-    if (!this._isKeyCaseSensitive()) {
-      key = key.toLowerCase();
-    }
-    if (this.meta.ext == 'mdd') {
-      key = key.replace(/\\/g, '/');
-    }
-    return key.trim();
-  }
 
-  comp(word1: string, word2: string): number {
-    // if case-sensitive, the uppercase word is smaller than lowercase word
-    // for example: `Holanda` is smaller than `abacaxi`
-    // so when comparing with the words, we should use the dictionary order,
-    // however, if we change the word to lowercase, the binary search algorithm will be confused
-    // so, we use the enhanced compare function `common.wordCompare`
-    word1 = this.strip(word1);
-    word2 = this.strip(word2);
-    return word1.localeCompare(word2);
-  }
 
   /**
    * lookupKeyInfoItem lookup the `keyInfoItem`
@@ -157,13 +135,6 @@ export class Mdict extends MdictBase {
     return -1;
   }
 
-  private _isKeyCaseSensitive(): boolean {
-    return this.options.isCaseSensitive || common.isTrue(this.header['isCaseSensitive'] as string);
-  }
-
-  private _isStripKey(): boolean {
-    return this.options.isStripKey || common.isTrue(this.header['StripKey'] as string);
-  }
 
   private decompressBuff(recordBuffer: Uint8Array, unpackSize: number) {
     // decompress

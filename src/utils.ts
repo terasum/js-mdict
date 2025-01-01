@@ -3,7 +3,7 @@ import { ripemd128 } from './ripemd128.js';
 import { closeSync, openSync, readSync } from 'node:fs';
 
 const REGEXP_STRIPKEY: { [key: string]: RegExp } = {
-  mdx: /[()., '/\\@_$]()/g,
+  mdx: /[().,\-&、 '/\\@_$\!]()/g,
   mdd: /([.][^.]*$)|[()., '/@]/g,
 };
 
