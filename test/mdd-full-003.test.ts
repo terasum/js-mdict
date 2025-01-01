@@ -7,21 +7,20 @@ describe('mdd-full-001', () => {
   const file = fs.openSync(output, 'w');
   if (fs.statSync(output).size == 0) {
     console.log('Writing keylist to file: ' + output + '\n');
-    mdd._readKeyBlock();
-    mdd.keyList.forEach((element) => {
+    mdd.keywordList.forEach((element) => {
       fs.writeSync(file, element.keyText + '\n');
     });
   }
   fs.closeSync(file);
   it('mdd-full-003', () => {
     const fileContent = fs.readFileSync(output, 'utf8');
-    for (let line of fileContent.split('\n')) {
-      if (line.trim() !== '' && line.trim() !== "\\.DS_Store") {
+    for (const line of fileContent.split('\n')) {
+      if (line.trim() !== '' && line.trim() !== '\\.DS_Store') {
         const resource = mdd.locate(line);
-          expect(resource.definition).toBeDefined();
-          expect(resource.definition?.length).toBeDefined();
-          expect(resource.keyText).toBe(line);
-          expect(resource.definition?.length).toBeGreaterThan(0);
+        expect(resource.definition).toBeDefined();
+        expect(resource.definition?.length).toBeDefined();
+        expect(resource.keyText).toBe(line);
+        expect(resource.definition?.length).toBeGreaterThan(0);
       }
     }
   });

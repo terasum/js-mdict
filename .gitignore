@@ -28,3 +28,4 @@ test/temp-debug.spec.js
 
 # bun!
 /bun.lockb
+.idea

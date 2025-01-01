@@ -21,16 +21,6 @@ export default [
     'plugin:@typescript-eslint/recommended'
   ),
   {
-    overrides: [
-      {
-        files: ['test/**/*'],
-        env: {
-          jest: true,
-        },
-      },
-    ],
-  },
-  {
     plugins: {
       '@typescript-eslint': typescriptEslint,
     },

@@ -231,7 +231,7 @@ function readNumber(bf: Buffer, numfmt: NumFmt): number {
  * @param {Symbol} numfmt - 数字格式(NUMFMT_UINT8, NUMFMT_UINT16, NUMFMT_UINT32, NUMFMT_UINT64)。
  * @returns {number} 读取的数字。
  */
-function readNumber2(bf: Buffer, offset: number, numfmt: NumFmt): number {
+function readNumber2(bf: Buffer, offset: number, numfmt: symbol): number {
   if (numfmt === NUMFMT_UINT32) {
     return bf.readUInt32BE(offset);
   } else if (numfmt === NUMFMT_UINT64) {
@@ -243,6 +243,30 @@ function readNumber2(bf: Buffer, offset: number, numfmt: NumFmt): number {
   }
   return 0;
 }
+function b2n8(data: Uint8Array): number {
+  return b2n(data, NUMFMT_UINT8);
+}
+function b2n16(data: Uint8Array): number {
+  return b2n(data, NUMFMT_UINT16);
+}
+function b2n32(data: Uint8Array): number {
+  return b2n(data, NUMFMT_UINT32);
+}
+function b2n64(data: Uint8Array): number {
+  return b2n(data, NUMFMT_UINT64);
+}
+
+function b2n(data: Uint8Array, numfmt: NumFmt): number {
+  if (numfmt == NUMFMT_UINT16) {
+    return readNumber(Buffer.from(data), NUMFMT_UINT16);
+  } else if (numfmt == NUMFMT_UINT32) {
+    return readNumber(Buffer.from(data), NUMFMT_UINT32);
+  } else if (numfmt == NUMFMT_UINT64) {
+    return readNumber(Buffer.from(data), NUMFMT_UINT64);
+  } else {
+    return 0;
+  }
+}
 
 /**
  * 使用简单的加密算法快速解密数据。
@@ -251,7 +275,7 @@ function readNumber2(bf: Buffer, offset: number, numfmt: NumFmt): number {
  * @returns {Uint8Array} 解密后的数据。
  */
 function fast_decrypt(b: Uint8Array, key: Uint8Array): Uint8Array {
- // XOR decryption
+  // XOR decryption
   let previous = 0x36;
   for (let i = 0; i < b.length; ++i) {
     let t = ((b[i] >> 4) | (b[i] << 4)) & 0xff;
@@ -278,7 +302,7 @@ function salsa_decrypt(data: Buffer, k: Buffer): Buffer {
  */
 function mdxDecrypt(comp_block: Uint8Array): Uint8Array {
   const keyinBuffer = new Uint8Array(8);
-  keyinBuffer.set(comp_block.slice(4, 8),0);
+  keyinBuffer.set(comp_block.slice(4, 8), 0);
   keyinBuffer[4] ^= 0x95;
   keyinBuffer[5] ^= 0x36;
   keyinBuffer[6] ^= 0x00;
@@ -429,6 +453,11 @@ export default {
   parseHeader,
   readNumber,
   readNumber2,
+  b2n,
+  b2n8,
+  b2n16,
+  b2n32,
+  b2n64,
   mdxDecrypt,
   ripemd128,
   fast_decrypt,
