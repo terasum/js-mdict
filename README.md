@@ -12,14 +12,14 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 ## Latest Version
 
-v6.0.0-alpha-2
+v6.0.1 (2025-01-02)
 
 ## Usage
 
 > NOTE: Not Support Browser!
 
 ```bash
-npm install js-mdict@v6.0.0-alpha-2
+npm install js-mdict@v6.0.1
 ```
 
 ### ESM
