@@ -72,8 +72,7 @@
     "package.json",
     "README.md",
     "dist",
-    "LICENSE",
-    "src"
+    "LICENSE"
   ],
   "mocha": {
     "loader": [
