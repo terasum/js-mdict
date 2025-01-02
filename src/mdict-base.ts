@@ -121,7 +121,7 @@ export class MdictMeta {
  */
 class MDictBase {
   // 文件扫描
-  scanner: FileScanner;
+  protected scanner: FileScanner;
 
   // mdx meta
   meta: MdictMeta = new MdictMeta();
@@ -134,9 +134,9 @@ class MDictBase {
   // -------------------------
 
   // header start offset
-  _headerStartOffset: number;
+  protected _headerStartOffset: number;
   // header end offset
-  _headerEndOffset: number;
+  protected _headerEndOffset: number;
   // header 数据
   header: MDictHeader;
 
@@ -145,9 +145,9 @@ class MDictBase {
   // ------------------------
 
   // keyHeader start offset
-  _keyHeaderStartOffset: number;
+  protected _keyHeaderStartOffset: number;
   // keyHeader end offset
-  _keyHeaderEndOffset: number;
+  protected _keyHeaderEndOffset: number;
   // keyHeader 数据
   keyHeader: KeyHeader;
 
@@ -155,9 +155,9 @@ class MDictBase {
   // PART2: keyBlockInfo
   // ------------------------
   // keyBlockInfo start offset
-  _keyBlockInfoStartOffset: number;
+  protected _keyBlockInfoStartOffset: number;
   // keyBlockInfo end offset
-  _keyBlockInfoEndOffset: number;
+  protected _keyBlockInfoEndOffset: number;
   // keyBlockInfo 数据 (Key Block Info list)
   keyInfoList: KeyInfoItem[];
 
@@ -166,9 +166,9 @@ class MDictBase {
   // ------------------------
 
   // keyBlock start offset
-  _keyBlockStartOffset: number;
+  protected _keyBlockStartOffset: number;
   // keyBlock end offset
-  _keyBlockEndOffset: number;
+  protected _keyBlockEndOffset: number;
   // keyList 数据(词条列表)
   keywordList: KeyWordItem[];
 
@@ -178,9 +178,9 @@ class MDictBase {
   // ------------------------
 
   // recordHeader start offset
-  _recordHeaderStartOffset: number;
+  protected _recordHeaderStartOffset: number;
   // recordHeader end offset
-  _recordHeaderEndOffset: number;
+  protected _recordHeaderEndOffset: number;
   // recordHeader 数据
   recordHeader: RecordHeader;
 
@@ -188,9 +188,9 @@ class MDictBase {
   // PART2: recordBlockInfo
   // ------------------------
   // recordInfo start offset
-  _recordInfoStartOffset: number;
+  protected _recordInfoStartOffset: number;
   // recordInfo end offset
-  _recordInfoEndOffset: number;
+  protected _recordInfoEndOffset: number;
   // recordBlockInfo 数据
   recordInfoList: RecordInfo[];
 
@@ -198,9 +198,9 @@ class MDictBase {
   // PART2: recordBlock
   // ------------------------
   // recordBlock start offset
-  _recordBlockStartOffset: number;
+  protected _recordBlockStartOffset: number;
   // recordBlock end offset
-  _recordBlockEndOffset: number;
+  protected _recordBlockEndOffset: number;
   // keyData 数据
   recordBlockDataList: any[];
 
@@ -1005,7 +1005,7 @@ class MDictBase {
    * read all records block,
    * this is a slow method, do not use!
    */
-  _readRecordBlocks(): void {
+  public _readRecordBlocks(): void {
     this._recordBlockStartOffset = this._recordInfoEndOffset;
     const keyData: any[] = [];
 

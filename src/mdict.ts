@@ -1,6 +1,6 @@
 import MdictBase, { KeyWordItem, KeyInfoItem, MDictOptions } from './mdict-base.js';
 import common from './utils.js';
-import lzo1x from './lzo1x-wrapper';
+import lzo1x from './lzo1x-wrapper.js';
 import zlib from 'zlib';
 
 const pako = {

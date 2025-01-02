@@ -1,14 +1,15 @@
 import { Mdict } from './mdict.js';
-import { KeyWordItem } from '../src/mdict-base';
+import { KeyWordItem } from '../src/mdict-base.js';
 
 
-import  common  from './utils';
+import  common  from './utils.js';
 
 export interface FuzzyWord extends KeyWordItem {
   key: string;
   idx: number;
   ed: number;
 }
+
 export class MDX extends Mdict {
   /**
    * lookup the word
