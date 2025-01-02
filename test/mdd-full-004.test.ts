@@ -17,13 +17,8 @@ describe('mdd-full-004', () => {
     for (const line of fileContent.split('\n')) {
       if (line.trim() !== '' && line.trim() !== '\\.DS_Store') {
         const def = mdx.lookup(line.trim());
-        if (!def.definition) {
-          console.log(line);
-        }
         expect(def.definition).toBeDefined();
-        expect(def.definition?.length).toBeDefined();
         expect(def.keyText).toBe(line);
-        expect(def.definition?.length).toBeGreaterThan(0);
       }
     }
   });

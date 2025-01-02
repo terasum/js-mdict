@@ -27,7 +27,6 @@ export class Mdict extends MdictBase {
 
 
 
-
   /**
    * lookupKeyInfoItem lookup the `keyInfoItem`
    * the `keyInfoItem` contains key-word record block location: recordStartOffset
@@ -35,10 +34,10 @@ export class Mdict extends MdictBase {
    * @param word the target word phrase
    */
   lookupKeyBlockByWord(word: string) : KeyWordItem | undefined {
-    const keyBlockInfoId = this.lookupKeyInfoByWord(word);
-    if (keyBlockInfoId < 0) {
-      return undefined;
-    }
+    // const keyBlockInfoId = this.lookupKeyInfoByWord(word);
+    // if (keyBlockInfoId < 0) {
+    //   return undefined;
+    // }
 
     // TODO: if the this.list length parse too slow, can decode by below code
     // const list = this.lookupPartialKeyBlockListByKeyInfoId(keyInfoId);

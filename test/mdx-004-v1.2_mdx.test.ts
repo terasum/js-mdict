@@ -20,8 +20,7 @@ describe('Mdict', () => {
       }
       expect(
         def.definition.startsWith(
-          '<font size=+1 color=purple>nave</font><head><meta http-equiv="Content-Type" content="text/html;'
-        )
+          `<font size=+1 color=purple>-n't</font><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link href="collins.css" rel="stylesheet" type="text/css" /></head><div class="tab_content" id="dict_tab_101" style="display:block"><div class="part_main"><div class="collins_content"><div class="collins_en_cn"><div class="caption"><span class="num">1.</span><span class="text_blue"></span>  <span class="text_gray" style="font-weight:bold;">→see: </span><b class="text_blue"><a class = "explain" href="entry://not">not</a></b>; </div><ul></ul></div></div></div></div>`)
       ).toBeTruthy();
     });
     it('#lookup', () => {

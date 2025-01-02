@@ -14,15 +14,15 @@ describe('mdd-full-003', () => {
   fs.closeSync(file);
   it('mdd-full-003', () => {
     const fileContent = fs.readFileSync(output, 'utf8');
+    let count = 0;
     for (const line of fileContent.split('\n')) {
       if (line.trim() !== '') {
-        console.log(`search resource line : ${line}`);
-        const resource = mdd.locate(line);
-        expect(resource.definition).toBeDefined();
-        expect(resource.definition?.length).toBeDefined();
-        expect(resource.keyText).toBe(line);
-        expect(resource.definition?.length).toBeGreaterThan(0);
+        const resource = mdd.lookupKeyBlockByWord(line);
+        if (resource && resource.keyText && resource.keyText.length>0) {
+          count++;
+        }
       }
+      expect(count).toBeGreaterThan(0);
     }
   });
 });

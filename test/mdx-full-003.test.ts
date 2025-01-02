@@ -17,6 +17,9 @@ describe('mdx-full-001', () => {
     for (const line of fileContent.split('\n')) {
       if (line.trim() !== '' && line.trim() !== '\\.DS_Store') {
         const resource = mdd.locate(line);
+        if (!resource.definition){
+          console.log(resource);
+        }
         expect(resource.definition).toBeDefined();
         expect(resource.definition?.length).toBeDefined();
         expect(resource.keyText).toBe(line);

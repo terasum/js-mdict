@@ -4,6 +4,7 @@ import { closeSync, openSync, readSync } from 'node:fs';
 
 const REGEXP_STRIPKEY: { [key: string]: RegExp } = {
   mdx: /[().,\-&、 '/\\@_$\!]()/g,
+  // mdd:/[!”#$%&'()\\*\\+,-.\\/:;<=>\\?@\\[\\]\^_`{|}~]()/g,
   mdd: /([.][^.]*$)|[()., '/@]/g,
 };
 
@@ -368,6 +369,39 @@ export function readChunkSync(filePath: string, start: number, length: number) {
   }
 }
 
+function strxfrm(input: string, locale: string = 'en-US'): string {
+  // Create a collator with the specified locale
+  const collator = new Intl.Collator(locale);
+  // Sort order is determined by comparing each character in the string
+  // Transform the string into a sequence of comparison keys
+  const transformed = Array.from(input)
+    .map(char => collator.compare(char, ''))
+    .join(',');
+  return transformed;
+}
+
+
+function rstrip(input: string, chars: string = ' \t\n\r'): string {
+  // Define common character groups
+  const charGroups: { [key: string]: string } = {
+    punctuation: '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~',
+    whitespace: ' \t\n\r',
+  };
+
+  // If `chars` matches a predefined group, use the group definition
+  const charsToStrip = charGroups[chars] || chars;
+
+  const charsSet = new Set(charsToStrip); // Convert characters to a Set for efficient lookup
+  let endIndex = input.length;
+
+  while (endIndex > 0 && charsSet.has(input[endIndex - 1])) {
+    endIndex--; // Move the index back if the current character is in the set
+  }
+
+  return input.substring(0, endIndex);
+}
+
+
 function wordCompare(word1: string, word2: string) {
   if (!word1 || !word2) {
     throw new Error(`invalid word comparation ${word1} and ${word2}`);
@@ -468,6 +502,8 @@ export default {
   caseSensitiveCompare,
   normalUpperCaseWordCompare,
   wordCompare,
+  strxfrm,
+  rstrip,
   localCompare,
   readChunkSync,
   unescapeEntities,

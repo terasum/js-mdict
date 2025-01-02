@@ -24,17 +24,17 @@ describe('test mdx file v1.2', () => {
       const list = mdict.associate('recom');
       expect(list).toHaveLength(1206);
       expect(list).toBeDefined();
-      expect(list[0].keyText).toBe('qualifier');
-      expect(list[1].keyText).toBe('qualify');
-      expect(list[2].keyText).toBe('qualitative');
+      expect(list[0].keyText).toBe('q.v.');
+      expect(list[1].keyText).toBe('qualifier');
+      expect(list[2].keyText).toBe('qualify');
     });
 
     it('#fuzzy_search', () =>{
       const list = mdict.fuzzy_search('recom', 3, 3);
       expect(list).toHaveLength(3);
-      expect(list[0].key).toBe('race');
-      expect(list[1].key).toBe('racer');
-      expect(list[2].key).toBe('racism');
+      expect(list[0].key).toBe('RAC');
+      expect(list[1].key).toBe('race');
+      expect(list[2].key).toBe('racer');
     });
   });
 });

@@ -1,7 +1,6 @@
 import assert from 'assert';
 import lzo1x from './lzo1x-wrapper.js';
 import common, { NumFmt } from './utils.js';
-import { hasLatinies } from './latins';
 import { FileScanner } from './scanner.js';
 import zlib from 'zlib';
 
@@ -320,77 +319,92 @@ class MDictBase {
       key = key.toLowerCase();
     }
     if (this.meta.ext == 'mdd') {
-      key = key.replace(/\\/g, '/');
+      key = key.replace(common.REGEXP_STRIPKEY[this.meta.ext], '$1');
+      key = key.replace(/_/g, '!');
     }
     return key.toLowerCase().trim();
   }
 
+
   comp(word1: string, word2: string): number {
-    // if case-sensitive, the uppercase word is smaller than lowercase word
-    // for example: `Holanda` is smaller than `abacaxi`
-    // so when comparing with the words, we should use the dictionary order,
-    // however, if we change the word to lowercase, the binary search algorithm will be confused
-    // so, we use the enhanced compare function `common.wordCompare`
-    const strippedWord1 = this.strip(word1);
-    const strippedWord2 = this.strip(word2);
-
-    const result = strippedWord1.localeCompare(strippedWord2);
-    if (hasLatinies(word1) && hasLatinies(word2)){
-      if (word1.length > word2.length) {
-        return 1;
-      } else if (word1.length < word2.length) {
-        const result2 = word1.localeCompare(word2);
-        if (result2 >= 0 ){
-          return result2;
-        } else {
-          if (word1.length > word2.length) {
-            return 1;
-          }
-          return -1;
-        }
-      }
-    }
-    if (hasLatinies(word1) || hasLatinies(word2)){
-      if (word1.length > word2.length) {
-        const result2 = word1.localeCompare(word2);
-        if (result2 >= 0 ){
-          return result2;
-        } else {
-          if (word1.length > word2.length) {
-            return 1;
-          }
-          return -1;
-        }
-      } else if (word1.length < word2.length) {
-        return 1;
-      } else {
-        if (hasLatinies(word1) && !hasLatinies(word2)){
-          return 1;
-        }
-      }
-    }
-    if(result == 0) {
-      // prefix
-      if (word1.at(0) === '-' && word2.at(0) !== '-') {
-        return 1;
-      }
-      if (word2.at(0) === '-' && word1.at(0) !== '-') {
-        return 1;
-      }
-      //inner space and middle dash
-      if (word2.indexOf('-') > 0 && word1.indexOf(' ') >0) {
-        return 0;
-      }
-      if (word1.indexOf('-') > 0 && word2.indexOf(' ') >0) {
-        return 0;
-      }
-
-    }
-    if (result < 0) {
-      return result;
-    }
-    return result;
+    return word1.localeCompare(word2);
   }
+
+  // comp2(word1: string, word2: string): number {
+  //   // if case-sensitive, the uppercase word is smaller than lowercase word
+  //   // for example: `Holanda` is smaller than `abacaxi`
+  //   // so when comparing with the words, we should use the dictionary order,
+  //   // however, if we change the word to lowercase, the binary search algorithm will be confused
+  //   // so, we use the enhanced compare function `common.wordCompare`
+  //
+  //   const key1 = this.strip(word1);
+  //   const key2 = this.strip(word2);
+  //
+  //   const collator = new Intl.Collator('en-US');
+  //   const result =  collator.compare(key1, key2);
+  //   if (hasLatinies(word1) && hasLatinies(word2)){
+  //     if (word1.length > word2.length) {
+  //       return 1;
+  //     } else if (word1.length < word2.length) {
+  //       const result2 = word1.localeCompare(word2);
+  //       if (result2 >= 0 ){
+  //         return result2;
+  //       } else {
+  //         if (word1.length > word2.length) {
+  //           return 1;
+  //         }
+  //         return -1;
+  //       }
+  //     }
+  //   }
+  //   if (hasLatinies(word1) || hasLatinies(word2)){
+  //     if (word1.length > word2.length) {
+  //       const result2 = word1.localeCompare(word2);
+  //       if (result2 >= 0 ){
+  //         return result2;
+  //       } else {
+  //         if (word1.length > word2.length) {
+  //           return 1;
+  //         }
+  //         return -1;
+  //       }
+  //     } else if (word1.length < word2.length) {
+  //       return 1;
+  //     } else {
+  //       if (hasLatinies(word1) && !hasLatinies(word2)){
+  //         return 1;
+  //       }
+  //     }
+  //   }
+  //   if(result == 0) {
+  //     // prefix
+  //     if (word1.at(0) === '-' && word2.at(0) !== '-') {
+  //       return 1;
+  //     }
+  //     if (word2.at(0) === '-' && word1.at(0) !== '-') {
+  //       return 1;
+  //     }
+  //     //inner space and middle dash
+  //     if (word2.indexOf('-') > 0 && word1.indexOf(' ') >0) {
+  //       return 0;
+  //     }
+  //     if (word1.indexOf('-') > 0 && word2.indexOf(' ') >0) {
+  //       return 0;
+  //     }
+  //
+  //   }
+  //   if (result < 0) {
+  //     if (this.meta.ext == 'mdd') {
+  //       if (key1.length > key2.length) {
+  //         return this.strip(key1) > this.strip(key2) ? -1 : 1;
+  //       } else if (key2.length > key1.length) {
+  //         return 1;
+  //       }
+  //     }
+  //     return result;
+  //   }
+  //   return result;
+  // }
 
   private _isKeyCaseSensitive(): boolean {
     return this.options.isCaseSensitive || common.isTrue(this.header['isCaseSensitive'] as string);
@@ -415,6 +429,10 @@ class MDictBase {
     // this method will return the whole words list of the dictionaries file, this is very slow
     // NOTE: 本方法非常缓慢，也有可能导致内存溢出，请不要直接调用
     this._readKeyBlocks();
+
+    this.keywordList.sort((ki1:KeyWordItem, ki2:KeyWordItem): number =>{
+      return ki1.keyText.localeCompare(ki2.keyText);
+    });
 
     // STEP5: read record header
     this._readRecordHeader();

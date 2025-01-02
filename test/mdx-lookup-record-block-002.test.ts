@@ -27,7 +27,7 @@ describe('mdx-lookup-key-block-003', () => {
   });
 
   it('lookup-key-block-003-02', () => {
-    const item = mdd.lookupKeyBlockByWord('\\collins.css');
+    const item = mdd.lookupKeyBlockByWord('\\Logo.jpg');
     expect(item).toBeDefined();
     if (!item) {
       return;
