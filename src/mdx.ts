@@ -39,6 +39,20 @@ export class MDX extends Mdict {
     };
   };
 
+  fetch(keywordItem : KeyWordItem): { keyText: string; definition: string | null } {
+    const def = this.lookupRecordByKeyBlock(keywordItem);
+    if (!def) {
+      return {
+        keyText: keywordItem.keyText,
+        definition: null
+      };
+    }
+    return {
+      keyText: keywordItem.keyText,
+      definition: this.meta.decoder.decode(def)
+    };
+  }
+
   /**
    * search the prefix like the phrase in the dictionary
    * @test ok

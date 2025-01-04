@@ -1,24 +1,28 @@
 import {MDX} from '../src';
+import { expect } from '@jest/globals';
 
 describe('Mdict', () => {
   describe('Oxford', () => {
     const mdict = new MDX('./test/data/oald7.mdx', {
       resort: true,
     });
-    // it("#associate&#parse_defination", () => {
-    //   const matched = mdict.associate("on");
-    //   assert.isTrue(matched.length > 0);
-    //   assert.isTrue(matched != undefined);
-    //   assert.isTrue(matched[0] != undefined);
+    it('#associate&#parse_defination', () => {
+      const matched = mdict.associate('on');
+      expect(matched.length > 0).toBeTruthy();
+      expect(matched != undefined).toBeTruthy();
+      expect(matched[0] != undefined).toBeTruthy();
 
-    //   let defination = mdict.fetch_defination(matched[0]);
-
-    //   assert.isTrue(
-    //     defination.definition.startsWith(
-    //       `<head><link rel=\"stylesheet\" type=\"text/css\" href=\"O7.css\"/>`
-    //     )
-    //   );
-    // });
+      const def = mdict.fetch(matched[0]);
+      expect(def.definition).toBeDefined();
+      if (!def.definition){
+        throw new Error('Mdict definition not found');
+      }
+      expect(
+        def.definition.startsWith(
+          '<head><link rel="stylesheet" type="text/css" href="O7.css"/>'
+        )
+      );
+    });
     it('#lookup', () => {
       const def = mdict.lookup('ask');
       expect(def.definition).toBeDefined();

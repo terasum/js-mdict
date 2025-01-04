@@ -16,11 +16,11 @@ describe('Mdict', () => {
       expect(matched).toBeDefined();
       expect(matched![0]).toBeDefined();
 
-      // const defination = mdict.fetch_defination(matched![0]);
+      const defination = mdict.fetch(matched![0]);
 
-      // expect(defination.definition).toMatch(
-      //   /^<head><link rel="stylesheet" type="text\/css" href="O7\.css"\/>/
-      // );
+      expect(defination.definition).toMatch(
+        /^<head><link rel="stylesheet" type="text\/css" href="O7\.css"\/>/
+      );
     });
     it('#lookup', () => {
       const def = mdict.lookup('ask');
