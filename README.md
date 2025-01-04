@@ -16,10 +16,8 @@ v6.0.2 (2025-01-04)
 
 ## Usage
 
-> NOTE: Not Support Browser!
-
 ```bash
-npm install js-mdict@v6.0.1
+npm install js-mdict
 ```
 
 ### ESM
@@ -27,9 +25,9 @@ npm install js-mdict@v6.0.1
 file: `demo.mjs`
 
 ```javascript
-import { Mdict } from "js-mdict";
+import { MDX } from "js-mdict";
 
-const mdict = new Mdict("resources/oald7.mdx");
+const mdict = new MDX("resources/oald7.mdx");
 
 const def = mdict.lookup("ask");
 console.log(def.definition);
@@ -46,6 +44,26 @@ console.log(def.definition);
 ...
 </body>
   */
+import { MDD } from '../dist/cjs/index.js';
+
+const mdx = new MDD('./test/data/oale8.mdd');
+console.log(mdx.locate('\\Logo.jpg'));
+
+/*
+$ git clone github.com/terasum/js-mdict
+$ cd js-mdict
+$ npx tsx ./example/oale8-mdd-example.ts
+
+{
+  keyText: '\\Logo.jpg',
+  definition: '/9j/4AAQSkZJRgABAgAAAQABAAD//gAEKgD/4gIcSUNDX1BST0ZJTEUAAQEAAAIMbGNtcwIQ...'
+ }
+*/
+
+
+/*
+
+  */
 ```
 
 ### CommonJS
@@ -55,7 +73,7 @@ file: `demo.mjs`
 ```javascript
 const { Mdict } = require('js-mdict');
 
-const mdict = new Mdict('resources/oald7.mdx');
+const mdict = new MDX('resources/oald7.mdx');
 
 const def = mdict.lookup('ask');
 console.log(def.definition);
@@ -75,146 +93,19 @@ console.log(def.definition);
 
 ## Benchmark
 
-use oale8.mdx as an example:
+TODO
 
-```
-Mdict#loading time: 0 sec
-Mdict#lookup x 1,967 ops/sec ±0.95% (97 runs sampled)
-Mdict#prefix x 1,800 ops/sec ±0.70% (96 runs sampled)
-Mdict#fuzzy_search x 285 ops/sec ±14.03% (77 runs sampled)
-Mdict#associate x 2,059 ops/sec ±4.53% (89 runs sampled)
-Fastest is Mdict#associate
-```
-
-**depreciate** if you use js-mdict @2.0.3, you can use api shown below:
-
-> Note: 2.0.3 not supports mdd file, and record info encrypted file
-
-```javascript
-import path from 'path';
-import Mdict from 'js-mdict';
-
-const dictPath = path.join(__dirname, '../resource/Collins.mdx');
-const mdict = new Mdict(dictPath);
-mdict
-  .build()
-  .then((_mdict) => {
-    console.log('hello', _mdict.lookup('hello'));
-    console.log('world', _mdict.lookup('world'));
-    console.log(_mdict.attr());
-  })
-  .catch((err) => {
-    console.error(err);
-  });
-```
 
 ## Release
 
-## v6.0.0-alpha
+## v6.0.2
 
 1. implements with TypeScript
+2. fix some overflow bug
+3. resort the keyword order internally (may cost more memory), search word precisely
 
-BREAKING CHANGES:
-
-1. delete large files in history
-2. delete suggest, associate etc. functions.
-
-## v5.0.0
-
-NOTE: This version has a lot of changes, please read the example code example carefully!
-
-注意： 本版本改动了多个 API, 请仔细阅读上方的示例代码。
-
-BREAKING CHANGES:
-
-1. Refactor the key search algorithm: build the keyList first, and resort internally, then search the word
-2. The `suggest` method has been deprecated.
-3. The `parse_definition` method has been deprecated, use `fetch_definition` instead
-4. Delete `nspell` and `en-dictionary-us` dependencies
-5. Cleanup unstable compare method and key record compare, won't use `keyInfoBlock.firstKey/lastKey` to locate `recordBlock`
-6. Use built-in `TextDecoder` and `zlib`, instead of third party `TextDecoder` and `pako`.
-7. use pnpm instead of yarn to manage the dependencies.
-8. Have fun!
-
-### v4.0.20
-
-1. upgrade xmldom to v0.7.5
-
-### v4.0.19
-
-1. support rangeKey API
-
-### v4.0.18
-
-1. add rangeKeyBlock interface
-2. enhance performance of readKeyBlock
-
-### v4.0.17
-
-1. fix associate can't find special character bug
-
-### v4.0.16
-
-1. fix accurate record start offset parse_definition bug
-
-### v4.0.15
-
-1. fix `findList` return `undefined` will crash the `associate` and `prefix` method bug
-
-### v4.0.14
-
-1. fix babel-runtime dependencies issue
-
-### v4.0.13
-
-1. fix UpperCase key sensitive options logic, details [#41](https://github.com/terasum/js-mdict/issues/41)
-2. fix 1.2 mdx keyblock read bug
-3. correct some Header properties (StripKey..)
-
-> very thanks to @songxiaocheng
-
-### v4.0.12
-
-1. fix typings declaring and reformat codebase
-
-### v4.0.11
-
-1. fix some `.mdd` file reading issues, and if you search mdd file, use `lookup` method, and it will return base64 data
-
-### v4.0.10
-
-1. rewrite `typings/mdict.d.ts`
-
-### v4.0.9
-
-1. rename `typings/Mdict.d.ts` to `typings/mdict.d.ts`
-
-### v4.0.8
-
-1. fix uppercase words comparing missed bug
-2. fix `out of index error` when cannot locate word offset
-3. if cannot find the word key block, return `undefined`
-
-### v4.0.7
-
-1. rename Mdict.js to mdict.js , rename MdictBase.js to mdict-base.js, fix import error on ubuntu.
-
-### v4.0.6
-
-1. support search words by prefix `associate` (the phrase as the words' prefix, not the phrase's prefix as search token just like `prefix` function)
-2. some security updates
-
-> very thanks to @Danjame
-
-### v4.0.x
-
-1. ES6 implemention
-2. rewrite the decode code, more readable decode api
-3. _NOT SUPPORT BROWSER CURRENTLY_
-
-### v3.1.0 (2018-08-22)
-
-1. add `fuzzy_search` method, which supports fuzzy word search
+BREAKING:
+1. the `Mdict` class don't provide the `lookup` method now, you should use `MDX/MDD` class 
 
 ## MDX/MDD Layout
 
