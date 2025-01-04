@@ -1,9 +1,7 @@
 import { ripemd128 } from './ripemd128.js';
 
-import { closeSync, openSync, readSync } from 'node:fs';
-
 const REGEXP_STRIPKEY: { [key: string]: RegExp } = {
-  mdx: /[().,\-&、 '/\\@_$\!]()/g,
+  mdx: /[().,\-&、 '/\\@_$\\!]()/g,
   // mdd:/[!”#$%&'()\\*\\+,-.\\/:;<=>\\?@\\[\\]\^_`{|}~]()/g,
   mdd: /([.][^.]*$)|[()., '/@]/g,
 };
@@ -332,33 +330,6 @@ function isTrue(v: string | undefined): boolean {
   return v === 'yes' || v === 'true';
 }
 
-function caseUnsensitiveCompare(a: string, b: string): number {
-  return a.toLowerCase().localeCompare(b.toLowerCase());
-}
-
-function caseSensitiveCompare(a: string, b: string): number {
-  return a.localeCompare(b);
-}
-
-export function readChunkSync(filePath: string, start: number, length: number) {
-  let buffer = new Uint8Array(length);
-  const fileDescriptor = openSync(filePath, 'r');
-
-  try {
-    const bytesRead = readSync(fileDescriptor, buffer, {
-      length,
-      position: start,
-    });
-
-    if (bytesRead < length) {
-      buffer = buffer.subarray(0, bytesRead);
-    }
-
-    return buffer;
-  } finally {
-    closeSync(fileDescriptor);
-  }
-}
 
 function wordCompare(word1: string, word2: string) {
   if (!word1 || !word2) {
@@ -389,18 +360,6 @@ function wordCompare(word1: string, word2: string) {
   return word1.length < word2.length ? -1 : 1;
 }
 
-// if this.header.KeyCaseSensitive = YES,
-// Uppercase character is placed in the start position of the directionary
-// so if `this.header.KeyCaseSensitive = YES` use normalUpperCaseWordCompare, else use wordCompare
-function normalUpperCaseWordCompare(word1: string, word2: string) {
-  if (word1 === word2) {
-    return 0;
-  } else if (word1 > word2) {
-    return 1;
-  } else {
-    return -1;
-  }
-}
 
 function unescapeEntities(text: string) {
   text = text.replace(/&lt;/g, '<');
@@ -439,12 +398,7 @@ export default {
   salsa_decrypt,
   appendBuffer,
   isTrue,
-  caseUnsensitiveCompare,
-  caseSensitiveCompare,
-  normalUpperCaseWordCompare,
   wordCompare,
-  readChunkSync,
-  unescapeEntities,
   substituteStylesheet,
   UTF16,
   REGEXP_STRIPKEY,

@@ -6,8 +6,6 @@ describe('Mdict', () => {
   describe('#lookup', () => {
     const mdict = new MDX('./test/data/oald7.mdx', {
       passcode: '',
-      debug: false,
-      resort: true,
       isStripKey: true,
       isCaseSensitive: false,
     });
