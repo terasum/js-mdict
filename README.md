@@ -116,9 +116,14 @@ BREAKING:
 1. the `Mdict` class don't provide the `lookup` method now, you should use `MDX/MDD` class 
 
 ## MDX/MDD Layout
-
+### v1.2-v2.0
 ![layout](./docs/mdict-format.svg)
 
-> this picture is from [@ikey4u/wikit](https://github.com/ikey4u/wikit)
+> this is from [@ikey4u/wikit](https://github.com/ikey4u/wikit)
+
+### v3.0
+![layout-v3.0](./docs/mdict-v3.0-format.svg)
+
+> this is from [xwang/mdict-analysis](https://bitbucket.org/xwang/mdict-analysis/src/master/MDict3.svg)
 
 code by terasum with ❤️

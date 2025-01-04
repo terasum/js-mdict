@@ -8,15 +8,16 @@ importers:
 
   .:
     dependencies:
-      chai:
-        specifier: ^5.1.1
-        version: 5.1.1
       interopRequireDefault:
         specifier: link:@babel/runtime/helpers/interopRequireDefault
         version: link:@babel/runtime/helpers/interopRequireDefault
       js-mdict:
         specifier: ^6.0.3
         version: 6.0.3
+    devDependencies:
+      chai:
+        specifier: ^5.1.1
+        version: 5.1.1
 
 packages:
 

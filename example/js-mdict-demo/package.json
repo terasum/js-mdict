@@ -11,8 +11,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "chai": "^5.1.1",
     "interopRequireDefault": "link:@babel/runtime/helpers/interopRequireDefault",
     "js-mdict": "^6.0.3"
+  },
+  "devDependencies": {
+    "chai": "^5.1.1"
   }
 }
