@@ -103,7 +103,10 @@ average decode time:0.19147 s
 
 ## Release
 
-## v6.0.2
+### v6.0.3 (2025-01-04)
+1. fix tests and benchmarks
+
+### v6.0.2
 
 1. implements with TypeScript
 2. fix some overflow bug
