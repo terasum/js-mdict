@@ -86,7 +86,8 @@ export class Mdict extends MdictBase {
 
     const start = item.recordStartOffset - recordBlockInfo.unpackAccumulatorOffset;
     const end = item.recordEndOffset - recordBlockInfo.unpackAccumulatorOffset;
-    return unpackRecordBlockBuff.subarray(start, end);
+
+    return unpackRecordBlockBuff.slice(start, end);
   }
 
   /**

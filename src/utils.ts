@@ -232,41 +232,32 @@ function readNumber(bf: Buffer, numfmt: NumFmt): number {
  * @param {Symbol} numfmt - 数字格式(NUMFMT_UINT8, NUMFMT_UINT16, NUMFMT_UINT32, NUMFMT_UINT64)。
  * @returns {number} 读取的数字。
  */
-function readNumber2(bf: Buffer, offset: number, numfmt: symbol): number {
-  if (numfmt === NUMFMT_UINT32) {
-    return bf.readUInt32BE(offset);
-  } else if (numfmt === NUMFMT_UINT64) {
-    return uint64BEtoNumber(bf.slice(offset, offset + 8));
-  } else if (numfmt === NUMFMT_UINT16) {
-    return bf.readUInt16BE(offset);
-  } else if (numfmt === NUMFMT_UINT8) {
-    return bf.readUInt8(offset);
+// function readNumber2(bf: Buffer, offset: number, numfmt: symbol): number {
+//   if (numfmt === NUMFMT_UINT32) {
+//     return bf.readUInt32BE(offset);
+//   } else if (numfmt === NUMFMT_UINT64) {
+//     return uint64BEtoNumber(bf.slice(offset, offset + 8));
+//   } else if (numfmt === NUMFMT_UINT16) {
+//     return bf.readUInt16BE(offset);
+//   } else if (numfmt === NUMFMT_UINT8) {
+//     return bf.readUInt8(offset);
+//   }
+//   return 0;
+// }
+
+
+function b2n(data: Uint8Array): number {
+  switch (data.length) {
+    case 1:
+      return uint8BEtoNumber(data);
+    case 2:
+      return uint16BEtoNumber(data);
+    case 4:
+      return uint32BEtoNumber(data);
+    case 8:
+      return uint64BEtoNumber(data);
   }
   return 0;
-}
-function b2n8(data: Uint8Array): number {
-  return b2n(data, NUMFMT_UINT8);
-}
-function b2n16(data: Uint8Array): number {
-  return b2n(data, NUMFMT_UINT16);
-}
-function b2n32(data: Uint8Array): number {
-  return b2n(data, NUMFMT_UINT32);
-}
-function b2n64(data: Uint8Array): number {
-  return b2n(data, NUMFMT_UINT64);
-}
-
-function b2n(data: Uint8Array, numfmt: NumFmt): number {
-  if (numfmt == NUMFMT_UINT16) {
-    return readNumber(Buffer.from(data), NUMFMT_UINT16);
-  } else if (numfmt == NUMFMT_UINT32) {
-    return readNumber(Buffer.from(data), NUMFMT_UINT32);
-  } else if (numfmt == NUMFMT_UINT64) {
-    return readNumber(Buffer.from(data), NUMFMT_UINT64);
-  } else {
-    return 0;
-  }
 }
 
 /**
@@ -369,39 +360,6 @@ export function readChunkSync(filePath: string, start: number, length: number) {
   }
 }
 
-function strxfrm(input: string, locale: string = 'en-US'): string {
-  // Create a collator with the specified locale
-  const collator = new Intl.Collator(locale);
-  // Sort order is determined by comparing each character in the string
-  // Transform the string into a sequence of comparison keys
-  const transformed = Array.from(input)
-    .map(char => collator.compare(char, ''))
-    .join(',');
-  return transformed;
-}
-
-
-function rstrip(input: string, chars: string = ' \t\n\r'): string {
-  // Define common character groups
-  const charGroups: { [key: string]: string } = {
-    punctuation: '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~',
-    whitespace: ' \t\n\r',
-  };
-
-  // If `chars` matches a predefined group, use the group definition
-  const charsToStrip = charGroups[chars] || chars;
-
-  const charsSet = new Set(charsToStrip); // Convert characters to a Set for efficient lookup
-  let endIndex = input.length;
-
-  while (endIndex > 0 && charsSet.has(input[endIndex - 1])) {
-    endIndex--; // Move the index back if the current character is in the set
-  }
-
-  return input.substring(0, endIndex);
-}
-
-
 function wordCompare(word1: string, word2: string) {
   if (!word1 || !word2) {
     throw new Error(`invalid word comparation ${word1} and ${word2}`);
@@ -444,18 +402,6 @@ function normalUpperCaseWordCompare(word1: string, word2: string) {
   }
 }
 
-// this compare function is for mdd file
-function localCompare(word1: string, word2: string) {
-  // return word1.localeCompare(word2);
-  if (word1.localeCompare(word2) === 0) {
-    return 0;
-  } else if (word1 > word2) {
-    return 1;
-  } else {
-    return -1;
-  }
-}
-
 function unescapeEntities(text: string) {
   text = text.replace(/&lt;/g, '<');
   text = text.replace(/&gt;/g, '>');
@@ -486,12 +432,7 @@ export default {
   levenshteinDistance,
   parseHeader,
   readNumber,
-  readNumber2,
   b2n,
-  b2n8,
-  b2n16,
-  b2n32,
-  b2n64,
   mdxDecrypt,
   ripemd128,
   fast_decrypt,
@@ -502,9 +443,6 @@ export default {
   caseSensitiveCompare,
   normalUpperCaseWordCompare,
   wordCompare,
-  strxfrm,
-  rstrip,
-  localCompare,
   readChunkSync,
   unescapeEntities,
   substituteStylesheet,

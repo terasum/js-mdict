@@ -20,6 +20,8 @@ npm-debug.log
 yarn-error.log
 test/temp-debug.spec.js
 test/data/output/*.txt
+test/data/*.txt
+test/data/*.toml
 
 # vim
 .*.swp
