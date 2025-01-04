@@ -8,7 +8,7 @@
 
 mdict (\*.mdd \*.mdx) file reader based on [jeka-kiselyov/mdict](https://github.com/jeka-kiselyov/mdict) .
 
-Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](https://github.com/jeka-kiselyov/mdict).
+Thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](https://github.com/jeka-kiselyov/mdict).
 
 ## Latest Version
 
@@ -21,8 +21,6 @@ npm install js-mdict
 ```
 
 ### ESM
-
-file: `demo.mjs`
 
 ```javascript
 import { MDX } from "js-mdict";
@@ -68,10 +66,8 @@ $ npx tsx ./example/oale8-mdd-example.ts
 
 ### CommonJS
 
-file: `demo.mjs`
-
 ```javascript
-const { Mdict } = require('js-mdict');
+const { MDX } = require('js-mdict');
 
 const mdict = new MDX('resources/oald7.mdx');
 
