@@ -1,3 +1,4 @@
 node_modules
-resources/*.mdx
-resources/*.mdd
+resources/
+!resources/.gitkeep
+output.txt

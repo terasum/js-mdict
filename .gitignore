@@ -22,6 +22,7 @@ tests/temp-debug.spec.js
 tests/data/output/*.txt
 tests/data/*.txt
 tests/data/*.toml
+docs/*.py
 
 # vim
 .*.swp

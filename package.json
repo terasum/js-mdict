@@ -43,6 +43,7 @@
     "bench": "jest --projects jest.bench.config.js"
   },
   "dependencies": {
+    "commander": "^13.0.0",
     "levenshtein-edit-distance": "^3.0.1"
   },
   "devDependencies": {
@@ -54,7 +55,6 @@
     "@types/benchmark": "^2.1.5",
     "@types/chai": "^5.0.0",
     "@types/jest": "^29.5.13",
-    "@types/levenshtein-edit-distance": "^3.0.2",
     "@types/lodash": "^4.17.10",
     "@types/node": "^22.7.3",
     "@types/pako": "^2.0.3",

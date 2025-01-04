@@ -99,6 +99,31 @@ average load time:0.0522899 s
 Mdict#decodeRecordBlock
 average decode time:0.19147 s
 ```
+## TESTED Dictionaries
+
+| File Path | Title | Version | Encoding | 'arose' Definition's Length |
+| --------- | ----- | ------- | -------- | --------------------------- |
+|dict-01-袖珍葡汉汉葡词典(简体版).mdx|Title (No HTML code allowed)|2.0|UTF-16|181|
+|dict-02-红葡汉词典.mdx|Title (No HTML code allowed)|2.0|UTF-16|135|
+|dict-03-ptDict_KeyCaseSensitive.mdx|Title (No HTML code allowed)|2.0|UTF-16|207|
+|new-oxford-en-ch-dict.mdx|新牛津英汉双解大词典|2.0|UTF-8|285|
+|oald7.mdx|Oxford Advanced Learner&apos;s Dictionary 7th|1.2|UTF-8|220|
+|oale8.mdd|OALECD8e|2.0||1513|
+|oale8.mdx||2.0|UTF-8|1549|
+|Collins COBUILD Advanced Learner's English-Chinese Dictionary.mdd|柯林斯高阶英汉双解学习词典|2.0||13014|
+|Collins COBUILD Advanced Learner's English-Chinese Dictionary.mdx|Collins COBUILD Advanced Learner&apos;s English-Chinese Dictionary|1.2|UTF-8|495|
+|Oxford Advanced Learner's Dictionary 7th.mdd|O7|2.0||2295|
+|Oxford Advanced Learner's Dictionary 7th.mdx|Oxford Advanced Learner&apos;s Dictionary 7th|1.2|UTF-8|220|
+|The American Heritage Dictionary of English Language.mdd|undefined|1.2|undefined|1141|
+|The American Heritage Dictionary of English Language.mdx|The American Heritage Dictionary of English Language|1.2|UTF-16|1823|
+|Macmillan English Dictionary.mdd|Macmillan English Dictionary|2.0||44697|
+|Macmillan English Dictionary.mdx|Macmillan English Dictionary|2.0|UTF-8|517|
+|Oxford Collocations Dictionary for students of English 2nd.mdd|Oxford Collocations Dictionary for students of English|2.0||43791|
+|Oxford Collocations Dictionary for students of English 2nd.mdx|Oxford Collocations Dictionary for students of English|2.0|UTF-8|386|
+|Oxford Dictionary of English 2005 2nd.mdx|Oxford Dictionary of English|2.0|UTF-8|1081|
+|Vocabulary.com Dictionary.mdd|Vocabulary.com Dictionary|2.0||145|
+|Vocabulary.com Dictionary.mdx|Vocabulary.com Dictionary|2.0|UTF-8|2501|
+
 
 
 ## Release
