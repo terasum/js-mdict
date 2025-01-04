@@ -1,4 +1,4 @@
-import {MDX} from '../dist/cjs/index.js';
+import { MDX } from '../dist/cjs/index.js';
 
 const mdx = new MDX('./test/data/oald7.mdx');
 console.log(mdx.header);
