@@ -1,0 +1,18 @@
+{
+  "name": "js-mdict-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^5.1.1",
+    "interopRequireDefault": "link:@babel/runtime/helpers/interopRequireDefault",
+    "js-mdict": "^6.0.3"
+  }
+}
