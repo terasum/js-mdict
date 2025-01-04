@@ -218,7 +218,7 @@ BREAKING CHANGES:
 
 ## MDX/MDD Layout
 
-![layout](https://chainlark.oss-cn-beijing.aliyuncs.com/bkun1.svg)
+![layout](./docs/format.svg)
 
 > this picture is from [@ikey4u/wikit](https://github.com/ikey4u/wikit)
 
