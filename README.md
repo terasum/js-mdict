@@ -12,7 +12,7 @@ Very thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](
 
 ## Latest Version
 
-v6.0.1 (2025-01-02)
+v6.0.2 (2025-01-04)
 
 ## Usage
 
