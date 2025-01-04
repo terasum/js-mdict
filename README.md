@@ -59,9 +59,6 @@ $ npx tsx ./example/oale8-mdd-example.ts
 */
 
 
-/*
-
-  */
 ```
 
 ### CommonJS
@@ -99,7 +96,7 @@ average load time:0.0522899 s
 Mdict#decodeRecordBlock
 average decode time:0.19147 s
 ```
-## TESTED Dictionaries
+## Tested Passed Dictionaries
 
 | File Path | Title | Version | Encoding | 'arose' Definition's Length |
 | --------- | ----- | ------- | -------- | --------------------------- |
