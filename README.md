@@ -218,7 +218,7 @@ BREAKING CHANGES:
 
 ## MDX/MDD Layout
 
-![layout](./docs/format.svg)
+![layout](./docs/mdict-format.svg)
 
 > this picture is from [@ikey4u/wikit](https://github.com/ikey4u/wikit)
 
