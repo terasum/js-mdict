@@ -13,7 +13,7 @@ export interface FuzzyWord extends KeyWordItem {
 export class MDX extends Mdict {
   /**
    * lookup the word
-   * @test ok
+   * @tests ok
    * @param word search word
    * @returns word definition
    */
@@ -55,7 +55,7 @@ export class MDX extends Mdict {
 
   /**
    * search the prefix like the phrase in the dictionary
-   * @test ok
+   * @tests ok
    * @param prefix prefix search phrase
    * @returns the prefix related list
    */
@@ -68,7 +68,7 @@ export class MDX extends Mdict {
 
   /**
    * search matched list of associate words
-   * @test ok
+   * @tests ok
    * @param phrase associate search likely workds
    * @returns matched list
    */
@@ -99,7 +99,7 @@ export class MDX extends Mdict {
 
   /**
    * fuzzy search words list
-   * @test ok
+   * @tests ok
    * @param word search word
    * @param fuzzy_size the fuzzy workd size
    * @param ed_gap edit distance

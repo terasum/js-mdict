@@ -3,7 +3,7 @@ export default {
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   testEnvironment: 'node',
-  testRegex: '(/tests/.*|(\\.|/)(test|spec))\\.tsx?$',
+  testRegex: '(/tests/test-.*|(\\.|/)(tests|spec))\\.tsx?$',
   transform: {
     '^.+.tsx?$': ['ts-jest', {}],
   },
@@ -18,7 +18,6 @@ export default {
     '^./utils.js$': '<rootDir>/src/utils.ts',
     '^./ripemd128.js$': '<rootDir>/src/ripemd128.ts',
     '^./index.js$': '<rootDir>/src/index.ts',
-    '^./mdx.js$': '<rootDir>/src/mdx.ts',
     '^./mdd.js$': '<rootDir>/src/mdd.ts',
     '^./scanner.js$': '<rootDir>/src/scanner.ts',
 

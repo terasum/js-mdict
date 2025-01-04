@@ -1,6 +1,6 @@
 import {MDX} from '../dist/cjs/index.js';
 
-const mdx = new MDX('./test/data/new-oxford-en-ch-dict.mdx');
+const mdx = new MDX('./tests/data/new-oxford-en-ch-dict.mdx');
 console.log(mdx.header);
 console.log(mdx.lookup('be'));
 

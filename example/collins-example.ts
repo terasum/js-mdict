@@ -1,6 +1,6 @@
 import {MDD} from '../dist/cjs/index.js';
 
-const mdd = new MDD('./test/data/Collins.mdd');
+const mdd = new MDD('./tests/data/Collins.mdd');
 console.log(mdd.header);
 console.log(mdd.locate('\\Logo.jpg'));
 

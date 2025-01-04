@@ -11,17 +11,17 @@ npm-debug.log
 /resources
 *.mdx
 *.mdd
-/test/data/mdx
+/tests/data/mdx
 
 # Directory used for running tests in CommonJS mode
 /cjs-test
 /coverage
 /coverage/*
 yarn-error.log
-test/temp-debug.spec.js
-test/data/output/*.txt
-test/data/*.txt
-test/data/*.toml
+tests/temp-debug.spec.js
+tests/data/output/*.txt
+tests/data/*.txt
+tests/data/*.toml
 
 # vim
 .*.swp

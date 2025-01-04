@@ -198,6 +198,12 @@ export class Mdict extends MdictBase {
     return left - 1;
   }
 
+  public close(){
+    this.scanner.close();
+    this.keywordList = [];
+    this.keyInfoList = [];
+    this.recordInfoList = [];
+  }
 
 }
 

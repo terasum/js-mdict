@@ -1,6 +1,6 @@
 import { MDD } from '../dist/cjs/index.js';
 
-const mdx = new MDD('./test/data/oale8.mdd');
+const mdx = new MDD('./tests/data/oale8.mdd');
 console.log(mdx.header);
 console.log(mdx.locate('\\Logo.jpg'));
 

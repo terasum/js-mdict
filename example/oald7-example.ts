@@ -1,6 +1,6 @@
 import { MDX } from '../dist/cjs/index.js';
 
-const mdx = new MDX('./test/data/oald7.mdx');
+const mdx = new MDX('./tests/data/oald7.mdx');
 console.log(mdx.header);
 console.log(mdx.lookup('example'));
 

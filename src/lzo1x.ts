@@ -57,7 +57,7 @@ const lzo1x = function lzo1x() {
     skipToFirstLiteralFun: false,
 
     ctzl(v: any) {
-      // this might be needed for _compressCore (it isn't in my current test files)
+      // this might be needed for _compressCore (it isn't in my current tests files)
       /*
        * https://graphics.stanford.edu/~seander/bithacks.html#ZerosOnRightBinSearch
        * Matt Whitlock suggested this on January 25, 2006.

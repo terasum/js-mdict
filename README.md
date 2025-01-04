@@ -44,7 +44,7 @@ console.log(def.definition);
   */
 import { MDD } from '../dist/cjs/index.js';
 
-const mdx = new MDD('./test/data/oale8.mdd');
+const mdx = new MDD('./tests/data/oale8.mdd');
 console.log(mdx.locate('\\Logo.jpg'));
 
 /*
@@ -89,7 +89,16 @@ console.log(def.definition);
 
 ## Benchmark
 
-TODO
+```angular2html
+Mdict#loading time: 0 sec
+Mdict#lookup x 20,288 ops/sec ±0.44% (93 runs sampled)
+Mdict#prefix x 3,279 ops/sec ±17.69% (92 runs sampled)
+Mdict#associate x 6,436 ops/sec ±0.40% (98 runs sampled)
+Mdict#loadDict
+average load time:0.0522899 s
+Mdict#decodeRecordBlock
+average decode time:0.19147 s
+```
 
 
 ## Release

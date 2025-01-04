@@ -413,7 +413,7 @@ class MDictBase {
   private _isStripKey(): boolean {
     return this.options.isStripKey || common.isTrue(this.header['StripKey'] as string);
   }
-  protected readDict() {
+  public readDict() {
     // STEP1: read header
     this._readHeader();
 
@@ -862,7 +862,7 @@ class MDictBase {
     if (compType.toString('hex') == '00000000') {
       keyBlock = kbPackedBuff.slice(8);
     } else if (compType.toString('hex') == '01000000') {
-      // TODO: test for v2.0 dictionary
+      // TODO: tests for v2.0 dictionary
       const decompressedBuff = lzo1x.decompress(kbPackedBuff.slice(8), unpackSize, 0);
       keyBlock = Buffer.from(decompressedBuff);
     } else if (compType.toString('hex') === '02000000') {
