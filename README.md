@@ -52,6 +52,10 @@ $ git clone github.com/terasum/js-mdict
 $ cd js-mdict
 $ npx tsx ./example/oale8-mdd-example.ts
 
+NOTE: the mdd's definition is base64 encoded bytes, 
+if your target is css/js content, please decode base64 and get the original text
+if your target is images, you can use dataurl to show the images
+
 {
   keyText: '\\Logo.jpg',
   definition: '/9j/4AAQSkZJRgABAgAAAQABAAD//gAEKgD/4gIcSUNDX1BST0ZJTEUAAQEAAAIMbGNtcwIQ...'
