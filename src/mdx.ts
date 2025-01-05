@@ -3,6 +3,10 @@ import { KeyWordItem } from '../src/mdict-base.js';
 import  common  from './utils.js';
 
 export interface FuzzyWord extends KeyWordItem {
+  recordStartOffset: number;
+  recordEndOffset: number;
+  keyText: string;
+  keyBlockIdx: number;
   ed: number;
 }
 

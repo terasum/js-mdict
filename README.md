@@ -129,6 +129,9 @@ average decode time:0.19147 s
 
 ## Release
 
+### v6.0.6 (2025-01-04)
+1. fix FuzzySearch result type issue
+
 ### v6.0.5 (2025-01-04)
 1. fix fuzzy_word search method
 
