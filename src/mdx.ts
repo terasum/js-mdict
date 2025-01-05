@@ -1,12 +1,8 @@
 import { Mdict } from './mdict.js';
 import { KeyWordItem } from '../src/mdict-base.js';
-
-
 import  common  from './utils.js';
 
 export interface FuzzyWord extends KeyWordItem {
-  key: string;
-  idx: number;
   ed: number;
 }
 
@@ -82,6 +78,34 @@ export class MDX extends Mdict {
     });
   }
 
+
+
+  /**
+   * suggest the phrase with the edit distance
+   * @tests ok
+   * @param phrase search phrase
+   * @param distance edit distance
+   * @returns the suggest list
+   */
+
+  suggest(phrase: string, distance: number) {
+    if (distance < 0 || distance > 5) {
+      console.log("the edit distance should be in the range of 0 to 5");
+      return [];
+    }
+
+    const keywordList =  this.associate(phrase);
+    const suggestList: KeyWordItem[] = [];
+    keywordList.forEach(item => {
+      const key = this.strip(item.keyText);
+      const ed = common.levenshteinDistance(key, this.strip(phrase));
+      if (ed <= distance) {
+        suggestList.push(item);
+      }
+    });
+    return suggestList;
+  }
+
   fetch_definition(keywordItem : KeyWordItem): { keyText: string; definition: string | null } {
     const def = this.lookupRecordByKeyBlock(keywordItem);
     if (!def) {
@@ -107,27 +131,23 @@ export class MDX extends Mdict {
    */
   fuzzy_search(word: string, fuzzy_size: number, ed_gap: number): FuzzyWord[] {
     const fuzzy_words: FuzzyWord[] = [];
-    let count = 0;
-
 
     const keywordList =  this.associate(word);
     keywordList.forEach(item => {
       const key = this.strip(item.keyText);
       const ed = common.levenshteinDistance(key, this.strip(word));
       if (ed <= ed_gap) {
-        count++;
-        if (count > fuzzy_size) {
-          return;
-        }
         fuzzy_words.push({
           ...item,
-          key: item.keyText,
-          idx: item.recordStartOffset,
           ed: ed,
         });
       }}
     );
 
-    return fuzzy_words;
+    fuzzy_words.sort((a, b) => {
+      return a.ed - b.ed;
+    });
+
+    return fuzzy_words.slice(0, fuzzy_size);
   }
 }

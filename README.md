@@ -12,7 +12,7 @@ Thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](https
 
 ## Latest Version
 
-v6.0.3 (2025-01-04)
+v6.0.4 (2025-01-05)
 
 ## Usage
 
@@ -128,6 +128,12 @@ average decode time:0.19147 s
 
 
 ## Release
+
+### v6.0.5 (2025-01-04)
+1. fix fuzzy_word search method
+
+### v6.0.4 (2025-01-04)
+1. add example
 
 ### v6.0.3 (2025-01-04)
 1. fix tests and benchmarks
