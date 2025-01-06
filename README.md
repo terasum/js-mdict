@@ -129,7 +129,7 @@ average decode time:0.19147 s
 
 ## Release
 
-### v6.0.6 (2025-01-04)
+### v6.0.6 (2025-01-06)
 1. fix mdd not found case bug
 
 ### v6.0.5 (2025-01-04)
