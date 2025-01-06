@@ -33,7 +33,7 @@ export class Mdict extends MdictBase {
    * the `recordStartOffset` should indicate the unpacked record data relative offset
    * @param word the target word phrase
    */
-  lookupKeyBlockByWord(word: string) : KeyWordItem | undefined {
+  lookupKeyBlockByWord(word: string, isAssociate: boolean = false): KeyWordItem | undefined {
     // const keyBlockInfoId = this.lookupKeyInfoByWord(word);
     // if (keyBlockInfoId < 0) {
     //   return undefined;
@@ -60,8 +60,10 @@ export class Mdict extends MdictBase {
       }
     }
 
-    if (mid == -1) {
-      return undefined;
+    if (this.comp(word, list[mid].keyText) != 0) {
+      if (!isAssociate) {
+        return undefined;
+      }
     }
 
     return list[mid];
@@ -198,7 +200,7 @@ export class Mdict extends MdictBase {
     return left - 1;
   }
 
-  public close(){
+  public close() {
     this.scanner.close();
     this.keywordList = [];
     this.keyInfoList = [];

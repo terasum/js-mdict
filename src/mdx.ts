@@ -73,7 +73,7 @@ export class MDX extends Mdict {
    * @returns matched list
    */
   associate(phrase: string): KeyWordItem[] {
-    const keyBlockItem = this.lookupKeyBlockByWord(phrase);
+    const keyBlockItem = this.lookupKeyBlockByWord(phrase, true);
     if (!keyBlockItem) {
       return [];
     }

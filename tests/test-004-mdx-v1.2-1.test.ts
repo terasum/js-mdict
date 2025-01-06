@@ -32,9 +32,9 @@ describe('tests mdx file v1.2', () => {
     it('#fuzzy_search', () =>{
       const list = mdict.fuzzy_search('recom', 3, 3);
       expect(list).toHaveLength(3);
-      expect(list[0].key).toBe('RAC');
-      expect(list[1].key).toBe('race');
-      expect(list[2].key).toBe('racer');
+      expect(list[0].keyText).toBe('recon');
+      expect(list[1].keyText).toBe('re-form');
+      expect(list[2].keyText).toBe('realm');
     });
   });
 });
