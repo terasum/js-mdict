@@ -16,4 +16,22 @@ describe('mdx-lookup-key-block', () => {
     }
 
   });
+
+  it('locate-key-002', () => {
+    const item = mdd.lookupKeyBlockByWord('\\uk_pron.png');
+    expect(item).toBeDefined();
+    if (!item) {
+      return;
+    }
+
+  });
+
+  it('locate-key-003', () => {
+    const item = mdd.lookupKeyBlockByWord('\\uk_pron.png');
+    expect(item).toBeDefined();
+    if (!item) {
+      return;
+    }
+
+  });
 });
