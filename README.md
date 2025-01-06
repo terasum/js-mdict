@@ -12,7 +12,7 @@ Thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](https
 
 ## Latest Version
 
-v6.0.6 (2025-01-05)
+v6.0.6 (2025-01-06)
 
 ## Usage
 
@@ -130,7 +130,7 @@ average decode time:0.19147 s
 ## Release
 
 ### v6.0.6 (2025-01-04)
-1. fix FuzzySearch result type issue
+1. fix mdd not found case bug
 
 ### v6.0.5 (2025-01-04)
 1. fix fuzzy_word search method
