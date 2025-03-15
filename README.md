@@ -12,7 +12,7 @@ Thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](https
 
 ## Latest Version
 
-v6.0.6 (2025-01-06)
+v6.0.7 (2025-03-15)
 
 ## Usage
 
@@ -86,6 +86,18 @@ console.log(def.definition);
 ...
 </body>
   */
+```
+
+### Command Line
+
+``` bash
+npm install -g js-mdict
+
+> js-mdict ~/Downloads/uu89ug_folder/大辞泉202304.mdx 新語      
+> <head><meta charset="utf-8"><link rel="stylesheet" type="text/css" href="srej.css"><script src="srej.js"></script></head><srejm class="srejm">☞<a href="entry://しんご【新語】">しんご【新語】</a><hr/>☞<a href="entry://しんご【新語】［書名］">しんご【新語】［書名］</a></srejm>
+
+> js-mdict ~/Downloads/uu89ug_folder/大辞泉202304.mdd \\srej.css
+> dGFibGUuc3JlansgbWFyZ2luOjAgYXV0bztib3JkZXItY29sbGFwc2U6Y29sbGFwc2U7Ym9yZGVyLXN0eWxlOmhpZGRlbiB9DQp0...(total: 3976.97265625 KB)
 ```
 
 ## Benchmark

@@ -94,7 +94,7 @@ export class MDX extends Mdict {
 
   suggest(phrase: string, distance: number) {
     if (distance < 0 || distance > 5) {
-      console.log("the edit distance should be in the range of 0 to 5");
+      console.log('the edit distance should be in the range of 0 to 5');
       return [];
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "js-mdict",
-  "version": "6.0.6",
+  "version": "6.0.7",
   "description": "mdict (*.mdx, *.mdd) file reader",
   "author": "terasum <terasum@163.com>",
   "repository": "git+https://github.com/terasum/js-mdict.git",
@@ -41,6 +41,9 @@
     "lint-fix": "eslint --quiet 'src/**/*.ts' 'tests/**/*.ts' --fix",
     "prepack": "npm run clean && npm run build",
     "bench": "jest --projects jest.bench.config.js"
+  },
+  "bin":{
+    "js-mdict": "./dist/cjs/cli.js"
   },
   "dependencies": {
     "commander": "^13.0.0",
