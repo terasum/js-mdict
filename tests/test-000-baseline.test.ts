@@ -4,7 +4,7 @@ import {MDX} from '../src';
 
 describe('Mdict', () => {
   describe('#lookup', () => {
-    const mdict = new MDX('./tests/data/oald7.mdx', {
+    const mdict = new MDX('./tests/data/mini/mini.mdx', {
       passcode: '',
       isStripKey: true,
       isCaseSensitive: false,

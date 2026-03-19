@@ -3,7 +3,7 @@ import {MDX} from '../src';
 describe('Mdict', () => {
   describe('Collins', () => {
     const mdict = new MDX(
-      './tests/data/Collins.mdx',
+      './tests/data/mini/mini.mdx',
       { resort: true }
     );
     it('#associate&#parse_defination', () => {

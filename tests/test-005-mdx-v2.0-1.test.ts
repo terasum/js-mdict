@@ -2,7 +2,7 @@ import { MDX } from '../src';
 
 describe('Mdict', () => {
   describe('oale8.mdx', () => {
-    const mdict = new MDX('./tests/data/oald7.mdx', { resort: true });
+    const mdict = new MDX('./tests/data/mini/mini.mdx', { resort: true });
     it('#associate&#parse_defination', () => {
       const matched = mdict.associate('on');
       if (!matched) {

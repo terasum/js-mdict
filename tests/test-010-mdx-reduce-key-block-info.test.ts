@@ -2,7 +2,7 @@ import { MDX } from '../src';
 
 describe('mdx-reduce-word-key-block', () => {
   const mdict = new MDX(
-    './tests/data/Collins.mdx',
+    './tests/data/mini/mini.mdx',
     { resort: true }
   );
   it('reduce-word-key-block-01', () => {
