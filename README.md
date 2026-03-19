@@ -175,3 +175,51 @@ BREAKING:
 > this is from [xwang/mdict-analysis](https://bitbucket.org/xwang/mdict-analysis/src/master/MDict3.svg)
 
 code by terasum with ❤️
+
+---
+
+## API Reference
+
+### Search Methods
+
+| Method | Description | Example |
+|--------|-------------|---------|
+| `lookup(word)` | Exact match search | `mdict.lookup("hello")` |
+| `prefix(prefix)` | Find words starting with prefix | `mdict.prefix("book")` |
+| `contains(substring, caseSensitive?, limit?)` | Find words containing substring | `mdict.contains("tion")` |
+| `fuzzy_search(word, size, ed_gap)` | Fuzzy search with edit distance | `mdict.fuzzy_search("helo", 10, 2)` |
+| `associate(phrase)` | Find words in same key block | `mdict.associate("book")` |
+| `suggest(phrase, distance)` | Suggest similar words | `mdict.suggest("helo", 2)` |
+
+### New in v6.0.8+
+
+#### `contains()` - Substring Search
+
+Search for all words containing a specified substring.
+
+```javascript
+import { MDX } from "js-mdict";
+
+const mdict = new MDX("dictionary.mdx");
+
+// Find all words containing "tion" (e.g., action, nation, education)
+const results = mdict.contains("tion");
+console.log(`Found ${results.length} words containing "tion"`);
+
+// Case-sensitive search with limit (max 50 results)
+const exactResults = mdict.contains("Book", true, 50);
+
+// Get definitions for the found words
+results.slice(0, 5).forEach(item => {
+  const def = mdict.fetch(item);
+  console.log(`${item.keyText}: ${def.definition?.substring(0, 50)}...`);
+});
+```
+
+**Parameters:**
+- `substring` (string): The text to search for
+- `caseSensitive` (boolean, optional): Case-sensitive search. Default: `false`
+- `limit` (number, optional): Maximum results to return. Default: `1000`
+
+**Returns:** `KeyWordItem[]` - Array of matching keywords
+

@@ -154,4 +154,28 @@ export class MDX extends Mdict {
 
     return fuzzy_words.slice(0, fuzzy_size);
   }
+
+  /**
+   * search words that contain the specified substring
+   * @param substring the text to search for
+   * @param caseSensitive whether to perform case-sensitive search (default: false)
+   * @param limit maximum number of results to return (default: 1000)
+   * @returns list of keywords containing the substring
+   */
+  contains(substring: string, caseSensitive: boolean = false, limit: number = 1000): KeyWordItem[] {
+    const searchKey = caseSensitive ? substring : substring.toLowerCase();
+
+    const matchedList: KeyWordItem[] = [];
+    for (const item of this.keywordList) {
+      const keyText = caseSensitive ? item.keyText : item.keyText.toLowerCase();
+      if (keyText.includes(searchKey)) {
+        matchedList.push(item);
+        if (matchedList.length >= limit) {
+          break;
+        }
+      }
+    }
+
+    return matchedList;
+  }
 }
