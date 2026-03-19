@@ -1,7 +1,7 @@
 import assert from 'assert';
-import lzo1x from './lzo1x-wrapper';
-import common, { NumFmt } from './utils';
-import { FileScanner } from './scanner';
+import lzo1x from './lzo1x-wrapper.js';
+import common, { NumFmt } from './utils.js';
+import { FileScanner } from './scanner.js';
 import zlib from 'zlib';
 
 const pako = {

@@ -6,8 +6,8 @@ export type {
   RecordHeader,
   RecordInfo,
   KeyWordItem,
-} from './mdict-base.ts';
+} from './mdict-base.js';
 
-export { Mdict } from './mdict';
-export { MDX, FuzzyWord } from './mdx';
-export { MDD } from './mdd';
+export { Mdict } from './mdict.js';
+export { MDX, FuzzyWord } from './mdx.js';
+export { MDD } from './mdd.js';

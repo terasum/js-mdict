@@ -4,7 +4,7 @@
 //module/cli.js
 
 import fs from 'fs';
-import { MDX, MDD } from './index';
+import { MDX, MDD } from './index.js';
 
 function help() {
   console.log('js-mdict - A MDict dictionary file reader command line tool');

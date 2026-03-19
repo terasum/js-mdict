@@ -1,4 +1,4 @@
-import { ripemd128 } from './ripemd128';
+import { ripemd128 } from './ripemd128.js';
 
 const REGEXP_STRIPKEY: { [key: string]: RegExp } = {
   mdx: /[().,\-&、 '/\\@_$\\!]()/g,

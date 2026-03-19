@@ -1,6 +1,6 @@
-import { Mdict } from './mdict';
-import { KeyWordItem } from '../src/mdict-base.js';
-import  common  from './utils';
+import { Mdict } from './mdict.js';
+import { KeyWordItem } from './mdict-base.js';
+import  common  from './utils.js';
 
 export interface FuzzyWord extends KeyWordItem {
   recordStartOffset: number;
