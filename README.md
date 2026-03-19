@@ -45,7 +45,8 @@ console.log(def.definition);
 import { MDD } from '../dist/cjs/index.js';
 
 const mdx = new MDD('./tests/data/oale8.mdd');
-console.log(mdx.locate('\\Logo.jpg'));
+console.log(mdx.locate('Logo.jpg')); // will auto normalize to '\\Logo.jpg'
+console.log(mdx.locate('media/audio/test.mp3')); // will auto normalize to '\\media\\audio\\test.mp3'
 
 /*
 $ git clone github.com/terasum/js-mdict
