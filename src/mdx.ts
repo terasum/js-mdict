@@ -39,6 +39,26 @@ export class MDX extends Mdict {
     };
   };
 
+  /**
+   * lookup all entries matching the word
+   * useful when dictionary has duplicate keys (e.g., main entry + image + link)
+   * @param word search word
+   * @returns array of all matching entries
+   */
+  lookupAll(word: string): Array<{ keyText: string; definition: string | null }> {
+    const matchedItems = this.keywordList.filter(item => {
+      return this.comp(item.keyText, word) === 0;
+    });
+
+    return matchedItems.map(item => {
+      const def = this.lookupRecordByKeyBlock(item);
+      return {
+        keyText: item.keyText,
+        definition: def ? this.meta.decoder.decode(def) : null
+      };
+    });
+  }
+
   fetch(keywordItem : KeyWordItem): { keyText: string; definition: string | null } {
     const def = this.lookupRecordByKeyBlock(keywordItem);
     if (!def) {

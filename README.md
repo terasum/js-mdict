@@ -223,3 +223,75 @@ results.slice(0, 5).forEach(item => {
 
 **Returns:** `KeyWordItem[]` - Array of matching keywords
 
+
+### `lookupAll()` - Handle Duplicate Keys (New in v6.0.8+)
+
+Some dictionaries may contain duplicate keys (e.g., main entry + image reference + link entry).
+Use `lookupAll()` to retrieve all matching entries:
+
+```javascript
+import { MDX } from "js-mdict";
+
+const mdict = new MDX("dictionary.mdx");
+
+// Standard lookup returns only first match
+const first = mdict.lookup("tyre");
+console.log(first.definition); // May return image data, not main entry
+
+// lookupAll returns ALL matching entries
+const all = mdict.lookupAll("tyre");
+console.log(`Found ${all.length} entries for "tyre":`);
+
+// Filter to find main entry
+const mainEntry = all.find(e => 
+  !e.definition?.startsWith("[IMAGE") && 
+  !e.definition?.startsWith("@@@LINK")
+);
+console.log(mainEntry.definition);
+```
+
+**When to use lookupAll():**
+- Dictionary has duplicate keys
+- Need to filter results (e.g., exclude resources/links)
+- Want all possible definitions for a word
+
+
+### `lookupAll()` - Find All Matching Entries
+
+When a dictionary has duplicate keys (e.g., main entry + image + link), `lookup()` only returns the first match. Use `lookupAll()` to get all matches:
+
+```javascript
+import { MDX } from "js-mdict";
+
+const mdict = new MDX("dictionary.mdx");
+
+// Get all entries for "tyre" (main entry, image, link)
+const allEntries = mdict.lookupAll("tyre");
+console.log(`Found ${allEntries.length} entries for "tyre"`);
+
+// Filter to get main entry (skip images and links)
+const mainEntry = allEntries.find(e => {
+  const def = e.definition || '';
+  return !def.includes('[IMAGE]') && !def.includes('@@@LINK');
+});
+
+// Or filter by definition content
+const withDefinitions = allEntries.filter(e => {
+  const def = e.definition || '';
+  return !def.includes('@@@LINK') && !def.startsWith('<');
+});
+
+// Get specific entry
+allEntries.forEach((entry, index) => {
+  console.log(`Entry ${index + 1}: ${entry.definition.substring(0, 50)}...`);
+});
+```
+
+**Parameters:**
+- `word` (string): The search word
+
+**Returns:** `Array<{ keyText: string; definition: string | null }>` - All matching entries
+
+---
+
+_This method is useful for dictionaries with duplicate keys like LDOCE5+++ which may have multiple entries for the same word (main definition, image references, links to related words)._
