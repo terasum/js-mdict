@@ -1,7 +1,7 @@
 {
   "name": "js-mdict",
-  "version": "6.0.7",
-  "description": "mdict (*.mdx, *.mdd) file reader",
+  "version": "7.0.0",
+  "description": "mdict (*.mdx, *.mdd) file reader. Licensed under AGPL-3.0 for better community cooperation and commercial value protection.",
   "author": "terasum <terasum@163.com>",
   "repository": "git+https://github.com/terasum/js-mdict.git",
   "keywords": [
@@ -12,7 +12,7 @@
     "vocabulary",
     "borwser"
   ],
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "bugs": {
     "url": "https://github.com/terasum/js-mdict/issues"
   },
