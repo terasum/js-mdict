@@ -12,7 +12,22 @@ Thanks to [fengdh](https://github.com/fengdh/mdict-js) and [jeka-kiselyov](https
 
 ## Latest Version
 
-v6.0.7 (2025-03-15)
+v7.0.0 (2026-03-20)
+
+## Licensing Transition Notice (v7.0.0)
+
+As of **March 20, 2026**, `js-mdict` has transitioned from the MIT License to the **GNU AGPL-3.0**.
+
+### Why this change?
+1.  **Community Reciprocity**: To ensure that improvements made to the core parser—especially when used in network/cloud services—are shared back with the community.
+2.  **Commercial Value Protection**: To provide a clear path for commercial licensing for entities that wish to use `js-mdict` in closed-source proprietary products.
+
+### What this means for you:
+*   **Open Source Users**: You can continue to use `js-mdict` for free under the terms of AGPL-3.0. If you modify the code and run it on a server, you must provide the source code of your version to your users.
+*   **Commercial Users**: If you cannot comply with AGPL-3.0 (e.g., you want to use it in a closed-source app), please contact the maintainer for a **Commercial License**.
+*   **Legacy Versions**: All versions prior to v7.0.0 remain under the MIT License.
+
+---
 
 ## Usage
 
@@ -191,7 +206,7 @@ code by terasum with ❤️
 | `associate(phrase)` | Find words in same key block | `mdict.associate("book")` |
 | `suggest(phrase, distance)` | Suggest similar words | `mdict.suggest("helo", 2)` |
 
-### New in v6.0.8+
+### New in v7.0.0+
 
 #### `contains()` - Substring Search
 
