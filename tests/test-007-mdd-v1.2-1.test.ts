@@ -3,7 +3,7 @@ import { expect } from '@jest/globals';
 
 describe('Mdict', () => {
   describe('Collins', () => {
-    const mdict = new MDD('tests/data/Collins.mdd');
+    const mdict = new MDD('./tests/data/mini/mini.mdd');
     it('#lookup', () => {
       const def = mdict.locate('\\collins.css');
 

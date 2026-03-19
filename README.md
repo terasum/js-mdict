@@ -45,7 +45,8 @@ console.log(def.definition);
 import { MDD } from '../dist/cjs/index.js';
 
 const mdx = new MDD('./tests/data/oale8.mdd');
-console.log(mdx.locate('\\Logo.jpg'));
+console.log(mdx.locate('Logo.jpg')); // will auto normalize to '\\Logo.jpg'
+console.log(mdx.locate('media/audio/test.mp3')); // will auto normalize to '\\media\\audio\\test.mp3'
 
 /*
 $ git clone github.com/terasum/js-mdict
@@ -174,3 +175,123 @@ BREAKING:
 > this is from [xwang/mdict-analysis](https://bitbucket.org/xwang/mdict-analysis/src/master/MDict3.svg)
 
 code by terasum with ❤️
+
+---
+
+## API Reference
+
+### Search Methods
+
+| Method | Description | Example |
+|--------|-------------|---------|
+| `lookup(word)` | Exact match search | `mdict.lookup("hello")` |
+| `prefix(prefix)` | Find words starting with prefix | `mdict.prefix("book")` |
+| `contains(substring, caseSensitive?, limit?)` | Find words containing substring | `mdict.contains("tion")` |
+| `fuzzy_search(word, size, ed_gap)` | Fuzzy search with edit distance | `mdict.fuzzy_search("helo", 10, 2)` |
+| `associate(phrase)` | Find words in same key block | `mdict.associate("book")` |
+| `suggest(phrase, distance)` | Suggest similar words | `mdict.suggest("helo", 2)` |
+
+### New in v6.0.8+
+
+#### `contains()` - Substring Search
+
+Search for all words containing a specified substring.
+
+```javascript
+import { MDX } from "js-mdict";
+
+const mdict = new MDX("dictionary.mdx");
+
+// Find all words containing "tion" (e.g., action, nation, education)
+const results = mdict.contains("tion");
+console.log(`Found ${results.length} words containing "tion"`);
+
+// Case-sensitive search with limit (max 50 results)
+const exactResults = mdict.contains("Book", true, 50);
+
+// Get definitions for the found words
+results.slice(0, 5).forEach(item => {
+  const def = mdict.fetch(item);
+  console.log(`${item.keyText}: ${def.definition?.substring(0, 50)}...`);
+});
+```
+
+**Parameters:**
+- `substring` (string): The text to search for
+- `caseSensitive` (boolean, optional): Case-sensitive search. Default: `false`
+- `limit` (number, optional): Maximum results to return. Default: `1000`
+
+**Returns:** `KeyWordItem[]` - Array of matching keywords
+
+
+### `lookupAll()` - Handle Duplicate Keys (New in v6.0.8+)
+
+Some dictionaries may contain duplicate keys (e.g., main entry + image reference + link entry).
+Use `lookupAll()` to retrieve all matching entries:
+
+```javascript
+import { MDX } from "js-mdict";
+
+const mdict = new MDX("dictionary.mdx");
+
+// Standard lookup returns only first match
+const first = mdict.lookup("tyre");
+console.log(first.definition); // May return image data, not main entry
+
+// lookupAll returns ALL matching entries
+const all = mdict.lookupAll("tyre");
+console.log(`Found ${all.length} entries for "tyre":`);
+
+// Filter to find main entry
+const mainEntry = all.find(e => 
+  !e.definition?.startsWith("[IMAGE") && 
+  !e.definition?.startsWith("@@@LINK")
+);
+console.log(mainEntry.definition);
+```
+
+**When to use lookupAll():**
+- Dictionary has duplicate keys
+- Need to filter results (e.g., exclude resources/links)
+- Want all possible definitions for a word
+
+
+### `lookupAll()` - Find All Matching Entries
+
+When a dictionary has duplicate keys (e.g., main entry + image + link), `lookup()` only returns the first match. Use `lookupAll()` to get all matches:
+
+```javascript
+import { MDX } from "js-mdict";
+
+const mdict = new MDX("dictionary.mdx");
+
+// Get all entries for "tyre" (main entry, image, link)
+const allEntries = mdict.lookupAll("tyre");
+console.log(`Found ${allEntries.length} entries for "tyre"`);
+
+// Filter to get main entry (skip images and links)
+const mainEntry = allEntries.find(e => {
+  const def = e.definition || '';
+  return !def.includes('[IMAGE]') && !def.includes('@@@LINK');
+});
+
+// Or filter by definition content
+const withDefinitions = allEntries.filter(e => {
+  const def = e.definition || '';
+  return !def.includes('@@@LINK') && !def.startsWith('<');
+});
+
+// Get specific entry
+allEntries.forEach((entry, index) => {
+  console.log(`Entry ${index + 1}: ${entry.definition.substring(0, 50)}...`);
+});
+```
+
+**Parameters:**
+- `word` (string): The search word
+
+**Returns:** `Array<{ keyText: string; definition: string | null }>` - All matching entries
+
+---
+
+_This method is useful for dictionaries with duplicate keys like LDOCE5+++ which may have multiple entries for the same word (main definition, image references, links to related words)._

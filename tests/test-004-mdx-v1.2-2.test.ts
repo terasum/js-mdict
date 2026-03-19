@@ -3,7 +3,7 @@ import { expect } from '@jest/globals';
 
 describe('Mdict', () => {
   describe('Oxford', () => {
-    const mdict = new MDX('./tests/data/oald7.mdx', {
+    const mdict = new MDX('./tests/data/mini/mini.mdx', {
       resort: true,
     });
     it('#associate&#parse_defination', () => {

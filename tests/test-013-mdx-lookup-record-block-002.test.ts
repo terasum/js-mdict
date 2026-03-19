@@ -4,11 +4,11 @@ import { MDD } from '../src';
 
 describe('mdx-lookup-key-block-003', () => {
   const mdict = new Mdict(
-    './tests/data/oald7.mdx',
+    './tests/data/mini/mini.mdx',
     { resort: true }
   );
   const mdd = new MDD(
-    './tests/data/oale8.mdd',
+    './tests/data/mini/mini.mdd',
     { resort: true }
   );
   it('lookup-key-block-003-01', () => {

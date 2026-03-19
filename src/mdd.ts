@@ -11,7 +11,12 @@ export class MDD extends Mdict {
    * @returns the keyText and definition
    */
   locate(resourceKey: string): { keyText: string; definition: string | null } {
-    const item = this.lookupKeyBlockByWord(resourceKey);
+    let normalizedKey = resourceKey.replace(/\//g, '\\');
+    if (normalizedKey.length > 0 && !normalizedKey.startsWith('\\')) {
+      normalizedKey = '\\' + normalizedKey;
+    }
+
+    const item = this.lookupKeyBlockByWord(normalizedKey);
     if (!item) {
       return {
         keyText: resourceKey,

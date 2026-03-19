@@ -3,7 +3,7 @@ import { MDX } from '../src';
 
 describe('sort-004', () => {
   const input = './tests/data/output/oald7.mdx.keylist.txt';
-  const mdx = new MDX('./tests/data/oald7.mdx',{debug:true});
+  const mdx = new MDX('./tests/data/mini/mini.mdx',{debug:true});
   it('mdd-full-004-mdx0-foreach', () => {
     const fileContent = fs.readFileSync(input, 'utf8');
     const datalist = [];

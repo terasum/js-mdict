@@ -4,7 +4,7 @@ import { MDD } from '../src';
 describe('mdx-lookup-key-block', () => {
 
   const mdd = new MDD(
-    './tests/data/oale8.mdd',
+    './tests/data/mini/mini.mdd',
     { resort: true }
   );
 

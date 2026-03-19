@@ -1,5 +1,5 @@
 import { Mdict } from './mdict.js';
-import { KeyWordItem } from '../src/mdict-base.js';
+import { KeyWordItem } from './mdict-base.js';
 import  common  from './utils.js';
 
 export interface FuzzyWord extends KeyWordItem {
@@ -38,6 +38,26 @@ export class MDX extends Mdict {
       definition: this.meta.decoder.decode(def)
     };
   };
+
+  /**
+   * lookup all entries matching the word
+   * useful when dictionary has duplicate keys (e.g., main entry + image + link)
+   * @param word search word
+   * @returns array of all matching entries
+   */
+  lookupAll(word: string): Array<{ keyText: string; definition: string | null }> {
+    const matchedItems = this.keywordList.filter(item => {
+      return this.comp(item.keyText, word) === 0;
+    });
+
+    return matchedItems.map(item => {
+      const def = this.lookupRecordByKeyBlock(item);
+      return {
+        keyText: item.keyText,
+        definition: def ? this.meta.decoder.decode(def) : null
+      };
+    });
+  }
 
   fetch(keywordItem : KeyWordItem): { keyText: string; definition: string | null } {
     const def = this.lookupRecordByKeyBlock(keywordItem);
@@ -153,5 +173,29 @@ export class MDX extends Mdict {
     });
 
     return fuzzy_words.slice(0, fuzzy_size);
+  }
+
+  /**
+   * search words that contain the specified substring
+   * @param substring the text to search for
+   * @param caseSensitive whether to perform case-sensitive search (default: false)
+   * @param limit maximum number of results to return (default: 1000)
+   * @returns list of keywords containing the substring
+   */
+  contains(substring: string, caseSensitive: boolean = false, limit: number = 1000): KeyWordItem[] {
+    const searchKey = caseSensitive ? substring : substring.toLowerCase();
+
+    const matchedList: KeyWordItem[] = [];
+    for (const item of this.keywordList) {
+      const keyText = caseSensitive ? item.keyText : item.keyText.toLowerCase();
+      if (keyText.includes(searchKey)) {
+        matchedList.push(item);
+        if (matchedList.length >= limit) {
+          break;
+        }
+      }
+    }
+
+    return matchedList;
   }
 }

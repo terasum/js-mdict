@@ -4,7 +4,7 @@ import {MDX} from '../src/index.js';
 describe('Mdict', () => {
   describe('Oxford', () => {
     const mdict = new MDX(
-      './tests/data/oald7.mdx',
+      './tests/data/mini/mini.mdx',
       {
         resort: true,
       }

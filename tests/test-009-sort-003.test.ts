@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { MDD, MDX } from '../src';
 
-const mdd = new MDD('./tests/data/Collins.mdx');
+const mdd = new MDD('./tests/data/mini/mini.mdx');
 const output = './tests/data/output/Collins.mdx.keylist.txt';
 const file = fs.openSync(output, 'w');
 if (fs.statSync(output).size == 0) {
@@ -12,7 +12,7 @@ if (fs.statSync(output).size == 0) {
 }
 fs.closeSync(file);
 
-const mdx = new MDX('./tests/data/Collins.mdx',{debug:true});
+const mdx = new MDX('./tests/data/mini/mini.mdx',{debug:true});
 it('mdd-full-003-mdx-foreach', () => {
   const fileContent = fs.readFileSync(output, 'utf8');
   const datalist = [];

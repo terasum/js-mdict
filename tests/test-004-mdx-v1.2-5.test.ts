@@ -2,7 +2,7 @@ import {MDX} from '../src';
 
 describe('Mdict', () => {
   describe('American Heritage', () => {
-    const mdict = new MDX('./tests/data/tahdel.mdx', {
+    const mdict = new MDX('./tests/data/mini/mini.mdx', {
       resort: true,
     });
     it('#associate&#parse_defination', () => {

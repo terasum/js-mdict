@@ -3,7 +3,7 @@ import { MDX } from '../src';
 
 describe('mdx-prefix-001', () => {
   const mdict = new MDX(
-    './tests/data/Collins.mdx',
+    './tests/data/mini/mini.mdx',
     { resort: true }
   );
 

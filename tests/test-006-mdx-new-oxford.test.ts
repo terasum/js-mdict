@@ -3,7 +3,7 @@ import { expect } from '@jest/globals';
 
 describe('tests mdx file v1.2', () => {
   describe('oald7.mdx', () => {
-    const mdict = new MDX('./tests/data/new-oxford-en-ch-dict.mdx', {
+    const mdict = new MDX('./tests/data/mini/mini.mdx', {
       resort: true,
     });
     it('#lookup', () => {

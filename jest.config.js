@@ -3,7 +3,7 @@ export default {
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   testEnvironment: 'node',
-  testRegex: '(/tests/test-.*|(\\.|/)(tests|spec))\\.tsx?$',
+  testRegex: '(/tests/.*|(\\.|/)(tests|spec))\\.tsx?$',
   transform: {
     '^.+.tsx?$': ['ts-jest', {}],
   },

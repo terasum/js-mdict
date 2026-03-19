@@ -2,7 +2,7 @@ import { MDD } from '../src/index';
 import fs from 'node:fs';
 
 describe('mdx-full-001', () => {
-  const mdd = new MDD('./tests/data/tahdel.mdd',{debug:true});
+  const mdd = new MDD('./tests/data/mini/mini.mdd',{debug:true});
   const output = './tests/data/output/tahdel.mdd.keylist.txt';
   const file = fs.openSync(output, 'w');
   if (fs.statSync(output).size == 0) {

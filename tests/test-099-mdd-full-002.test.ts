@@ -2,7 +2,7 @@ import { MDD } from '../src';
 import fs from 'node:fs';
 
 describe('mdd-full-001', () => {
-  const mdd = new MDD('./tests/data/oale8.mdd', {debug: true});
+  const mdd = new MDD('./tests/data/mini/mini.mdd', {debug: true});
   console.log(mdd.header);
   console.log(mdd.recordHeader);
   console.log(mdd.recordBlockDataList.slice(0,10));
