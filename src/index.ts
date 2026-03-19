@@ -8,6 +8,6 @@ export type {
   KeyWordItem,
 } from './mdict-base.ts';
 
-export { Mdict } from './mdict.js';
-export { MDX, FuzzyWord } from './mdx.js';
-export { MDD } from './mdd.js';
+export { Mdict } from './mdict';
+export { MDX, FuzzyWord } from './mdx';
+export { MDD } from './mdd';

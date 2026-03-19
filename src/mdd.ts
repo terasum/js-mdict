@@ -1,4 +1,4 @@
-import { Mdict } from './mdict.js';
+import { Mdict } from './mdict';
 
 const BASE64ENCODER = function(arrayBuffer: Uint8Array): string {
   return Buffer.from(arrayBuffer).toString('base64');

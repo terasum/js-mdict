@@ -1,4 +1,4 @@
-import { ripemd128 } from './ripemd128.js';
+import { ripemd128 } from './ripemd128';
 
 const REGEXP_STRIPKEY: { [key: string]: RegExp } = {
   mdx: /[().,\-&、 '/\\@_$\\!]()/g,
@@ -17,9 +17,7 @@ const UTF16 = 'UTF-16';
  * @returns {Uint8Array} 新创建的 Uint8Array。
  */
 function newUint8Array(buf: Buffer, offset: number, len: number): Uint8Array {
-  let ret = new Uint8Array(len);
-  ret = Buffer.from(buf, offset, offset + len);
-  return ret;
+  return new Uint8Array(buf.buffer, buf.byteOffset + offset, len);
 }
 
 /**
@@ -298,10 +296,10 @@ function mdxDecrypt(comp_block: Uint8Array): Uint8Array {
   keyinBuffer[6] ^= 0x00;
   keyinBuffer[7] ^= 0x00;
 
-  const key = ripemd128(keyinBuffer);
+  const key = ripemd128(keyinBuffer.buffer.slice(keyinBuffer.byteOffset, keyinBuffer.byteOffset + keyinBuffer.length));
   const resultBuff = Buffer.concat([
-    comp_block.subarray(0, 8),
-    fast_decrypt(comp_block.slice(8), Uint8Array.from(key)),
+    Buffer.from(comp_block.subarray(0, 8)),
+    Buffer.from(fast_decrypt(Uint8Array.from(comp_block.slice(8)), key)),
   ]);
   return resultBuff;
 }

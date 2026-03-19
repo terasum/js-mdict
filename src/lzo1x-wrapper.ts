@@ -1,4 +1,4 @@
-import lzo from './lzo1x.js';
+import lzo from './lzo1x';
 
 function decompress(buf: Uint8Array, initSize: number, blockSize: number) {
   const result = lzo.decompress({
