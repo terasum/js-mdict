@@ -1,12 +1,13 @@
 name: Publish to npm
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   publish-npm:
@@ -14,8 +15,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -38,8 +37,22 @@ jobs:
       - name: Publish to npm (Trusted Publishing via OIDC)
         run: npm publish --provenance
 
-      - name: Post-publish notification
+      - name: Create GitHub Release
         if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "✅ Successfully published ${{ github.event.release.tag_name }} to npm"
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "✅ Successfully published ${TAG_NAME} to npm"
           echo "📦 Package: https://www.npmjs.com/package/js-mdict"
+          
+          # Check if release already exists
+          if ! gh release view "${TAG_NAME}" &>/dev/null; then
+            echo "Creating GitHub release for ${TAG_NAME}..."
+            gh release create "${TAG_NAME}" \
+              --title "${TAG_NAME}" \
+              --notes "Released to npm: https://www.npmjs.com/package/js-mdict" \
+              --latest
+          else
+            echo "GitHub release ${TAG_NAME} already exists"
+          fi
