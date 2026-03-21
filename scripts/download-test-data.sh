@@ -33,7 +33,7 @@ FILES=(
 
 for FILE in "${FILES[@]}"; do
     echo "Downloading $FILE..."
-    wrangler r2 object get "$R2_BUCKET_NAME/$FILE" --file "$DEST_DIR/$FILE"
+    wrangler r2 object get "$R2_BUCKET_NAME/$FILE" --file "$DEST_DIR/$FILE" --remote
 done
 
 echo "All test data downloaded successfully to $DEST_DIR"
