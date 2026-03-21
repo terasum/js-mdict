@@ -29,5 +29,15 @@ jobs:
     - name: Build project
       run: npm run build
 
+    - name: Download Test Data from R2
+      run: bash scripts/download-test-data.sh
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+
     - name: Run Core Integration Tests (Issue 80, 85, 86)
       run: npx jest tests/test-020-issue-integration.test.ts
+
+    - name: Run Internal Data Integration Tests
+      run: npx jest tests/test-021-internal-data.test.ts
